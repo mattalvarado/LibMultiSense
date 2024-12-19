@@ -1,7 +1,7 @@
 /**
  * @file LibMultiSense/details/flash.cc
  *
- * Copyright 2013-2022
+ * Copyright 2013-2025
  * Carnegie Robotics, LLC
  * 4501 Hatfield Street, Pittsburgh, PA 15201
  * http://www.carnegierobotics.com
@@ -37,9 +37,9 @@
 #include "MultiSense/details/channel.hh"
 #include "MultiSense/details/query.hh"
 
-#include "MultiSense/details/wire/AckMessage.hh"
-#include "MultiSense/details/wire/SysFlashOpMessage.hh"
-#include "MultiSense/details/wire/SysFlashResponseMessage.hh"
+#include <wire/AckMessage.hh>
+#include <wire/SysFlashOpMessage.hh>
+#include <wire/SysFlashResponseMessage.hh>
 
 namespace crl {
 namespace multisense {

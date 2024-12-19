@@ -1,7 +1,7 @@
 /**
  * @file LibMultiSense/details/dispatch.cc
  *
- * Copyright 2013-2022
+ * Copyright 2013-2025
  * Carnegie Robotics, LLC
  * 4501 Hatfield Street, Pittsburgh, PA 15201
  * http://www.carnegierobotics.com
@@ -37,59 +37,59 @@
 
 #include "MultiSense/details/channel.hh"
 
-#include "MultiSense/details/wire/AckMessage.hh"
+#include <wire/AckMessage.hh>
 
-#include "MultiSense/details/wire/VersionResponseMessage.hh"
-#include "MultiSense/details/wire/StatusResponseMessage.hh"
-#include "MultiSense/details/wire/PtpStatusResponseMessage.hh"
+#include <wire/VersionResponseMessage.hh>
+#include <wire/StatusResponseMessage.hh>
+#include <wire/PtpStatusResponseMessage.hh>
 
-#include "MultiSense/details/wire/AuxCamConfigMessage.hh"
-#include "MultiSense/details/wire/CamConfigMessage.hh"
-#include "MultiSense/details/wire/RemoteHeadConfigMessage.hh"
-#include "MultiSense/details/wire/CompressedImageMessage.hh"
-#include "MultiSense/details/wire/DisparityMessage.hh"
-#include "MultiSense/details/wire/ImageMessage.hh"
-#include "MultiSense/details/wire/ImageMetaMessage.hh"
-#include "MultiSense/details/wire/JpegMessage.hh"
+#include <wire/AuxCamConfigMessage.hh>
+#include <wire/CamConfigMessage.hh>
+#include <wire/RemoteHeadConfigMessage.hh>
+#include <wire/CompressedImageMessage.hh>
+#include <wire/DisparityMessage.hh>
+#include <wire/ImageMessage.hh>
+#include <wire/ImageMetaMessage.hh>
+#include <wire/JpegMessage.hh>
 
-#include "MultiSense/details/wire/CamHistoryMessage.hh"
+#include <wire/CamHistoryMessage.hh>
 
-#include "MultiSense/details/wire/LidarDataMessage.hh"
+#include <wire/LidarDataMessage.hh>
 
-#include "MultiSense/details/wire/LedStatusMessage.hh"
+#include <wire/LedStatusMessage.hh>
 
-#include "MultiSense/details/wire/LedSensorStatusMessage.hh"
+#include <wire/LedSensorStatusMessage.hh>
 
-#include "MultiSense/details/wire/PollMotorInfoMessage.hh"
+#include <wire/PollMotorInfoMessage.hh>
 
-#include "MultiSense/details/wire/SysMtuMessage.hh"
-#include "MultiSense/details/wire/SysNetworkMessage.hh"
-#include "MultiSense/details/wire/SysFlashResponseMessage.hh"
-#include "MultiSense/details/wire/SysDeviceInfoMessage.hh"
-#include "MultiSense/details/wire/SysCameraCalibrationMessage.hh"
-#include "MultiSense/details/wire/SysSensorCalibrationMessage.hh"
-#include "MultiSense/details/wire/SysTransmitDelayMessage.hh"
-#include "MultiSense/details/wire/SysPacketDelayMessage.hh"
-#include "MultiSense/details/wire/SysLidarCalibrationMessage.hh"
-#include "MultiSense/details/wire/SysDeviceModesMessage.hh"
-#include "MultiSense/details/wire/SysExternalCalibrationMessage.hh"
+#include <wire/SysMtuMessage.hh>
+#include <wire/SysNetworkMessage.hh>
+#include <wire/SysFlashResponseMessage.hh>
+#include <wire/SysDeviceInfoMessage.hh>
+#include <wire/SysCameraCalibrationMessage.hh>
+#include <wire/SysSensorCalibrationMessage.hh>
+#include <wire/SysTransmitDelayMessage.hh>
+#include <wire/SysPacketDelayMessage.hh>
+#include <wire/SysLidarCalibrationMessage.hh>
+#include <wire/SysDeviceModesMessage.hh>
+#include <wire/SysExternalCalibrationMessage.hh>
 
-#include "MultiSense/details/wire/SysPpsMessage.hh"
+#include <wire/SysPpsMessage.hh>
 
-#include "MultiSense/details/wire/ImuDataMessage.hh"
-#include "MultiSense/details/wire/ImuConfigMessage.hh"
-#include "MultiSense/details/wire/ImuInfoMessage.hh"
+#include <wire/ImuDataMessage.hh>
+#include <wire/ImuConfigMessage.hh>
+#include <wire/ImuInfoMessage.hh>
 
-#include "MultiSense/details/wire/SysTestMtuResponseMessage.hh"
+#include <wire/SysTestMtuResponseMessage.hh>
 
-#include "MultiSense/details/wire/GroundSurfaceModel.hh"
-#include "MultiSense/details/wire/ApriltagDetections.hh"
-
-#include "MultiSense/details/wire/FeatureDetectorConfigMessage.hh"
-#include "MultiSense/details/wire/FeatureDetectorGetConfigMessage.hh"
-#include "MultiSense/details/wire/FeatureDetectorControlMessage.hh"
-#include "MultiSense/details/wire/FeatureDetectorMessage.hh"
-#include "MultiSense/details/wire/FeatureDetectorMetaMessage.hh"
+#include <wire/GroundSurfaceModel.hh>
+#include <wire/ApriltagDetections.hh>
+#include <wire/SecondaryAppDataMessage.hh>
+#include <wire/SecondaryAppControlMessage.hh>
+#include <wire/SecondaryAppConfigMessage.hh>
+#include <wire/SecondaryAppActivateMessage.hh>
+#include <wire/SecondaryAppGetRegisteredAppsMessage.hh>
+#include <wire/SecondaryAppRegisteredAppsMessage.hh>
 
 #include <limits>
 
@@ -245,21 +245,22 @@ void impl::dispatchAprilTagDetections(apriltag::Header& header)
 }
 
 //
-// Publish a feature detection event
+// Publish Secondary App Data
 
-void impl::dispatchFeatureDetections(feature_detector::Header& header)
+void impl::dispatchSecondaryApplication(utility::BufferStream& buffer,
+                                        secondary_app::Header& header)
 {
     utility::ScopedLock lock(m_dispatchLock);
 
-    std::list<FeatureDetectorListener*>::const_iterator it;
+    std::list<SecondaryAppListener*>::const_iterator it;
 
-    for(it  = m_featureDetectorListeners.begin();
-        it != m_featureDetectorListeners.end();
-        ++ it)
-        (*it)->dispatch(header);
+    for(it  = m_secondaryAppListeners.begin();
+        it != m_secondaryAppListeners.end();
+        it ++)
+        (*it)->dispatch(buffer, header);
 
     utility::ScopedLock statsLock(m_statisticsLock);
-    m_channelStatistics.numDispatchedFeatureDetections++;
+    m_channelStatistics.numDispatchedSecondary++;
 }
 
 
@@ -597,54 +598,35 @@ void impl::dispatch(utility::BufferStreamWriter& buffer)
         dispatchAprilTagDetections(header);
         break;
     }
-    case MSG_ID(wire::FeatureDetector::ID):
+    case MSG_ID(wire::SecondaryAppData::ID):
     {
-        wire::FeatureDetector featureDetector(stream, version);
+        wire::SecondaryAppData SecondaryApp(stream, version);
 
-        const wire::FeatureDetectorMeta * metaP = m_featureDetectorMetaCache.find(featureDetector.frameId);
-        if (NULL == metaP)
-          break;
+        secondary_app::Header header;
 
-        feature_detector::Header header;
-        header.source         = featureDetector.source | ((uint64_t)featureDetector.sourceExtended << 32);
-        header.frameId        = metaP->frameId;
-        header.timeSeconds    = metaP->timeSeconds;
-        header.timeNanoSeconds= metaP->timeNanoSeconds;
-        header.ptpNanoSeconds = metaP->ptpNanoSeconds;
-        header.octaveWidth    = metaP->octaveWidth;
-        header.octaveHeight   = metaP->octaveHeight;
-        header.numOctaves     = metaP->numOctaves;
-        header.scaleFactor    = metaP->scaleFactor;
-        header.motionStatus   = metaP->motionStatus;
-        header.averageXMotion = metaP->averageXMotion;
-        header.averageYMotion = metaP->averageYMotion;
-        header.numFeatures    = featureDetector.numFeatures;
-        header.numDescriptors = featureDetector.numDescriptors;
+        wire::SecondaryAppMetadata * metaP = m_secondaryAppMetaCache.find(SecondaryApp.frameId);
+        if (metaP == NULL)
+            break;
 
-        const size_t startDescriptor=featureDetector.numFeatures*sizeof(wire::Feature);
-
-        uint8_t * dataP = reinterpret_cast<uint8_t *>(featureDetector.dataP);
-        for (size_t i = 0; i < featureDetector.numFeatures; i++) {
-            feature_detector::Feature f = *reinterpret_cast<feature_detector::Feature *>(dataP + (i * sizeof(wire::Feature)));
-            header.features.push_back(f);
-        }
-
-        for (size_t j = 0;j < featureDetector.numDescriptors; j++) {
-            feature_detector::Descriptor d = *reinterpret_cast<feature_detector::Descriptor *>(dataP + (startDescriptor + (j * sizeof(wire::Descriptor))));
-            header.descriptors.push_back(d);
-        }
-
-        dispatchFeatureDetections(header);
+        header.frameId                    = SecondaryApp.frameId;
+        header.source                     = SecondaryApp.source | ((uint64_t)SecondaryApp.sourceExtended << 32);
+        header.timeSeconds                = SecondaryApp.timeSeconds;
+        header.timeMicroSeconds           = SecondaryApp.timeMicroSeconds;
+        header.secondaryAppDataLength     = SecondaryApp.length;
+        header.secondaryAppDataP          = SecondaryApp.dataP;
+        header.secondaryAppMetadataP      = metaP->dataP;
+        header.secondaryAppMetadataLength = metaP->dataLength;
+        dispatchSecondaryApplication(buffer, header);
         break;
     }
-    case MSG_ID(wire::FeatureDetectorMeta::ID):
+    case MSG_ID(wire::SecondaryAppMetadata::ID):
     {
-        wire::FeatureDetectorMeta *metaP = new (std::nothrow) wire::FeatureDetectorMeta(stream, version);
+        wire::SecondaryAppMetadata *metaP = new (std::nothrow) wire::SecondaryAppMetadata(stream, version);
 
         if (NULL == metaP)
             CRL_EXCEPTION_RAW("unable to allocate metadata");
 
-        m_featureDetectorMetaCache.insert(metaP->frameId, metaP); // destroys oldest
+        m_secondaryAppMetaCache.insert(metaP->frameId, metaP); // destroys oldest
         break;
     }
     case MSG_ID(wire::Ack::ID):
@@ -718,11 +700,14 @@ void impl::dispatch(utility::BufferStreamWriter& buffer)
     case MSG_ID(wire::SysExternalCalibration::ID):
         m_messages.store(wire::SysExternalCalibration(stream, version));
         break;
+    case MSG_ID(wire::SecondaryAppConfig::ID):
+        m_messages.store(wire::SecondaryAppConfig(stream, version));
+        break;
+    case MSG_ID(wire::SecondaryAppRegisteredApps::ID):
+        m_messages.store(wire::SecondaryAppRegisteredApps(stream, version));
+        break;
     case MSG_ID(wire::PtpStatusResponse::ID):
         m_messages.store(wire::PtpStatusResponse(stream, version));
-        break;
-    case MSG_ID(wire::FeatureDetectorConfig::ID):
-        m_messages.store(wire::FeatureDetectorConfig(stream, version));
         break;
     default:
 

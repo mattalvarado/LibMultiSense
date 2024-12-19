@@ -1,7 +1,7 @@
 /**
  * @file LibMultiSense/details/listeners.hh
  *
- * Copyright 2013-2022
+ * Copyright 2013-2025
  * Carnegie Robotics, LLC
  * 4501 Hatfield Street, Pittsburgh, PA 15201
  * http://www.carnegierobotics.com
@@ -41,7 +41,7 @@
 #include "MultiSense/MultiSenseTypes.hh"
 
 #include "MultiSense/details/utility/Thread.hh"
-#include "MultiSense/details/utility/BufferStream.hh"
+#include "utility/BufferStream.hh"
 
 namespace crl {
 namespace multisense {
@@ -235,7 +235,7 @@ typedef Listener<imu::Header,              imu::Callback>              ImuListen
 typedef Listener<compressed_image::Header, compressed_image::Callback> CompressedImageListener;
 typedef Listener<ground_surface::Header,   ground_surface::Callback>   GroundSurfaceSplineListener;
 typedef Listener<apriltag::Header,         apriltag::Callback>         AprilTagDetectionListener;
-typedef Listener<feature_detector::Header, feature_detector::Callback> FeatureDetectorListener;
+typedef Listener<secondary_app::Header,    secondary_app::Callback>    SecondaryAppListener;
 
 } // namespace details
 } // namespace multisense

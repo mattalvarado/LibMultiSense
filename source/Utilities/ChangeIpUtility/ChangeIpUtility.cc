@@ -1,7 +1,7 @@
 /**
  * @file ChangeIpUtility/ChangeIpUtility.cc
  *
- * Copyright 2013-2022
+ * Copyright 2013-2025
  * Carnegie Robotics, LLC
  * 4501 Hatfield Street, Pittsburgh, PA 15201
  * http://www.carnegierobotics.com
@@ -59,9 +59,9 @@
 #include <MultiSense/details/utility/Portability.hh>
 #include <MultiSense/MultiSenseChannel.hh>
 
-#include <MultiSense/details/utility/BufferStream.hh>
-#include <MultiSense/details/wire/Protocol.hh>
-#include <MultiSense/details/wire/SysNetworkMessage.hh>
+#include <utility/BufferStream.hh>
+#include <wire/Protocol.hh>
+#include <wire/SysNetworkMessage.hh>
 
 #include <Utilities/portability/getopt/getopt.h>
 

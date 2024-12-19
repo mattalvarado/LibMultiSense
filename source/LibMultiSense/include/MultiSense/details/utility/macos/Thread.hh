@@ -1,7 +1,7 @@
 /**
  * @file LibMultiSense/details/utility/macos/Thread.hh
  *
- * Copyright 2017-2022
+ * Copyright 2017-2025
  * Carnegie Robotics, LLC
  * 4501 Hatfield Street, Pittsburgh, PA 15201
  * http://www.carnegierobotics.com
@@ -51,7 +51,7 @@
 
 #include "MultiSense/details/utility/Portability.hh"
 
-#include "MultiSense/details/utility/Exception.hh"
+#include "utility/Exception.hh"
 
 namespace crl {
 namespace multisense {
