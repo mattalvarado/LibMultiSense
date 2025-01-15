@@ -1,0 +1,29 @@
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+
+set (MULTISENSE_UTILITY_LIBS
+    ${MULTISENSE_UTILITY_LIBS}
+    MultiSense
+    ws2_32
+)
+
+elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+
+set (MULTISENSE_UTILITY_LIBS
+    ${MULTISENSE_UTILITY_LIBS}
+    MultiSense
+    pthread
+)
+
+else ()
+
+set (MULTISENSE_UTILITY_LIBS
+    ${MULTISENSE_UTILITY_LIBS}
+    MultiSense
+    pthread
+    rt
+)
+
+endif ()
+
+add_subdirectory(SaveImageUtility)

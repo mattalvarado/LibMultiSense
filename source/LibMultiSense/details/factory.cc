@@ -1,5 +1,5 @@
 /**
- * @file LibMultiSense/AckMessage.hh
+ * @file factory.cc
  *
  * Copyright 2013-2025
  * Carnegie Robotics, LLC
@@ -31,59 +31,30 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * Significant history (date, user, job code, action):
- *   2013-05-07, ekratzer@carnegierobotics.com, PR1044, Created file.
+ *   2024-12-24, malvarado@carnegierobotics.com, IRAD, Created file.
  **/
 
-#ifndef LibMultiSense_AckMessage
-#define LibMultiSense_AckMessage
+#include "details/legacy/channel.hh"
 
-#include "utility/Portability.hh"
+namespace multisense
+{
 
-namespace crl {
-namespace multisense {
-namespace details {
-namespace wire {
-
-class Ack {
-public:
-    static CRL_CONSTEXPR IdType      ID      = ID_ACK;
-    static CRL_CONSTEXPR VersionType VERSION = 1;
-
-    typedef int32_t  AckStatus;
-
-    //
-    // General status codes
-
-    static CRL_CONSTEXPR AckStatus Status_Ok          =  0;
-    static CRL_CONSTEXPR AckStatus Status_TimedOut    = -1;
-    static CRL_CONSTEXPR AckStatus Status_Error       = -2;
-    static CRL_CONSTEXPR AckStatus Status_Failed      = -3;
-    static CRL_CONSTEXPR AckStatus Status_Unsupported = -4;
-    static CRL_CONSTEXPR AckStatus Status_Unknown     = -5;
-    static CRL_CONSTEXPR AckStatus Status_Exception   = -6;
-
-    IdType command; // the command being [n]ack'd
-    AckStatus status;
-
-    //
-    // Constructors
-
-    Ack(utility::BufferStreamReader&r, VersionType v) {serialize(r,v);};
-    Ack(IdType c=0, AckStatus s=Status_Ok) : command(c), status(s) {};
-
-    //
-    // Serialization routine
-
-    template<class Archive>
-        void serialize(Archive&          message,
-                       const VersionType version)
+std::unique_ptr<Channel> Channel::create(const ChannelConfig &config,
+                                         const ChannelImplementation &impl)
+{
+    switch (impl)
     {
-        (void) version;
-        message & command;
-        message & status;
+        case ChannelImplementation::LEGACY:
+        {
+            return std::unique_ptr<legacy::LegacyChannel>(new legacy::LegacyChannel(config));
+        }
+        default:
+        {
+            return nullptr;
+        }
     }
-};
 
-}}}} // namespaces
+    return nullptr;
+}
 
-#endif
+}

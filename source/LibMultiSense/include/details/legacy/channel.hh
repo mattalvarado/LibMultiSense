@@ -1,5 +1,5 @@
 /**
- * @file LibMultiSense/AckMessage.hh
+ * @file channel.hh
  *
  * Copyright 2013-2025
  * Carnegie Robotics, LLC
@@ -31,59 +31,52 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * Significant history (date, user, job code, action):
- *   2013-05-07, ekratzer@carnegierobotics.com, PR1044, Created file.
+ *   2024-12-24, malvarado@carnegierobotics.com, IRAD, Created file.
  **/
 
-#ifndef LibMultiSense_AckMessage
-#define LibMultiSense_AckMessage
+#include "MultiSense/MultiSenseChannel.hh"
 
-#include "utility/Portability.hh"
+#include "details/legacy/ip.hh"
+#include "details/legacy/message.hh"
+#include "details/legacy/storage.hh"
+#include "details/legacy/udp.hh"
 
-namespace crl {
-namespace multisense {
-namespace details {
-namespace wire {
+namespace multisense{
+namespace legacy{
 
-class Ack {
+class LegacyChannel : public Channel
+{
 public:
-    static CRL_CONSTEXPR IdType      ID      = ID_ACK;
-    static CRL_CONSTEXPR VersionType VERSION = 1;
+    explicit LegacyChannel(const ChannelConfig &config);
 
-    typedef int32_t  AckStatus;
+    virtual ~LegacyChannel();
 
-    //
-    // General status codes
+    virtual bool start_streams(const std::vector<DataSource> &sources);
 
-    static CRL_CONSTEXPR AckStatus Status_Ok          =  0;
-    static CRL_CONSTEXPR AckStatus Status_TimedOut    = -1;
-    static CRL_CONSTEXPR AckStatus Status_Error       = -2;
-    static CRL_CONSTEXPR AckStatus Status_Failed      = -3;
-    static CRL_CONSTEXPR AckStatus Status_Unsupported = -4;
-    static CRL_CONSTEXPR AckStatus Status_Unknown     = -5;
-    static CRL_CONSTEXPR AckStatus Status_Exception   = -6;
+    virtual bool stop_streams(const std::vector<DataSource> &sources);
 
-    IdType command; // the command being [n]ack'd
-    AckStatus status;
+    virtual void add_image_frame_callback(std::function<void(const ImageFrame&)> callback);
 
-    //
-    // Constructors
+    virtual bool connect(const ChannelConfig &config);
 
-    Ack(utility::BufferStreamReader&r, VersionType v) {serialize(r,v);};
-    Ack(IdType c=0, AckStatus s=Status_Ok) : command(c), status(s) {};
+    virtual void disconnect();
 
-    //
-    // Serialization routine
+    virtual std::optional<ImageFrame> get_next_image_frame();
 
-    template<class Archive>
-        void serialize(Archive&          message,
-                       const VersionType version)
-    {
-        (void) version;
-        message & command;
-        message & status;
-    }
+private:
+
+    ChannelConfig m_config;
+
+    NetworkSocket m_socket;
+
+    std::unique_ptr<UdpReceiver> m_udp_receiver = nullptr;
+
+    std::shared_ptr<BufferPool> m_buffer_pool = nullptr;
+
+    MessageAssembler m_message_assembler;
+
+    std::atomic_uint16_t m_transmit_id = 0;
 };
 
-}}}} // namespaces
-
-#endif
+}
+}

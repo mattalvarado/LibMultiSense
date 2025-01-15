@@ -1,5 +1,5 @@
 /**
- * @file LibMultiSense/AckMessage.hh
+ * @file message_test.hh
  *
  * Copyright 2013-2025
  * Carnegie Robotics, LLC
@@ -31,59 +31,43 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * Significant history (date, user, job code, action):
- *   2013-05-07, ekratzer@carnegierobotics.com, PR1044, Created file.
+ *   2025-01-10, malvarado@carnegierobotics.com, IRAD, Created file.
  **/
 
-#ifndef LibMultiSense_AckMessage
-#define LibMultiSense_AckMessage
+#include <gtest/gtest.h>
 
-#include "utility/Portability.hh"
+#include <details/legacy/message.hh>
 
-namespace crl {
-namespace multisense {
-namespace details {
-namespace wire {
+using namespace multisense::legacy;
 
-class Ack {
-public:
-    static CRL_CONSTEXPR IdType      ID      = ID_ACK;
-    static CRL_CONSTEXPR VersionType VERSION = 1;
+TEST(unwrap_sequence_id, null)
+{
+    auto full_sequence_id = unwrap_sequence_id(0, -1);
 
-    typedef int32_t  AckStatus;
+    EXPECT_EQ(full_sequence_id, 0);
 
-    //
-    // General status codes
+    full_sequence_id = unwrap_sequence_id(0, 0);
 
-    static CRL_CONSTEXPR AckStatus Status_Ok          =  0;
-    static CRL_CONSTEXPR AckStatus Status_TimedOut    = -1;
-    static CRL_CONSTEXPR AckStatus Status_Error       = -2;
-    static CRL_CONSTEXPR AckStatus Status_Failed      = -3;
-    static CRL_CONSTEXPR AckStatus Status_Unsupported = -4;
-    static CRL_CONSTEXPR AckStatus Status_Unknown     = -5;
-    static CRL_CONSTEXPR AckStatus Status_Exception   = -6;
+    EXPECT_EQ(full_sequence_id, 0);
+}
 
-    IdType command; // the command being [n]ack'd
-    AckStatus status;
+TEST(unwrap_sequence_id, no_increment)
+{
+    const auto full_sequence_id = unwrap_sequence_id(1, 1);
 
-    //
-    // Constructors
+    EXPECT_EQ(full_sequence_id, 1);
+}
 
-    Ack(utility::BufferStreamReader&r, VersionType v) {serialize(r,v);};
-    Ack(IdType c=0, AckStatus s=Status_Ok) : command(c), status(s) {};
+TEST(unwrap_sequence_id, increment)
+{
+    const auto full_sequence_id = unwrap_sequence_id(1, 0);
 
-    //
-    // Serialization routine
+    EXPECT_EQ(full_sequence_id, 1);
+}
 
-    template<class Archive>
-        void serialize(Archive&          message,
-                       const VersionType version)
-    {
-        (void) version;
-        message & command;
-        message & status;
-    }
-};
+TEST(unwrap_sequence_id, rollover)
+{
+    const auto full_sequence_id = unwrap_sequence_id(0, 65535);
 
-}}}} // namespaces
-
-#endif
+    EXPECT_EQ(full_sequence_id, 65536);
+}

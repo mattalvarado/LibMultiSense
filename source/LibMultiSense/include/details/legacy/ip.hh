@@ -1,5 +1,5 @@
 /**
- * @file LibMultiSense/AckMessage.hh
+ * @file ip.hh
  *
  * Copyright 2013-2025
  * Carnegie Robotics, LLC
@@ -31,59 +31,55 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * Significant history (date, user, job code, action):
- *   2013-05-07, ekratzer@carnegierobotics.com, PR1044, Created file.
+ *   2024-12-24, malvarado@carnegierobotics.com, IRAD, Created file.
  **/
 
-#ifndef LibMultiSense_AckMessage
-#define LibMultiSense_AckMessage
+#pragma once
 
-#include "utility/Portability.hh"
+#include <errno.h>
+#include <fcntl.h>
+#include <memory>
+#include <optional>
+#include <tuple>
 
-namespace crl {
-namespace multisense {
-namespace details {
-namespace wire {
-
-class Ack {
-public:
-    static CRL_CONSTEXPR IdType      ID      = ID_ACK;
-    static CRL_CONSTEXPR VersionType VERSION = 1;
-
-    typedef int32_t  AckStatus;
-
-    //
-    // General status codes
-
-    static CRL_CONSTEXPR AckStatus Status_Ok          =  0;
-    static CRL_CONSTEXPR AckStatus Status_TimedOut    = -1;
-    static CRL_CONSTEXPR AckStatus Status_Error       = -2;
-    static CRL_CONSTEXPR AckStatus Status_Failed      = -3;
-    static CRL_CONSTEXPR AckStatus Status_Unsupported = -4;
-    static CRL_CONSTEXPR AckStatus Status_Unknown     = -5;
-    static CRL_CONSTEXPR AckStatus Status_Exception   = -6;
-
-    IdType command; // the command being [n]ack'd
-    AckStatus status;
-
-    //
-    // Constructors
-
-    Ack(utility::BufferStreamReader&r, VersionType v) {serialize(r,v);};
-    Ack(IdType c=0, AckStatus s=Status_Ok) : command(c), status(s) {};
-
-    //
-    // Serialization routine
-
-    template<class Archive>
-        void serialize(Archive&          message,
-                       const VersionType version)
-    {
-        (void) version;
-        message & command;
-        message & status;
-    }
-};
-
-}}}} // namespaces
-
+#ifdef WIN32
+#include <ws2tcpip.h>
+#else
+#include <netdb.h>
 #endif
+
+#ifdef WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN 1
+#endif
+
+#include <windows.h>
+#include <winsock2.h>
+
+#else
+#include <netinet/ip.h>
+#include <unistd.h>
+
+#ifndef INVALID_SOCKET
+#define INVALID_SOCKET (-1)
+#endif
+#endif
+
+namespace multisense{
+namespace legacy{
+
+#ifdef WIN32
+    typedef SOCKET socket_t;
+#else
+    typedef int32_t socket_t;
+#endif
+
+std::unique_ptr<sockaddr_in> get_sockaddr(const std::string &ip_address, uint16_t command_port);
+
+///
+/// @brief Create a UDP socket to communicate with the MultiSense. Optionally bind to a specific interface
+///
+std::tuple<socket_t, uint16_t> bind(const std::optional<std::string>& interface_name);
+
+}
+}

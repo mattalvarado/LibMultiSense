@@ -1,63 +1,17 @@
-#
-# MultiSense - Makefile
-#
-
-#
-# Platform checks
-#
-
-include(CheckFunctionExists)
-
-check_function_exists(vasprintf HAVE_VASPRINTF)
-
-option(MULTISENSE_UDP_ASSEMBLER_DEBUG "Build LibMultiSense to print any failures to assemble a message. Defaults to OFF." OFF)
-option(MULTISENSE_BUILD_API_DATE "Build in the API date into LibMultiSense. Defaults to ON." ON)
-
-#
-# Include all of our child directories.
-#
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(MULTISENSE_HEADERS include/MultiSense/MultiSenseChannel.hh
                        include/MultiSense/MultiSenseTypes.hh)
 
-set(UTILITY_HEADERS
-  include/MultiSense/details/utility/Portability.hh
-  include/MultiSense/details/utility/BufferStream.hh
-  include/MultiSense/details/utility/Constants.hh
-  include/MultiSense/details/utility/Exception.hh
-  include/MultiSense/details/utility/TimeStamp.hh
-  include/MultiSense/details/utility/Thread.hh
-  include/MultiSense/details/utility/ReferenceCount.hh
-  include/MultiSense/details/utility/Units.hh
-  )
-
-set(DETAILS_HEADERS include/MultiSense/details/channel.hh
-                    include/MultiSense/details/query.hh
-                    include/MultiSense/details/listeners.hh
-                    include/MultiSense/details/signal.hh
-                    include/MultiSense/details/storage.hh)
-
-set(LINUX_HEADERS include/MultiSense/details/utility/linux/Thread.hh)
-set(WIN32_HEADERS include/MultiSense/details/utility/win32/Thread.hh)
-set(MACOS_HEADERS include/MultiSense/details/utility/macos/Thread.hh)
-
-set(DETAILS_SRC details/channel.cc
-                details/public.cc
-                details/constants.cc
-                details/flash.cc
-                details/dispatch.cc
-                details/utility/Constants.cc)
-
-if(NOT HAVE_VASPRINTF)
-    add_definitions(-DNEED_VASPRINTF=1)
-endif()
-
-#
-# Add in all of the source files in this directory.
-#
+set(DETAILS_SRC details/factory.cc
+                details/legacy/channel.cc
+                details/legacy/ip.cc
+                details/legacy/message.cc
+                details/legacy/storage.cc
+                details/legacy/udp.cc)
 
 add_library(MultiSense ${MULTISENSE_HEADERS}
-                       ${DETAILS_HEADERS}
                        ${DETAILS_SRC})
 
 target_link_libraries(MultiSense MultiSenseWire)
@@ -65,14 +19,7 @@ target_include_directories(MultiSense
         PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         PUBLIC $<INSTALL_INTERFACE:include>)
 
-if (MULTISENSE_UDP_ASSEMBLER_DEBUG)
-    target_compile_definitions(MultiSense PRIVATE UDP_ASSEMBLER_DEBUG=${MULTISENSE_UDP_ASSEMBLER_DEBUG})
-endif()
-
-#
-# Versioning...someday lets automate this somehow
-#
-set(version "6.1.0")
+set(version "7.0.0")
 set_target_properties(MultiSense PROPERTIES VERSION "${version}")
 
 if (MULTISENSE_BUILD_API_DATE)
@@ -95,11 +42,14 @@ else()
     target_link_libraries(MultiSense pthread rt)
 endif()
 
+if (BUILD_TESTS)
+    add_subdirectory(test)
+endif()
+
 include(CMakePackageConfigHelpers)
 configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/MultiSenseConfig.cmake.in
   ${CMAKE_CURRENT_BINARY_DIR}/MultiSenseConfig.cmake
   INSTALL_DESTINATION lib/cmake/MultiSense)
-
 
 # create install targets
 install(TARGETS MultiSense
@@ -123,6 +73,5 @@ install(FILES
   ${CMAKE_CURRENT_BINARY_DIR}/MultiSenseConfig.cmake
   ${CMAKE_CURRENT_BINARY_DIR}/MultiSenseConfigVersion.cmake
   DESTINATION lib/cmake/MultiSense)
-
 
 install(FILES ${MULTISENSE_HEADERS} DESTINATION include/MultiSense)

@@ -1,5 +1,5 @@
 /**
- * @file LibMultiSense/AckMessage.hh
+ * @file storage_test.hh
  *
  * Copyright 2013-2025
  * Carnegie Robotics, LLC
@@ -31,59 +31,45 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * Significant history (date, user, job code, action):
- *   2013-05-07, ekratzer@carnegierobotics.com, PR1044, Created file.
+ *   2025-01-08, malvarado@carnegierobotics.com, IRAD, Created file.
  **/
 
-#ifndef LibMultiSense_AckMessage
-#define LibMultiSense_AckMessage
+#include <gtest/gtest.h>
 
-#include "utility/Portability.hh"
+#include <details/legacy/storage.hh>
 
-namespace crl {
-namespace multisense {
-namespace details {
-namespace wire {
+using namespace multisense::legacy;
 
-class Ack {
-public:
-    static CRL_CONSTEXPR IdType      ID      = ID_ACK;
-    static CRL_CONSTEXPR VersionType VERSION = 1;
+TEST(BufferPool, null_construction)
+{
+    BufferPool pool(BufferPoolConfig{0, 0, 0, 0});
 
-    typedef int32_t  AckStatus;
+    ASSERT_EQ(pool.get_buffer(1), nullptr);
+}
 
-    //
-    // General status codes
+TEST(BufferPool, valid_construction)
+{
+    BufferPool pool(BufferPoolConfig{1, 10, 1, 30});
 
-    static CRL_CONSTEXPR AckStatus Status_Ok          =  0;
-    static CRL_CONSTEXPR AckStatus Status_TimedOut    = -1;
-    static CRL_CONSTEXPR AckStatus Status_Error       = -2;
-    static CRL_CONSTEXPR AckStatus Status_Failed      = -3;
-    static CRL_CONSTEXPR AckStatus Status_Unsupported = -4;
-    static CRL_CONSTEXPR AckStatus Status_Unknown     = -5;
-    static CRL_CONSTEXPR AckStatus Status_Exception   = -6;
+    const auto small_buffer = pool.get_buffer(2);
+    const auto large_buffer = pool.get_buffer(20);
 
-    IdType command; // the command being [n]ack'd
-    AckStatus status;
+    ASSERT_NE(small_buffer, nullptr);
+    ASSERT_NE(large_buffer, nullptr);
 
     //
-    // Constructors
+    // At this point we should be out of buffers
+    //
+    ASSERT_EQ(pool.get_buffer(20), nullptr);
+    ASSERT_EQ(pool.get_buffer(2), nullptr);
+}
 
-    Ack(utility::BufferStreamReader&r, VersionType v) {serialize(r,v);};
-    Ack(IdType c=0, AckStatus s=Status_Ok) : command(c), status(s) {};
+TEST(BufferPool, buffer_to_large)
+{
+    BufferPool pool(BufferPoolConfig{1, 10, 1, 30});
 
     //
-    // Serialization routine
-
-    template<class Archive>
-        void serialize(Archive&          message,
-                       const VersionType version)
-    {
-        (void) version;
-        message & command;
-        message & status;
-    }
-};
-
-}}}} // namespaces
-
-#endif
+    // We should have no buffer of size 40
+    //
+    ASSERT_EQ(pool.get_buffer(40), nullptr);
+}

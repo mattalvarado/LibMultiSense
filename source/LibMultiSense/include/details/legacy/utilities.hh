@@ -1,5 +1,5 @@
 /**
- * @file LibMultiSense/AckMessage.hh
+ * @file utilities.hh
  *
  * Copyright 2013-2025
  * Carnegie Robotics, LLC
@@ -31,59 +31,53 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * Significant history (date, user, job code, action):
- *   2013-05-07, ekratzer@carnegierobotics.com, PR1044, Created file.
+ *   2025-01-13, malvarado@carnegierobotics.com, IRAD, Created file.
  **/
 
-#ifndef LibMultiSense_AckMessage
-#define LibMultiSense_AckMessage
+#pragma once
 
-#include "utility/Portability.hh"
+#include "details/legacy/message.hh"
+#include "details/legacy/udp.hh"
 
-namespace crl {
-namespace multisense {
-namespace details {
-namespace wire {
+namespace multisense{
+namespace legacy{
 
-class Ack {
-public:
-    static CRL_CONSTEXPR IdType      ID      = ID_ACK;
-    static CRL_CONSTEXPR VersionType VERSION = 1;
+///
+/// @brief Helper to wait for data from the camera from a given query command. Once a query
+///        command is sent to the MultiSense, it Ack's the command before sending the response
+///
+template <typename OutputMessage, typename QueryMessage, class Rep, class Period>
+std::optional<OutputMessage> wait_for_data(MessageAssembler &assembler,
+                                           const NetworkSocket &socket,
+                                           const QueryMessage &query,
+                                           uint16_t sequence_id,
+                                           uint16_t mtu,
+                                           const std::chrono::duration<Rep, Period>& wait_time,
+                                           size_t attempts = 1)
+{
+    using namespace crl::multisense::details;
 
-    typedef int32_t  AckStatus;
+    auto ack_waiter = assembler.register_message(MSG_ID(QueryMessage::ID));
+    auto response_waiter = assembler.register_message(MSG_ID(OutputMessage::ID));
 
-    //
-    // General status codes
-
-    static CRL_CONSTEXPR AckStatus Status_Ok          =  0;
-    static CRL_CONSTEXPR AckStatus Status_TimedOut    = -1;
-    static CRL_CONSTEXPR AckStatus Status_Error       = -2;
-    static CRL_CONSTEXPR AckStatus Status_Failed      = -3;
-    static CRL_CONSTEXPR AckStatus Status_Unsupported = -4;
-    static CRL_CONSTEXPR AckStatus Status_Unknown     = -5;
-    static CRL_CONSTEXPR AckStatus Status_Exception   = -6;
-
-    IdType command; // the command being [n]ack'd
-    AckStatus status;
-
-    //
-    // Constructors
-
-    Ack(utility::BufferStreamReader&r, VersionType v) {serialize(r,v);};
-    Ack(IdType c=0, AckStatus s=Status_Ok) : command(c), status(s) {};
-
-    //
-    // Serialization routine
-
-    template<class Archive>
-        void serialize(Archive&          message,
-                       const VersionType version)
+    for (size_t i = 0 ; i < attempts ; ++i)
     {
-        (void) version;
-        message & command;
-        message & status;
+        if(publish_data(socket, serialize(query, sequence_id, mtu)) < 0)
+        {
+            continue;
+        }
+
+        if (auto ack = ack_waiter->wait_for<wire::Ack>(wait_time); ack)
+        {
+            if (auto response = response_waiter->wait_for<OutputMessage>(wait_time); response)
+            {
+                return response.value();
+            }
+        }
     }
-};
 
-}}}} // namespaces
+    return std::nullopt;
+}
 
-#endif
+}
+}

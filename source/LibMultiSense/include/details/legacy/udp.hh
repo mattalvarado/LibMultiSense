@@ -1,5 +1,5 @@
 /**
- * @file LibMultiSense/AckMessage.hh
+ * @file udp.hh
  *
  * Copyright 2013-2025
  * Carnegie Robotics, LLC
@@ -31,59 +31,55 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * Significant history (date, user, job code, action):
- *   2013-05-07, ekratzer@carnegierobotics.com, PR1044, Created file.
+ *   2024-12-24, malvarado@carnegierobotics.com, IRAD, Created file.
  **/
 
-#ifndef LibMultiSense_AckMessage
-#define LibMultiSense_AckMessage
+#pragma once
 
-#include "utility/Portability.hh"
+#include <atomic>
+#include <thread>
+#include <vector>
 
-namespace crl {
-namespace multisense {
-namespace details {
-namespace wire {
+#include "details/legacy/ip.hh"
 
-class Ack {
-public:
-    static CRL_CONSTEXPR IdType      ID      = ID_ACK;
-    static CRL_CONSTEXPR VersionType VERSION = 1;
+namespace multisense{
+namespace legacy{
 
-    typedef int32_t  AckStatus;
-
-    //
-    // General status codes
-
-    static CRL_CONSTEXPR AckStatus Status_Ok          =  0;
-    static CRL_CONSTEXPR AckStatus Status_TimedOut    = -1;
-    static CRL_CONSTEXPR AckStatus Status_Error       = -2;
-    static CRL_CONSTEXPR AckStatus Status_Failed      = -3;
-    static CRL_CONSTEXPR AckStatus Status_Unsupported = -4;
-    static CRL_CONSTEXPR AckStatus Status_Unknown     = -5;
-    static CRL_CONSTEXPR AckStatus Status_Exception   = -6;
-
-    IdType command; // the command being [n]ack'd
-    AckStatus status;
-
-    //
-    // Constructors
-
-    Ack(utility::BufferStreamReader&r, VersionType v) {serialize(r,v);};
-    Ack(IdType c=0, AckStatus s=Status_Ok) : command(c), status(s) {};
-
-    //
-    // Serialization routine
-
-    template<class Archive>
-        void serialize(Archive&          message,
-                       const VersionType version)
-    {
-        (void) version;
-        message & command;
-        message & status;
-    }
+struct NetworkSocket
+{
+    std::unique_ptr<sockaddr_in> sensor_address = nullptr;
+    socket_t sensor_socket;
+    uint16_t server_socket_port = 0;
 };
 
-}}}} // namespaces
+class UdpReceiver
+{
+public:
 
-#endif
+    UdpReceiver(const NetworkSocket &socket,
+                size_t max_mtu,
+                std::function<void(const std::vector<uint8_t>&)> receive_callback);
+
+    ~UdpReceiver();
+
+private:
+
+    void rx_thread();
+
+    socket_t m_socket;
+    uint16_t m_socket_port = 0;
+
+    std::thread m_rx_thread;
+    std::atomic_bool m_stop{false};
+
+    size_t m_max_mtu = 0;
+    std::vector<uint8_t> m_incoming_buffer;
+
+    std::function<void(const std::vector<uint8_t>&)> m_receive_callback;
+};
+
+
+int64_t publish_data(const NetworkSocket &socket, const std::vector<uint8_t> &data);
+
+}
+}

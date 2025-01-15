@@ -1,5 +1,5 @@
 /**
- * @file LibMultiSense/AckMessage.hh
+ * @file storage.hh
  *
  * Copyright 2013-2025
  * Carnegie Robotics, LLC
@@ -31,59 +31,65 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * Significant history (date, user, job code, action):
- *   2013-05-07, ekratzer@carnegierobotics.com, PR1044, Created file.
+ *   2025-01-08, malvarado@carnegierobotics.com, IRAD, Created file.
  **/
 
-#ifndef LibMultiSense_AckMessage
-#define LibMultiSense_AckMessage
+#pragma once
 
-#include "utility/Portability.hh"
+#include <memory>
+#include <mutex>
+#include <vector>
 
-namespace crl {
-namespace multisense {
-namespace details {
-namespace wire {
+namespace multisense{
+namespace legacy{
 
-class Ack {
-public:
-    static CRL_CONSTEXPR IdType      ID      = ID_ACK;
-    static CRL_CONSTEXPR VersionType VERSION = 1;
-
-    typedef int32_t  AckStatus;
-
-    //
-    // General status codes
-
-    static CRL_CONSTEXPR AckStatus Status_Ok          =  0;
-    static CRL_CONSTEXPR AckStatus Status_TimedOut    = -1;
-    static CRL_CONSTEXPR AckStatus Status_Error       = -2;
-    static CRL_CONSTEXPR AckStatus Status_Failed      = -3;
-    static CRL_CONSTEXPR AckStatus Status_Unsupported = -4;
-    static CRL_CONSTEXPR AckStatus Status_Unknown     = -5;
-    static CRL_CONSTEXPR AckStatus Status_Exception   = -6;
-
-    IdType command; // the command being [n]ack'd
-    AckStatus status;
-
-    //
-    // Constructors
-
-    Ack(utility::BufferStreamReader&r, VersionType v) {serialize(r,v);};
-    Ack(IdType c=0, AckStatus s=Status_Ok) : command(c), status(s) {};
-
-    //
-    // Serialization routine
-
-    template<class Archive>
-        void serialize(Archive&          message,
-                       const VersionType version)
-    {
-        (void) version;
-        message & command;
-        message & status;
-    }
+struct BufferPoolConfig
+{
+    size_t num_small_buffers = 0;
+    size_t small_buffer_size = 0;
+    size_t num_large_buffers = 0;
+    size_t large_buffer_size = 0;
 };
 
-}}}} // namespaces
+///
+/// @brief Object to handle the management and delivery of buffers to used to store incoming data without
+///        needing to continually reallocate internal memory. This class is threadsafe
+///
+class BufferPool
+{
+public:
 
-#endif
+    BufferPool(const BufferPoolConfig &config);
+
+    ~BufferPool() = default;
+
+    ///
+    /// Non-copyable
+    ///
+    BufferPool(const BufferPool&) = delete;
+    BufferPool& operator=(const BufferPool&) = delete;
+
+    ///
+    /// Movable
+    ///
+    BufferPool(BufferPool&&) noexcept = default;
+    BufferPool& operator=(BufferPool&&) noexcept = default;
+
+    ///
+    /// @brief Get a buffer which will contain at least target_size bytes of storage
+    ///
+    std::shared_ptr<std::vector<uint8_t>> get_buffer(size_t target_size);
+
+private:
+
+    std::mutex m_mutex;
+
+    BufferPoolConfig m_config;
+
+    std::vector<std::shared_ptr<std::vector<uint8_t>>> m_small_buffers;
+    std::vector<std::shared_ptr<std::vector<uint8_t>>> m_large_buffers;
+
+};
+
+}
+}
