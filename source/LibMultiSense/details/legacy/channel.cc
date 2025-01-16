@@ -323,9 +323,12 @@ void LegacyChannel::image_callback(std::shared_ptr<const std::vector<uint8_t>> d
         m_next_cv.notify_all();
 
         //
-        // Remove our frame from our frame bufer
+        // Remove our image frame from our frame buffer and the associated image metadata. Since frames ids will
+        // only monotonically increase, it's safe to also delete all the frame_ids earlier than the current
+        // frame id.
         //
-        m_frame_buffer.erase(wire_image.frameId);
+        m_frame_buffer.erase(std::begin(m_frame_buffer), m_frame_buffer.upper_bound(wire_image.frameId));
+        m_meta_cache.erase(std::begin(m_meta_cache), m_meta_cache.upper_bound(wire_image.frameId));
     }
 }
 

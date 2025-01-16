@@ -198,6 +198,12 @@ void MessageAssembler::process_packet(const std::vector<uint8_t> &raw_data)
         const size_t bytes_to_write = raw_data.size() - sizeof(wire::Header);
 
         auto& message = active_message->second;
+
+        if (bytes_to_write + message.bytes_written >  message.data->size())
+        {
+            CRL_EXCEPTION("Error. Write Will overrun internall buffer");
+        }
+
         //
         // Handle the special case unpacking of disparity data from 12bit to 16bit images
         //
@@ -221,24 +227,21 @@ void MessageAssembler::process_packet(const std::vector<uint8_t> &raw_data)
 
         message.bytes_written += bytes_to_write;
 
-        if (message.bytes_written >= message.data->size())
+        if (message.bytes_written == message.data->size())
         {
-            if (message.bytes_written == message.data->size())
+            //
+            // Handle the special case for Ack messages. To avoid collisions for all the Ack
+            // registrations, we extract the command associated with the Ack, and dispatch
+            // to all the listeners for that command
+            //
+            if (message.type == MSG_ID(wire::Ack::ID))
             {
-                //
-                // Handle the special case for Ack messages. To avoid collisions for all the Ack
-                // registrations, we extract the command associated with the Ack, and dispatch
-                // to all the listeners for that command
-                //
-                if (message.type == MSG_ID(wire::Ack::ID))
-                {
-                    const auto ack = deserialize<wire::Ack>(*message.data);
-                    dispatch(ack.command, message.data);
-                }
-                else
-                {
-                    dispatch(message.type, message.data);
-                }
+                const auto ack = deserialize<wire::Ack>(*message.data);
+                dispatch(ack.command, message.data);
+            }
+            else
+            {
+                dispatch(message.type, message.data);
             }
 
             //
