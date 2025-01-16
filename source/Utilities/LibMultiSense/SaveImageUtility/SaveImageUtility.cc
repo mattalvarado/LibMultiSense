@@ -112,7 +112,7 @@ int main(int argc, char** argv)
 
     const auto channel = lms::Channel::create(lms::ChannelConfig{ip_address, mtu});
 
-    channel->start_streams({lms::DataSource::LEFT_MONO_RAW});
+    channel->start_streams({lms::DataSource::LEFT_RECTIFIED_RAW});
 
     while(!done)
     {
@@ -120,7 +120,7 @@ int main(int argc, char** argv)
         {
             for (const auto &[source, image] : image_frame->images)
             {
-                std::cout << image.width << " " << image.height << std::endl;
+                std::cout << image.width << " " << image.height << " " << image.raw_data->size() - image.image_data_offset << std::endl;
             }
         }
     }

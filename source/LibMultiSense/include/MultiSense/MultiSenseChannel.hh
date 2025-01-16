@@ -70,10 +70,10 @@ struct ChannelConfig
 {
     std::string ip_address = "10.66.171.21";
     int16_t mtu = 1500;
-    std::optional<std::chrono::milliseconds> recieve_timeout = std::chrono::milliseconds(500);
+    std::optional<std::chrono::milliseconds> receive_timeout = std::chrono::milliseconds(500);
     uint16_t command_port = 9001;
     std::optional<std::string> interface = std::nullopt;
-    ReceiveBufferConfiguration receive_buffer_configuration{100, 1000, 16, 1920*1200*3};
+    ReceiveBufferConfiguration receive_buffer_configuration{100, 1500, 16, 1920*1200*3};
 };
 
 class Channel {

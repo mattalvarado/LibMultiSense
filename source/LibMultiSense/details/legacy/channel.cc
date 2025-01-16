@@ -40,8 +40,12 @@
 #include <utility/Exception.hh>
 #include <wire/Protocol.hh>
 #include <utility/BufferStream.hh>
+
+#include <wire/ImageMessage.hh>
+#include <wire/ImageMetaMessage.hh>
 #include <wire/StatusRequestMessage.hh>
 #include <wire/StatusResponseMessage.hh>
+#include <wire/StreamControlMessage.hh>
 #include <wire/SysGetCameraCalibrationMessage.hh>
 #include <wire/SysCameraCalibrationMessage.hh>
 
@@ -58,8 +62,7 @@ LegacyChannel::LegacyChannel(const ChannelConfig &config):
                                                                 config.receive_buffer_configuration.small_buffer_size,
                                                                 config.receive_buffer_configuration.num_large_buffers,
                                                                 config.receive_buffer_configuration.large_buffer_size})),
-    m_message_assembler(m_buffer_pool, config.receive_buffer_configuration.num_small_buffers +
-                                       config.receive_buffer_configuration.num_large_buffers)
+    m_message_assembler(m_buffer_pool)
 {
     connect(config);
 }
@@ -72,13 +75,63 @@ LegacyChannel::~LegacyChannel()
 
 bool LegacyChannel::start_streams(const std::vector<DataSource> &sources)
 {
-    (void) sources;
-    return true;
+    using namespace crl::multisense::details;
+    using namespace std::chrono_literals;
+
+    wire::StreamControl cmd;
+
+    cmd.enable(convert_sources(sources));
+
+    if (const auto ack = wait_for_ack(m_message_assembler,
+                                      m_socket,
+                                      cmd,
+                                      m_transmit_id++,
+                                      m_config.mtu,
+                                      500ms); ack)
+    {
+        if (ack->status != wire::Ack::Status_Ok)
+        {
+            CRL_DEBUG("Start streams ack invalid: %i", ack->status);
+            return false;
+        }
+
+        m_active_streams.insert(std::begin(sources), std::end(sources));
+        return true;
+    }
+
+    return false;
 }
 
 bool LegacyChannel::stop_streams(const std::vector<DataSource> &sources)
 {
-    (void) sources;
+    using namespace crl::multisense::details;
+    using namespace std::chrono_literals;
+
+    wire::StreamControl cmd;
+
+    cmd.disable(convert_sources(sources));
+
+    if (const auto ack = wait_for_ack(m_message_assembler,
+                                      m_socket,
+                                      cmd,
+                                      m_transmit_id++,
+                                      m_config.mtu,
+                                      500ms); ack)
+    {
+        if (ack->status != wire::Ack::Status_Ok)
+        {
+            CRL_DEBUG("Start streams ack invalid: %i", ack->status);
+            return false;
+        }
+
+        for (const auto &source : sources)
+        {
+            m_active_streams.erase(source);
+        }
+
+        return true;
+    }
+
     return false;
 }
 
@@ -87,7 +140,7 @@ bool LegacyChannel::stop_streams(const std::vector<DataSource> &sources)
 ///
 void LegacyChannel::add_image_frame_callback(std::function<void(const ImageFrame&)> callback)
 {
-    (void) callback;
+    m_user_frame_callback = callback;
 }
 
 ///
@@ -95,6 +148,8 @@ void LegacyChannel::add_image_frame_callback(std::function<void(const ImageFrame
 ///
 bool LegacyChannel::connect(const ChannelConfig &config)
 {
+    using namespace crl::multisense::details;
+
 #if WIN32
     WSADATA wsaData;
     int result = WSAStartup (MAKEWORD (0x02, 0x02), &wsaData);
@@ -111,6 +166,12 @@ bool LegacyChannel::connect(const ChannelConfig &config)
     m_socket.sensor_socket = sensor_socket;
     m_socket.server_socket_port = server_socket_port;
 
+    m_message_assembler.register_callback(wire::Image::ID,
+                                          std::bind(&LegacyChannel::image_callback, this, std::placeholders::_1));
+
+    m_message_assembler.register_callback(wire::ImageMeta::ID,
+                                          std::bind(&LegacyChannel::image_meta_callback, this, std::placeholders::_1));
+
     m_udp_receiver = std::make_unique<UdpReceiver>(m_socket, config.mtu,
             [this](const std::vector<uint8_t>& data)
             {
@@ -125,6 +186,17 @@ bool LegacyChannel::connect(const ChannelConfig &config)
 ///
 void LegacyChannel::disconnect()
 {
+    using namespace crl::multisense::details;
+
+    m_next_cv.notify_all();
+
+    //
+    // Stop all our streams before disconnecting
+    //
+    stop_streams({DataSource::ALL});
+
+    m_message_assembler.remove_callback(wire::Image::ID);
+
     m_socket = NetworkSocket{};
 
     m_udp_receiver = nullptr;
@@ -141,58 +213,120 @@ void LegacyChannel::disconnect()
 ///
 std::optional<ImageFrame> LegacyChannel::get_next_image_frame()
 {
+    std::unique_lock<std::mutex> lock(m_next_mutex);
+
+    std::optional<ImageFrame> output_frame = std::nullopt;
+    if (m_config.receive_timeout)
+    {
+        if (std::cv_status::no_timeout == m_next_cv.wait_for(lock, m_config.receive_timeout.value()))
+        {
+            output_frame = std::move(m_next_frame);
+        }
+    }
+    else
+    {
+        m_next_cv.wait(lock);
+        output_frame = std::move(m_next_frame);
+    }
+
+    //
+    // Reset our next frame
+    //
+    m_next_frame = std::nullopt;
+
+    return output_frame;
+}
+
+void LegacyChannel::image_meta_callback(std::shared_ptr<const std::vector<uint8_t>> data)
+{
     using namespace crl::multisense::details;
-    using namespace std::chrono_literals;
 
-    //auto waiter = m_message_assembler.register_message(wire::StatusResponse::ID);
+    const auto wire_meta = deserialize<wire::ImageMeta>(*data);
 
-    //publish_data(m_socket, serialize(wire::StatusRequest(), 0,  m_config.mtu));
+    m_meta_cache[wire_meta.frameId] = wire_meta;
+}
 
-    //if(auto status = waiter->wait_for<wire::StatusResponse>(500ms); status)
-    if (const auto status = wait_for_data<wire::StatusResponse>(m_message_assembler,
-                                                                m_socket,
-                                                                wire::StatusRequest(),
-                                                                m_transmit_id++,
-                                                                m_config.mtu,
-                                                                500ms); status)
+void LegacyChannel::image_callback(std::shared_ptr<const std::vector<uint8_t>> data)
+{
+    using namespace crl::multisense::details;
+    using namespace std::chrono;
+
+    const auto wire_image = deserialize<wire::Image>(*data);
+
+    std::cout << wire_image.frameId << std::endl;
+
+    const auto meta = m_meta_cache.find(wire_image.frameId);
+    if (meta == std::end(m_meta_cache))
     {
-        std::cout << status->uptime.getNanoSeconds() << std::endl;
-        std::cout << status->status << std::endl;
-        std::cout << status->temperature0 << std::endl;
-        std::cout << status->temperature1 << std::endl;
-        std::cout << status->temperature2 << std::endl;
-        std::cout << status->temperature3 << std::endl;
-        std::cout << status->inputVolts << std::endl;
-        std::cout << status->inputCurrent << std::endl;
-        std::cout << status->fpgaPower << std::endl;
-        std::cout << status->logicPower << std::endl;
-        std::cout << status->imagerPower << std::endl;
+        CRL_DEBUG("Missing corresponding meta for frame_id %li\n", wire_image.frameId);
+        return;
     }
 
-    if (const auto cal = wait_for_data<wire::SysCameraCalibration>(m_message_assembler,
-                                                                m_socket,
-                                                                wire::SysGetCameraCalibration(),
-                                                                m_transmit_id++,
-                                                                m_config.mtu,
-                                                                500ms); cal)
+    const system_clock::time_point capture_time{seconds{meta->second.timeSeconds} +
+                                                microseconds{meta->second.timeMicroSeconds}};
+
+    const system_clock::time_point ptp_capture_time{nanoseconds{meta->second.ptpNanoSeconds}};
+
+    PixelFormat pixel_format = PixelFormat::UNKNOWN;
+    switch (wire_image.bitsPerPixel)
     {
-        for (size_t i = 0 ; i < 3 ; ++i)
-        {
-            for (size_t j = 0 ; j < 3 ; ++j)
-            {
-                std::cout << cal->left.M[i][j] << " ";
-            }
-            std::cout << std::endl;
-        }
-        std::cout << std::endl;
-        for (size_t i = 0 ; i < 8 ; ++i)
-        {
-            std::cout << cal->left.D[i] << " ";
-        }
-        std::cout << std::endl;
+        case 8: {pixel_format = PixelFormat::MONO8; break;}
+        case 16: {pixel_format = PixelFormat::MONO16; break;}
+        default: {CRL_DEBUG("Uknown pixel format %d", wire_image.bitsPerPixel);}
     }
 
-    return std::nullopt;
+    const auto source = convert_sources(static_cast<uint64_t>(wire_image.sourceExtended) << 32 | wire_image.source);
+    if (source.size() != 1)
+    {
+        CRL_DEBUG("invalid image source\n");
+    }
+
+    Image image{data,
+                reinterpret_cast<const uint8_t*>(wire_image.dataP) - data->data(),
+                pixel_format,
+                wire_image.width,
+                wire_image.height,
+                capture_time,
+                ptp_capture_time,
+                source.front(),
+                m_calibration};
+
+    if (m_frame_buffer.count(wire_image.frameId) == 0)
+    {
+        ImageFrame frame{wire_image.frameId,
+                         std::map<DataSource, Image>{std::make_pair(source.front(), std::move(image))},
+                         capture_time,
+                         ptp_capture_time};
+
+        m_frame_buffer.emplace(wire_image.frameId, std::move(frame));
+    }
+    else
+    {
+        m_frame_buffer[wire_image.frameId].add_image(image);
+    }
+
+    //
+    // Check if our frame is valid, if so dispatch to our callbacks and notify anyone who is waiting on
+    // the next frame
+    //
+    if (const auto &frame = m_frame_buffer[wire_image.frameId]; std::all_of(std::begin(m_active_streams),
+                                                                            std::end(m_active_streams),
+                                                                            [&frame](const auto &e){return frame.has_image(e);}))
+    {
+        if (m_user_frame_callback)
+        {
+            m_user_frame_callback(frame);
+        }
+
+        std::lock_guard<std::mutex> lock(m_next_mutex);
+        m_next_frame = frame;
+        m_next_cv.notify_all();
+
+        //
+        // Remove our frame from our frame bufer
+        //
+        m_frame_buffer.erase(wire_image.frameId);
+    }
 }
 
 }

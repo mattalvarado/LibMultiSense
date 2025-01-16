@@ -9,7 +9,8 @@ set(DETAILS_SRC details/factory.cc
                 details/legacy/ip.cc
                 details/legacy/message.cc
                 details/legacy/storage.cc
-                details/legacy/udp.cc)
+                details/legacy/udp.cc
+                details/legacy/utilities.cc)
 
 add_library(MultiSense ${MULTISENSE_HEADERS}
                        ${DETAILS_SRC})

@@ -34,7 +34,15 @@
  *   2024-12-24, malvarado@carnegierobotics.com, IRAD, Created file.
  **/
 
+#pragma once
+
+#include <set>
+
 #include "MultiSense/MultiSenseChannel.hh"
+
+#include <wire/Protocol.hh>
+#include <utility/BufferStream.hh>
+#include <wire/ImageMetaMessage.hh>
 
 #include "details/legacy/ip.hh"
 #include "details/legacy/message.hh"
@@ -64,6 +72,15 @@ public:
     virtual std::optional<ImageFrame> get_next_image_frame();
 
 private:
+    ///
+    /// @brief Image meta callback used to internally receive images sent from the MultiSense
+    ///
+    void image_meta_callback(std::shared_ptr<const std::vector<uint8_t>> data);
+
+    ///
+    /// @brief Image callback used to internally receive images sent from the MultiSense
+    ///
+    void image_callback(std::shared_ptr<const std::vector<uint8_t>> data);
 
     ChannelConfig m_config;
 
@@ -76,6 +93,19 @@ private:
     MessageAssembler m_message_assembler;
 
     std::atomic_uint16_t m_transmit_id = 0;
+
+    CameraCalibration m_calibration;
+
+    std::set<DataSource> m_active_streams;
+
+    std::function<void(const ImageFrame&)> m_user_frame_callback;
+
+    std::mutex m_next_mutex;
+    std::condition_variable m_next_cv;
+    std::optional<ImageFrame> m_next_frame;
+
+    std::map<int64_t, crl::multisense::details::wire::ImageMeta> m_meta_cache;
+    std::map<int64_t, ImageFrame> m_frame_buffer;
 };
 
 }

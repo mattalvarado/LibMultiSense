@@ -39,8 +39,65 @@
 #include "details/legacy/message.hh"
 #include "details/legacy/udp.hh"
 
+#include "MultiSense/MultiSenseTypes.hh"
+
 namespace multisense{
 namespace legacy{
+
+constexpr crl::multisense::details::wire::SourceType all_sources = {
+    crl::multisense::details::wire::SOURCE_LUMA_LEFT |
+    crl::multisense::details::wire::SOURCE_LUMA_RIGHT |
+    crl::multisense::details::wire::SOURCE_COMPRESSED_LEFT |
+    crl::multisense::details::wire::SOURCE_COMPRESSED_RIGHT |
+    crl::multisense::details::wire::SOURCE_LUMA_RECT_LEFT |
+    crl::multisense::details::wire::SOURCE_LUMA_RECT_RIGHT |
+    crl::multisense::details::wire::SOURCE_COMPRESSED_RECTIFIED_LEFT |
+    crl::multisense::details::wire::SOURCE_COMPRESSED_RECTIFIED_RIGHT |
+    crl::multisense::details::wire::SOURCE_DISPARITY |
+    crl::multisense::details::wire::SOURCE_COMPRESSED_AUX |
+    crl::multisense::details::wire::SOURCE_LUMA_RECT_AUX |
+    crl::multisense::details::wire::SOURCE_CHROMA_AUX |
+    crl::multisense::details::wire::SOURCE_CHROMA_RECT_AUX |
+    crl::multisense::details::wire::SOURCE_DISPARITY_COST
+};
+
+std::vector<DataSource> convert_sources(const crl::multisense::details::wire::SourceType &source);
+
+crl::multisense::details::wire::SourceType convert_sources(const std::vector<DataSource> &sources);
+
+///
+/// @brief Helper to wait for ack from the camera from a given query command. Once a query
+///        command is sent to the MultiSense, it Ack's the command before sending the response
+///
+template <typename QueryMessage, class Rep, class Period>
+std::optional<crl::multisense::details::wire::Ack> wait_for_ack(MessageAssembler &assembler,
+                                                               const NetworkSocket &socket,
+                                                               const QueryMessage &query,
+                                                               uint16_t sequence_id,
+                                                               uint16_t mtu,
+                                                               const std::chrono::duration<Rep, Period>& wait_time,
+                                                               size_t attempts = 1)
+{
+    using namespace crl::multisense::details;
+
+    auto ack_waiter = assembler.register_message(MSG_ID(QueryMessage::ID));
+
+    for (size_t i = 0 ; i < attempts ; ++i)
+    {
+        if(publish_data(socket, serialize(query, sequence_id, mtu)) < 0)
+        {
+            continue;
+        }
+
+        if (auto ack = ack_waiter->wait_for<wire::Ack>(wait_time); ack)
+        {
+            return ack;
+        }
+    }
+
+    return std::nullopt;
+}
+
 
 ///
 /// @brief Helper to wait for data from the camera from a given query command. Once a query

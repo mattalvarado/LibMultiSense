@@ -53,10 +53,10 @@ namespace multisense
 ///
 enum class PixelFormat
 {
+    UNKNOWN,
     MONO8,
     RGB8,
-    MONO16,
-    UNKNOWN
+    MONO16
 };
 
 ///
@@ -76,10 +76,12 @@ enum class DataSource
     RIGHT_RECTIFIED_COMPRESSED,
     LEFT_DISPARITY_RAW,
     LEFT_DISPARITY_COMPRESSED,
-    AUX_RAW,
     AUX_COMPRESSED,
+    AUX_RECTIFIED_COMPRESSED,
     AUX_LUMA_RAW,
+    AUX_LUMA_RECTIFIED_RAW,
     AUX_CHROMA_RAW,
+    AUX_CHROMA_RECTIFIED_RAW,
     COST_RAW
 };
 
@@ -146,13 +148,15 @@ struct StereoCalibration
 ///
 struct Image
 {
-    std::shared_ptr<std::vector<uint8_t>>  data;
-    PixelFormat                            format{PixelFormat::UNKNOWN};
-    int                                    width{0};
-    int                                    height{0};
-    std::chrono::system_clock::time_point  timestamp{};
-    DataSource                             source{DataSource::UNKNOWN};
-    CameraCalibration                      calibration;
+    std::shared_ptr<const std::vector<uint8_t>>  raw_data;
+    int64_t image_data_offset = 0;
+    PixelFormat format{PixelFormat::UNKNOWN};
+    int width = 0;
+    int height = 0;
+    std::chrono::system_clock::time_point camera_timestamp{};
+    std::chrono::system_clock::time_point ptp_timestamp{};
+    DataSource source{DataSource::UNKNOWN};
+    CameraCalibration calibration;
 };
 
 ///
@@ -186,8 +190,10 @@ struct ImageFrame
         return (images.find(source) != images.end());
     }
 
-    std::map<DataSource, Image>           images;
+    int64_t frame_id = 0;
+    std::map<DataSource, Image>  images;
     std::chrono::system_clock::time_point frame_time{};
+    std::chrono::system_clock::time_point ptp_frame_time{};
 };
 
 }

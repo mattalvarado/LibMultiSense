@@ -105,9 +105,8 @@ crl::multisense::details::wire::IdType get_message_type(const std::vector<uint8_
     return message_type;
 }
 
-MessageAssembler::MessageAssembler(std::shared_ptr<BufferPool> buffer_pool, size_t max_active_messages):
-    m_buffer_pool(buffer_pool),
-    m_max_active_messages(max_active_messages)
+MessageAssembler::MessageAssembler(std::shared_ptr<BufferPool> buffer_pool):
+    m_buffer_pool(buffer_pool)
 {
 }
 
@@ -147,18 +146,31 @@ void MessageAssembler::process_packet(const std::vector<uint8_t> &raw_data)
 
     auto active_message = std::end(m_active_messages);
 
+    const auto buffer_config = m_buffer_pool->get_config();
+    const bool is_large_buffer = header.messageLength > buffer_config.small_buffer_size;
+    auto& ordered_messages = (is_large_buffer ? m_large_ordered_messages : m_small_ordered_messages);
+
     //
     // We are not currently tracking this message
     //
     if (m_active_messages.count(full_sequence_id) == 0)
     {
+        if (header.messageLength > buffer_config.large_buffer_size)
+        {
+            CRL_DEBUG("No buffers large enough to fit a message of %d bytes\n", header.messageLength);
+            return;
+        }
+
+        const auto max_active_messages = (is_large_buffer ? buffer_config.num_large_buffers :
+                                                            buffer_config.num_small_buffers);
+
         //
         // Remove old messages that we may no longer need to make sure
         //
-        while ((m_ordered_messages.size() + 1) > m_max_active_messages)
+        while ((ordered_messages.size() + 1) > max_active_messages)
         {
-            const auto old_sequence = m_ordered_messages.front();
-            m_ordered_messages.pop_front();
+            const auto old_sequence = ordered_messages.front();
+            ordered_messages.pop_front();
             m_active_messages.erase(old_sequence);
         }
 
@@ -172,9 +184,11 @@ void MessageAssembler::process_packet(const std::vector<uint8_t> &raw_data)
             return;
         }
 
-        auto [inserted_iterator,_] = m_active_messages.emplace(full_sequence_id, InternalMessage{0, std::move(buffer)});
+        const auto message_type = get_message_type(raw_data);
+        auto [inserted_iterator,_] = m_active_messages.emplace(full_sequence_id,
+                                                               InternalMessage{message_type, 0, std::move(buffer)});
         active_message = inserted_iterator;
-        m_ordered_messages.emplace_back(full_sequence_id);
+        ordered_messages.emplace_back(full_sequence_id);
     }
 
     active_message = (active_message == std::end(m_active_messages)) ? m_active_messages.find(full_sequence_id) : active_message;
@@ -183,14 +197,14 @@ void MessageAssembler::process_packet(const std::vector<uint8_t> &raw_data)
     {
         const size_t bytes_to_write = raw_data.size() - sizeof(wire::Header);
 
+        auto& message = active_message->second;
         //
         // Handle the special case unpacking of disparity data from 12bit to 16bit images
         //
-        const auto message_type = get_message_type(raw_data);
-        if(message_type == MSG_ID(wire::Disparity::ID))
+        if(message.type == MSG_ID(wire::Disparity::ID))
         {
-            utility::BufferStreamWriter stream(active_message->second.data->data(),
-                                               active_message->second.data->size());
+            utility::BufferStreamWriter stream(message.data->data(),
+                                               message.data->size());
 
             wire::Disparity::assembler(stream,
                                        raw_data.data() + sizeof(wire::Header),
@@ -200,39 +214,42 @@ void MessageAssembler::process_packet(const std::vector<uint8_t> &raw_data)
         }
         else
         {
-            memcpy(active_message->second.data->data() + header.byteOffset,
+            memcpy(message.data->data() + header.byteOffset,
                    raw_data.data() + sizeof(wire::Header),
                    bytes_to_write);
         }
 
-        active_message->second.bytes_written += bytes_to_write;
+        message.bytes_written += bytes_to_write;
 
-        if (active_message->second.bytes_written == active_message->second.data->size())
+        if (message.bytes_written >= message.data->size())
         {
-            //
-            // Handle the special case for Ack messages. To avoid collisions for all the Ack
-            // registrations, we extract the command associated with the Ack, and dispatch
-            // to all the listeners for that command
-            //
-            if (message_type == MSG_ID(wire::Ack::ID))
+            if (message.bytes_written == message.data->size())
             {
-                const auto ack = deserialize<wire::Ack>(*active_message->second.data);
-                dispatch(ack.command, active_message->second.data);
-            }
-            else
-            {
-                dispatch(message_type, active_message->second.data);
+                //
+                // Handle the special case for Ack messages. To avoid collisions for all the Ack
+                // registrations, we extract the command associated with the Ack, and dispatch
+                // to all the listeners for that command
+                //
+                if (message.type == MSG_ID(wire::Ack::ID))
+                {
+                    const auto ack = deserialize<wire::Ack>(*message.data);
+                    dispatch(ack.command, message.data);
+                }
+                else
+                {
+                    dispatch(message.type, message.data);
+                }
             }
 
             //
             // Remove processed messages
             //
             m_active_messages.erase(active_message);
-            for (auto it = std::begin(m_ordered_messages); it != std::end(m_ordered_messages);)
+            for (auto it = std::begin(ordered_messages); it != std::end(ordered_messages);)
             {
                 if (*it == full_sequence_id)
                 {
-                    it = m_ordered_messages.erase(it);
+                    it = ordered_messages.erase(it);
                     break;
                 }
                 else
@@ -250,10 +267,10 @@ void MessageAssembler::process_packet(const std::vector<uint8_t> &raw_data)
 
 std::shared_ptr<MessageCondition> MessageAssembler::register_message(const crl::multisense::details::wire::IdType &message_id)
 {
-    std::unique_lock<std::mutex> lock(m_mutex);
+    std::lock_guard<std::mutex> lock(m_mutex);
     if (auto it = m_conditions.find(message_id); it != std::end(m_conditions))
     {
-        std::unique_lock<std::mutex> lock(it->second->mutex);
+        std::lock_guard<std::mutex> lock(it->second->mutex);
         it->second->notified = false;
         return it->second;
     }
@@ -272,7 +289,7 @@ std::shared_ptr<MessageCondition> MessageAssembler::register_message(const crl::
 
 void MessageAssembler::remove_registration(const crl::multisense::details::wire::IdType &message_id)
 {
-    std::unique_lock<std::mutex> lock(m_mutex);
+    std::lock_guard<std::mutex> lock(m_mutex);
     if (auto it = m_conditions.find(message_id); it != std::end(m_conditions))
     {
         m_conditions.erase(it);
@@ -282,13 +299,13 @@ void MessageAssembler::remove_registration(const crl::multisense::details::wire:
 void MessageAssembler::register_callback(const crl::multisense::details::wire::IdType& message_id,
                                          std::function<void(std::shared_ptr<const std::vector<uint8_t>>)> callback)
 {
-    std::unique_lock<std::mutex> lock(m_mutex);
+    std::lock_guard<std::mutex> lock(m_mutex);
     m_callbacks.emplace(message_id, callback);
 }
 
 void MessageAssembler::remove_callback(const crl::multisense::details::wire::IdType& message_id)
 {
-    std::unique_lock<std::mutex> lock(m_mutex);
+    std::lock_guard<std::mutex> lock(m_mutex);
     if (auto it = m_callbacks.find(message_id); it != std::end(m_callbacks))
     {
         m_callbacks.erase(it);
@@ -298,11 +315,11 @@ void MessageAssembler::remove_callback(const crl::multisense::details::wire::IdT
 void MessageAssembler::dispatch(const crl::multisense::details::wire::IdType& message_id,
                                 std::shared_ptr<std::vector<uint8_t>> data)
 {
-    std::unique_lock<std::mutex> lock(m_mutex);
+    std::lock_guard<std::mutex> lock(m_mutex);
 
     if (auto condition = m_conditions.find(message_id); condition != std::end(m_conditions))
     {
-        std::unique_lock<std::mutex> lock(condition->second->mutex);
+        std::lock_guard<std::mutex> lock(condition->second->mutex);
         condition->second->data = *data;
         condition->second->notified = true;
         condition->second->cv.notify_all();

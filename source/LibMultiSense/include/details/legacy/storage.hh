@@ -80,6 +80,11 @@ public:
     ///
     std::shared_ptr<std::vector<uint8_t>> get_buffer(size_t target_size);
 
+    BufferPoolConfig get_config() const
+    {
+        return m_config;
+    }
+
 private:
 
     std::mutex m_mutex;

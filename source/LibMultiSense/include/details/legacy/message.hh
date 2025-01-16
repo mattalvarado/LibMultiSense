@@ -160,7 +160,7 @@ struct MessageCondition
 class MessageAssembler
 {
 public:
-    MessageAssembler(std::shared_ptr<BufferPool> buffer_pool, size_t max_active_messages);
+    MessageAssembler(std::shared_ptr<BufferPool> buffer_pool);
 
     ~MessageAssembler() = default;
 
@@ -190,6 +190,7 @@ private:
     ///
     struct InternalMessage
     {
+        crl::multisense::details::wire::IdType type = 0;
         size_t bytes_written = 0;
         std::shared_ptr<std::vector<uint8_t>> data;
     };
@@ -206,11 +207,11 @@ private:
     /// @brief Buffer pool used to allocate messages into
     ///
     std::shared_ptr<BufferPool> m_buffer_pool = nullptr;
-    size_t m_max_active_messages = 0;
 
     int32_t m_previous_wire_id = -1;
 
-    std::deque<int64_t> m_ordered_messages;
+    std::deque<int64_t> m_small_ordered_messages;
+    std::deque<int64_t> m_large_ordered_messages;
     std::map<int64_t, InternalMessage> m_active_messages;
 
     std::map<crl::multisense::details::wire::IdType, std::shared_ptr<MessageCondition>> m_conditions;
