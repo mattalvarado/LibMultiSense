@@ -100,19 +100,19 @@ struct CameraCalibration
     ///
     /// @brief Unrectified camera projection matrix stored in row-major ordering
     ///
-    std::array<double, 9> K;
+    std::array<double, 9> K = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
     ///
     /// @brief Rotation matrix which takes points in the unrectified camera frame and transform
     ///        them in to the rectified coordinate frame
     ///
-    std::array<double, 9> R;
+    std::array<double, 9> R = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
     ///
     /// @brief Rectified projection matrix which takes points in the origin camera coordinate
     ///        frame and projects them into the current camera
     ///
-    std::array<double, 12> P;
+    std::array<double, 12> P = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
     ///
     /// @brief The type of the distortion model used for the unrectified camera
@@ -148,14 +148,15 @@ struct StereoCalibration
 ///
 struct Image
 {
-    std::shared_ptr<const std::vector<uint8_t>>  raw_data;
+    std::shared_ptr<const std::vector<uint8_t>> raw_data = nullptr;
     int64_t image_data_offset = 0;
-    PixelFormat format{PixelFormat::UNKNOWN};
-    int width = 0;
-    int height = 0;
+    size_t image_data_length = 0;
+    PixelFormat format = PixelFormat::UNKNOWN;
+    int width = -1;
+    int height = -1;
     std::chrono::system_clock::time_point camera_timestamp{};
     std::chrono::system_clock::time_point ptp_timestamp{};
-    DataSource source{DataSource::UNKNOWN};
+    DataSource source = DataSource::UNKNOWN;
     CameraCalibration calibration;
 };
 
@@ -185,13 +186,16 @@ struct ImageFrame
         return it->second;
     }
 
+    ///
+    /// @brief Check if we have an image for a given data source
+    ///
     bool has_image(const DataSource &source) const
     {
         return (images.find(source) != images.end());
     }
 
     int64_t frame_id = 0;
-    std::map<DataSource, Image>  images;
+    std::map<DataSource, Image> images;
     std::chrono::system_clock::time_point frame_time{};
     std::chrono::system_clock::time_point ptp_frame_time{};
 };

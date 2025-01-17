@@ -172,6 +172,9 @@ public:
     ///
     std::shared_ptr<MessageCondition> register_message(const crl::multisense::details::wire::IdType &message_id);
 
+    ///
+    /// @brief Remove a registration for a specific message type
+    ///
     void remove_registration(const crl::multisense::details::wire::IdType &message_id);
 
     ///
@@ -181,6 +184,9 @@ public:
     void register_callback(const crl::multisense::details::wire::IdType& message_id,
                            std::function<void(std::shared_ptr<const std::vector<uint8_t>>)> callback);
 
+    ///
+    /// @brief Remove a callback for a specific message type
+    ///
     void remove_callback(const crl::multisense::details::wire::IdType& message_id);
 
 private:
@@ -201,6 +207,9 @@ private:
     void dispatch(const crl::multisense::details::wire::IdType& message_id,
                   std::shared_ptr<std::vector<uint8_t>> data);
 
+    ///
+    /// @brief Mutex to ensure calls into the MessageAssembler are thread safe
+    ///
     std::mutex m_mutex;
 
     ///
@@ -208,14 +217,37 @@ private:
     ///
     std::shared_ptr<BufferPool> m_buffer_pool = nullptr;
 
+    ///
+    /// @brief Internal id used to detect internal rollover of the 16 bit wire id
+    ///
     int32_t m_previous_wire_id = -1;
 
+    ///
+    /// @brief Tracking for the ordering of the small buffers we have allocated. Used to determine
+    ///        which active message to potentially remove
+    ///
     std::deque<int64_t> m_small_ordered_messages;
+    ///
+    /// @brief Tracking for the ordering of the large buffers we have allocated. Used to determine
+    ///        which active message to potentially remove
+    ///
     std::deque<int64_t> m_large_ordered_messages;
+
+    ///
+    /// @brief Active messages we are accumulating
+    ///
     std::map<int64_t, InternalMessage> m_active_messages;
 
+    ///
+    /// @brief Conditions which we are tracking. These are notified when a message of a given type is
+    ///        fully received
+    ///
     std::map<crl::multisense::details::wire::IdType, std::shared_ptr<MessageCondition>> m_conditions;
 
+    ///
+    /// @brief Callbacks which we are tracking. These are called when a message of a given type is
+    ///        fully received
+    ///
     std::map<crl::multisense::details::wire::IdType,
              std::function<void(std::shared_ptr<const std::vector<uint8_t>>)>> m_callbacks;
 

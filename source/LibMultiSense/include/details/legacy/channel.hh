@@ -82,6 +82,21 @@ private:
     ///
     void image_callback(std::shared_ptr<const std::vector<uint8_t>> data);
 
+    ///
+    /// @brief Disparity callback used to internally receive images sent from the MultiSense
+    ///
+    void disparity_callback(std::shared_ptr<const std::vector<uint8_t>> data);
+
+    ///
+    /// @brief Handle internall process, and potentially dispatch a image
+    ///
+    void handle_and_dispatch(Image image,
+                            int64_t frame_id,
+                            const std::chrono::system_clock::time_point &capture_time,
+                            const std::chrono::system_clock::time_point &ptp_capture_time);
+
+    std::mutex m_mutex;
+
     ChannelConfig m_config;
 
     NetworkSocket m_socket;

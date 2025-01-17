@@ -112,7 +112,11 @@ int main(int argc, char** argv)
 
     const auto channel = lms::Channel::create(lms::ChannelConfig{ip_address, mtu});
 
-    channel->start_streams({lms::DataSource::LEFT_RECTIFIED_RAW});
+    if (!channel->start_streams({lms::DataSource::LEFT_RECTIFIED_RAW, lms::DataSource::LEFT_DISPARITY_RAW}))
+    {
+        std::cerr << "Cannot start streams" << std::endl;
+        return 1;
+    }
 
     while(!done)
     {

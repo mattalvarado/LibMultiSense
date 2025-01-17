@@ -41,6 +41,7 @@
 #include <wire/Protocol.hh>
 #include <utility/BufferStream.hh>
 
+#include <wire/DisparityMessage.hh>
 #include <wire/ImageMessage.hh>
 #include <wire/ImageMetaMessage.hh>
 #include <wire/StatusRequestMessage.hh>
@@ -140,6 +141,8 @@ bool LegacyChannel::stop_streams(const std::vector<DataSource> &sources)
 ///
 void LegacyChannel::add_image_frame_callback(std::function<void(const ImageFrame&)> callback)
 {
+    std::lock_guard<std::mutex> lock(m_mutex);
+
     m_user_frame_callback = callback;
 }
 
@@ -166,17 +169,23 @@ bool LegacyChannel::connect(const ChannelConfig &config)
     m_socket.sensor_socket = sensor_socket;
     m_socket.server_socket_port = server_socket_port;
 
-    m_message_assembler.register_callback(wire::Image::ID,
-                                          std::bind(&LegacyChannel::image_callback, this, std::placeholders::_1));
-
     m_message_assembler.register_callback(wire::ImageMeta::ID,
                                           std::bind(&LegacyChannel::image_meta_callback, this, std::placeholders::_1));
 
+    m_message_assembler.register_callback(wire::Image::ID,
+                                          std::bind(&LegacyChannel::image_callback, this, std::placeholders::_1));
+
+    m_message_assembler.register_callback(wire::Disparity::ID,
+                                          std::bind(&LegacyChannel::disparity_callback, this, std::placeholders::_1));
+
+    //
+    // Main thread which services incoming data and dispatches to callbacks and conditions attached to the channel
+    //
     m_udp_receiver = std::make_unique<UdpReceiver>(m_socket, config.mtu,
-            [this](const std::vector<uint8_t>& data)
-            {
-                this->m_message_assembler.process_packet(data);
-            });
+                                                   [this](const std::vector<uint8_t>& data)
+                                                   {
+                                                       this->m_message_assembler.process_packet(data);
+                                                   });
 
     return true;
 }
@@ -188,6 +197,9 @@ void LegacyChannel::disconnect()
 {
     using namespace crl::multisense::details;
 
+    //
+    // Free anyone waiting on the next image frame
+    //
     m_next_cv.notify_all();
 
     //
@@ -253,8 +265,6 @@ void LegacyChannel::image_callback(std::shared_ptr<const std::vector<uint8_t>> d
 
     const auto wire_image = deserialize<wire::Image>(*data);
 
-    std::cout << wire_image.frameId << std::endl;
-
     const auto meta = m_meta_cache.find(wire_image.frameId);
     if (meta == std::end(m_meta_cache))
     {
@@ -272,17 +282,19 @@ void LegacyChannel::image_callback(std::shared_ptr<const std::vector<uint8_t>> d
     {
         case 8: {pixel_format = PixelFormat::MONO8; break;}
         case 16: {pixel_format = PixelFormat::MONO16; break;}
-        default: {CRL_DEBUG("Uknown pixel format %d", wire_image.bitsPerPixel);}
+        default: {CRL_DEBUG("Unknown pixel format %d", wire_image.bitsPerPixel);}
     }
 
     const auto source = convert_sources(static_cast<uint64_t>(wire_image.sourceExtended) << 32 | wire_image.source);
     if (source.size() != 1)
     {
         CRL_DEBUG("invalid image source\n");
+        return;
     }
 
     Image image{data,
                 reinterpret_cast<const uint8_t*>(wire_image.dataP) - data->data(),
+                ((wire_image.bitsPerPixel / 8) * wire_image.width * wire_image.height),
                 pixel_format,
                 wire_image.width,
                 wire_image.height,
@@ -291,45 +303,112 @@ void LegacyChannel::image_callback(std::shared_ptr<const std::vector<uint8_t>> d
                 source.front(),
                 m_calibration};
 
-    if (m_frame_buffer.count(wire_image.frameId) == 0)
+    handle_and_dispatch(std::move(image), wire_image.frameId, capture_time, ptp_capture_time);
+}
+
+void LegacyChannel::disparity_callback(std::shared_ptr<const std::vector<uint8_t>> data)
+{
+    using namespace crl::multisense::details;
+    using namespace std::chrono;
+
+    const auto wire_image = deserialize<wire::Disparity>(*data);
+
+    const auto meta = m_meta_cache.find(wire_image.frameId);
+    if (meta == std::end(m_meta_cache))
     {
-        ImageFrame frame{wire_image.frameId,
-                         std::map<DataSource, Image>{std::make_pair(source.front(), std::move(image))},
+        CRL_DEBUG("Missing corresponding meta for frame_id %li\n", wire_image.frameId);
+        return;
+    }
+
+    const system_clock::time_point capture_time{seconds{meta->second.timeSeconds} +
+                                                microseconds{meta->second.timeMicroSeconds}};
+
+    const system_clock::time_point ptp_capture_time{nanoseconds{meta->second.ptpNanoSeconds}};
+
+    PixelFormat pixel_format = PixelFormat::UNKNOWN;
+    switch (wire::Disparity::API_BITS_PER_PIXEL)
+    {
+        case 8: {pixel_format = PixelFormat::MONO8; break;}
+        case 16: {pixel_format = PixelFormat::MONO16; break;}
+        default: {CRL_DEBUG("Unknown pixel format %d", wire::Disparity::API_BITS_PER_PIXEL);}
+    }
+
+    const auto source = DataSource::LEFT_DISPARITY_RAW;
+
+    const auto disparity_length =
+        static_cast<size_t>(((static_cast<double>(wire::Disparity::API_BITS_PER_PIXEL) / 8.0) *
+                            wire_image.width *
+                            wire_image.height));
+
+    Image image{data,
+                reinterpret_cast<const uint8_t*>(wire_image.dataP) - data->data(),
+                disparity_length,
+                pixel_format,
+                wire_image.width,
+                wire_image.height,
+                capture_time,
+                ptp_capture_time,
+                source,
+                m_calibration};
+
+    handle_and_dispatch(std::move(image), wire_image.frameId, capture_time, ptp_capture_time);
+}
+
+void LegacyChannel::handle_and_dispatch(Image image,
+                                        int64_t frame_id,
+                                        const std::chrono::system_clock::time_point &capture_time,
+                                        const std::chrono::system_clock::time_point &ptp_capture_time)
+{
+    if (m_frame_buffer.count(frame_id) == 0)
+    {
+        const auto source = image.source;
+        ImageFrame frame{frame_id,
+                         std::map<DataSource, Image>{std::make_pair(source, std::move(image))},
                          capture_time,
                          ptp_capture_time};
 
-        m_frame_buffer.emplace(wire_image.frameId, std::move(frame));
+        m_frame_buffer.emplace(frame_id, std::move(frame));
     }
     else
     {
-        m_frame_buffer[wire_image.frameId].add_image(image);
+        m_frame_buffer[frame_id].add_image(std::move(image));
     }
 
     //
     // Check if our frame is valid, if so dispatch to our callbacks and notify anyone who is waiting on
     // the next frame
     //
-    if (const auto &frame = m_frame_buffer[wire_image.frameId]; std::all_of(std::begin(m_active_streams),
-                                                                            std::end(m_active_streams),
-                                                                            [&frame](const auto &e){return frame.has_image(e);}))
+    if (const auto &frame = m_frame_buffer[frame_id];
+            std::all_of(std::begin(m_active_streams),
+                        std::end(m_active_streams),
+                        [&frame](const auto &e){return frame.has_image(e);}))
     {
-        if (m_user_frame_callback)
-        {
-            m_user_frame_callback(frame);
-        }
-
         std::lock_guard<std::mutex> lock(m_next_mutex);
         m_next_frame = frame;
         m_next_cv.notify_all();
 
+        {
+            std::lock_guard<std::mutex> lock(m_mutex);
+            if (m_user_frame_callback)
+            {
+                m_user_frame_callback(frame);
+            }
+        }
+
         //
-        // Remove our image frame from our frame buffer and the associated image metadata. Since frames ids will
-        // only monotonically increase, it's safe to also delete all the frame_ids earlier than the current
-        // frame id.
+        // Remove our image frame from our frame buffer and the associated image metadata since we are
+        // now done with it internally
         //
-        m_frame_buffer.erase(std::begin(m_frame_buffer), m_frame_buffer.upper_bound(wire_image.frameId));
-        m_meta_cache.erase(std::begin(m_meta_cache), m_meta_cache.upper_bound(wire_image.frameId));
+        m_frame_buffer.erase(frame_id);
+        m_meta_cache.erase(frame_id);
     }
+
+    //
+    // Since frames will only monotonically increase, it's safe to also delete all the frame_ids earlier than
+    // the current frame id.
+    //
+    m_frame_buffer.erase(std::begin(m_frame_buffer), m_frame_buffer.lower_bound(frame_id));
+    m_meta_cache.erase(std::begin(m_meta_cache), m_meta_cache.lower_bound(frame_id));
 }
 
 }

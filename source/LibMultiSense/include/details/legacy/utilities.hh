@@ -80,6 +80,8 @@ std::optional<crl::multisense::details::wire::Ack> wait_for_ack(MessageAssembler
 {
     using namespace crl::multisense::details;
 
+    std::optional<wire::Ack> output = std::nullopt;
+
     auto ack_waiter = assembler.register_message(MSG_ID(QueryMessage::ID));
 
     for (size_t i = 0 ; i < attempts ; ++i)
@@ -91,11 +93,14 @@ std::optional<crl::multisense::details::wire::Ack> wait_for_ack(MessageAssembler
 
         if (auto ack = ack_waiter->wait_for<wire::Ack>(wait_time); ack)
         {
-            return ack;
+            output = std::move(ack);
+            break;
         }
     }
 
-    return std::nullopt;
+    assembler.remove_registration(MSG_ID(QueryMessage::ID));
+
+    return output;
 }
 
 
@@ -114,6 +119,8 @@ std::optional<OutputMessage> wait_for_data(MessageAssembler &assembler,
 {
     using namespace crl::multisense::details;
 
+    std::optional<OutputMessage> output = std::nullopt;
+
     auto ack_waiter = assembler.register_message(MSG_ID(QueryMessage::ID));
     auto response_waiter = assembler.register_message(MSG_ID(OutputMessage::ID));
 
@@ -128,12 +135,16 @@ std::optional<OutputMessage> wait_for_data(MessageAssembler &assembler,
         {
             if (auto response = response_waiter->wait_for<OutputMessage>(wait_time); response)
             {
-                return response.value();
+                output = std::move(response);
+                break;
             }
         }
     }
 
-    return std::nullopt;
+    assembler.remove_registration(MSG_ID(QueryMessage::ID));
+    assembler.remove_registration(MSG_ID(OutputMessage::ID));
+
+    return output;
 }
 
 }

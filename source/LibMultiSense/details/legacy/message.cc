@@ -114,6 +114,11 @@ void MessageAssembler::process_packet(const std::vector<uint8_t> &raw_data)
 {
     using namespace crl::multisense::details;
 
+    if (!m_buffer_pool)
+    {
+        CRL_EXCEPTION("Buffer pool uninitialized. Cannot recieve images");
+    }
+
     if (raw_data.size() < static_cast<int>(sizeof(wire::Header)))
     {
         CRL_EXCEPTION("undersized packet: %d/%d bytes\n",
@@ -155,9 +160,24 @@ void MessageAssembler::process_packet(const std::vector<uint8_t> &raw_data)
     //
     if (m_active_messages.count(full_sequence_id) == 0)
     {
-        if (header.messageLength > buffer_config.large_buffer_size)
+        const auto message_type = get_message_type(raw_data);
+
+        //
+        // Handle the special case for disparity messages which are serialized on the wire using
+        // a number of bits per pixel which is less than how they are represented in the API. Computed
+        // the expanded size of the disparity message, and make sure our output buffer has enough space
+        // to store that data
+        //
+        const uint32_t final_message_size = (message_type == MSG_ID(wire::Disparity::ID)) ?
+                                            ((header.messageLength - wire::Disparity::META_LENGTH) /
+                                            wire::Disparity::WIRE_BITS_PER_PIXEL *
+                                            wire::Disparity::API_BITS_PER_PIXEL +
+                                            wire::Disparity::META_LENGTH) :
+                                            header.messageLength;
+
+        if (final_message_size > buffer_config.large_buffer_size)
         {
-            CRL_DEBUG("No buffers large enough to fit a message of %d bytes\n", header.messageLength);
+            CRL_DEBUG("No buffers large enough to fit a message of %d bytes\n", final_message_size);
             return;
         }
 
@@ -165,9 +185,11 @@ void MessageAssembler::process_packet(const std::vector<uint8_t> &raw_data)
                                                             buffer_config.num_small_buffers);
 
         //
-        // Remove old messages that we may no longer need to make sure
+        // Remove old messages that we may no longer need to make sure we can allocate a buffer. Give
+        // ourselves two buffers of headroom since we have both a callback and notification transmission
+        // mechanism
         //
-        while ((ordered_messages.size() + 1) > max_active_messages)
+        while ((ordered_messages.size() + 2) >= max_active_messages)
         {
             const auto old_sequence = ordered_messages.front();
             ordered_messages.pop_front();
@@ -177,14 +199,13 @@ void MessageAssembler::process_packet(const std::vector<uint8_t> &raw_data)
         //
         // We received a new header, setup a new buffer for our message
         //
-        auto buffer = m_buffer_pool->get_buffer(header.messageLength);
+        auto buffer = m_buffer_pool->get_buffer(final_message_size);
         if (buffer == nullptr)
         {
             CRL_DEBUG("No free buffers available\n");
             return;
         }
 
-        const auto message_type = get_message_type(raw_data);
         auto [inserted_iterator,_] = m_active_messages.emplace(full_sequence_id,
                                                                InternalMessage{message_type, 0, std::move(buffer)});
         active_message = inserted_iterator;
@@ -201,7 +222,7 @@ void MessageAssembler::process_packet(const std::vector<uint8_t> &raw_data)
 
         if (bytes_to_write + message.bytes_written >  message.data->size())
         {
-            CRL_EXCEPTION("Error. Write Will overrun internall buffer");
+            CRL_EXCEPTION("Error. Buffer write will overrun internal buffer");
         }
 
         //
@@ -227,7 +248,7 @@ void MessageAssembler::process_packet(const std::vector<uint8_t> &raw_data)
 
         message.bytes_written += bytes_to_write;
 
-        if (message.bytes_written == message.data->size())
+        if (message.bytes_written == header.messageLength)
         {
             //
             // Handle the special case for Ack messages. To avoid collisions for all the Ack
@@ -248,17 +269,10 @@ void MessageAssembler::process_packet(const std::vector<uint8_t> &raw_data)
             // Remove processed messages
             //
             m_active_messages.erase(active_message);
-            for (auto it = std::begin(ordered_messages); it != std::end(ordered_messages);)
+            if (auto it = std::find(std::begin(ordered_messages), std::end(ordered_messages), full_sequence_id);
+                    it != std::end(ordered_messages))
             {
-                if (*it == full_sequence_id)
-                {
-                    it = ordered_messages.erase(it);
-                    break;
-                }
-                else
-                {
-                    ++it;
-                }
+                ordered_messages.erase(it);
             }
         }
     }
