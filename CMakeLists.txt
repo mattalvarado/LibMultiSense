@@ -47,6 +47,8 @@ option (BUILD_LEGACY_API "Build the legacy MultiSense API. Defaults to On for ba
 option (MULTISENSE_BUILD_UTILITIES "Build MultiSense utility applications. Defaults to ON for backwards compatibility." ON)
 option (BUILD_SHARED_LIBS "Build LibMultiSense as a shared library. Defaults to ON." ON)
 option (BUILD_TESTS "Build LibMultiSense GTests. Defaults to ON." ON)
+option (USE_OPENCV "Use OpenCV if found on the host system" OFF)
+
 
 if (BUILD_TESTS)
     enable_testing()

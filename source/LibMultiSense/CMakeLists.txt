@@ -5,6 +5,7 @@ set(MULTISENSE_HEADERS include/MultiSense/MultiSenseChannel.hh
                        include/MultiSense/MultiSenseTypes.hh)
 
 set(DETAILS_SRC details/factory.cc
+                details/utilities.cc
                 details/legacy/channel.cc
                 details/legacy/ip.cc
                 details/legacy/message.cc
@@ -19,6 +20,22 @@ target_link_libraries(MultiSense MultiSenseWire)
 target_include_directories(MultiSense
         PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         PUBLIC $<INSTALL_INTERFACE:include>)
+
+if (USE_OPENCV)
+   find_package(OpenCV QUIET)
+
+  if(OpenCV_FOUND)
+    message(STATUS "OpenCV found. Enabling OpenCV-specific code.")
+
+    target_compile_definitions(MultiSense PRIVATE HAVE_OPENCV)
+
+    target_include_directories(MultiSense PUBLIC ${OpenCV_INCLUDE_DIRS})
+
+    target_link_libraries(MultiSense ${OpenCV_LIBS})
+  else()
+    message(STATUS "OpenCV not found. Building without OpenCV support.")
+  endif()
+endif()
 
 set(version "7.0.0")
 set_target_properties(MultiSense PROPERTIES VERSION "${version}")

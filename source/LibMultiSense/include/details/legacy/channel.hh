@@ -59,16 +59,45 @@ public:
 
     virtual ~LegacyChannel();
 
+    ///
+    /// @brief Start a collection of image streams. Repeated calls to this function will not stop implicitly
+    ///        stop the previously started streams. For example if a user started a left_raw stream in one
+    ///        call and a disparity stream in a second call, both streams would be active until stop_streams
+    ///        is called for either
+    ///
     virtual bool start_streams(const std::vector<DataSource> &sources);
 
+    ///
+    /// @brief Stop a collection of streams
+    ///
     virtual bool stop_streams(const std::vector<DataSource> &sources);
 
+    ///
+    /// @brief Add a frame callback to get serviced inline with the receipt of a new frame. Only
+    ///        a single frame callback can be added to the channel
+    ///        NOTE: Perform minimal work in this callback, and ideally copy the lightweight
+    ///        ImageFrame object out to another processing thread
+    ///
     virtual void add_image_frame_callback(std::function<void(const ImageFrame&)> callback);
 
+    ///
+    /// @brief Initialize the connection to the camera
+    ///
     virtual bool connect(const ChannelConfig &config);
 
+    ///
+    /// @brief Disconnect from the camera
+    ///
     virtual void disconnect();
 
+    ///
+    /// @brief A blocking call that waits for one frame from the camera.
+    ///
+    /// If you’ve set a receive timeout (via ChannelConfig), it will block until that timeout expires;
+    /// otherwise, it blocks indefinitely until data arrives.
+    ///
+    /// @return The newly received ImageFrame, or std::nullopt if timed out (and you used a timeout).
+    ///
     virtual std::optional<ImageFrame> get_next_image_frame();
 
 private:
@@ -88,38 +117,78 @@ private:
     void disparity_callback(std::shared_ptr<const std::vector<uint8_t>> data);
 
     ///
-    /// @brief Handle internall process, and potentially dispatch a image
+    /// @brief Handle internal process, and potentially dispatch a image
     ///
     void handle_and_dispatch(Image image,
                             int64_t frame_id,
                             const std::chrono::system_clock::time_point &capture_time,
                             const std::chrono::system_clock::time_point &ptp_capture_time);
 
+    ///
+    /// @brief Internal mutex used to handle updates to the user supplied frame callback
+    ///
     std::mutex m_mutex;
 
+    ///
+    /// @brief Channel config
+    ///
     ChannelConfig m_config;
 
+    ///
+    /// @brief Active network socket for receiving and transmitting data
+    ///
     NetworkSocket m_socket;
 
+    ///
+    /// @brief Helper object to receive UDP traffic. Internally manages a receive thread
+    ///
     std::unique_ptr<UdpReceiver> m_udp_receiver = nullptr;
 
+    ///
+    /// @brief A collection of buffers to avoid dynamic allocation for incoming messages
+    ///
     std::shared_ptr<BufferPool> m_buffer_pool = nullptr;
 
+    ///
+    /// @brief Helper object to assemble raw UDP packets into complete MultiSense wire messages
+    ///
     MessageAssembler m_message_assembler;
 
+    ///
+    /// @brief Monotonically increasing internal id used to uniquely identify requests sent to the camera
+    ///
     std::atomic_uint16_t m_transmit_id = 0;
 
+    ///
+    /// @brief The current cached calibration stored here for convenience
+    ///
     CameraCalibration m_calibration;
 
+    ///
+    /// @brief The current set of active data streams the MultiSense is transmitting.
+    ///
     std::set<DataSource> m_active_streams;
 
-    std::function<void(const ImageFrame&)> m_user_frame_callback;
+    ///
+    /// @brief The currently active image frame user callback
+    ///
+    std::function<void(const ImageFrame&)> m_user_image_frame_callback;
 
+    ///
+    /// @brief Mutex, condition_variable, and frame used to service the get_next_image_frame member function
+    ///
     std::mutex m_next_mutex;
     std::condition_variable m_next_cv;
     std::optional<ImageFrame> m_next_frame;
 
+    ///
+    /// @brief A cache of image metadata associated with a specific frame id
+    ///
     std::map<int64_t, crl::multisense::details::wire::ImageMeta> m_meta_cache;
+
+    ///
+    /// @brief A cache of image frames associated with a specific frame id
+    ///
     std::map<int64_t, ImageFrame> m_frame_buffer;
 };
 

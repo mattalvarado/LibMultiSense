@@ -50,6 +50,7 @@
 #include <iostream>
 
 #include <MultiSense/MultiSenseChannel.hh>
+#include <MultiSense/MultiSenseUtilities.hh>
 
 
 namespace lms = multisense;
@@ -124,7 +125,7 @@ int main(int argc, char** argv)
         {
             for (const auto &[source, image] : image_frame->images)
             {
-                std::cout << image.width << " " << image.height << " " << image.raw_data->size() - image.image_data_offset << std::endl;
+                write_image(image, std::to_string(image_frame->frame_id) + "_" + std::to_string(static_cast<int>(source)) + ".png");
             }
         }
     }

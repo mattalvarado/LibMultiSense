@@ -136,23 +136,20 @@ bool LegacyChannel::stop_streams(const std::vector<DataSource> &sources)
     return false;
 }
 
-///
-/// @brief Setup user callback that will be invoked whenever a new frame is received.
-///
 void LegacyChannel::add_image_frame_callback(std::function<void(const ImageFrame&)> callback)
 {
     std::lock_guard<std::mutex> lock(m_mutex);
 
-    m_user_frame_callback = callback;
+    m_user_image_frame_callback = callback;
 }
 
-///
-/// @brief Initialize the connection to the camera
-///
 bool LegacyChannel::connect(const ChannelConfig &config)
 {
     using namespace crl::multisense::details;
 
+    //
+    // Setup networking
+    //
 #if WIN32
     WSADATA wsaData;
     int result = WSAStartup (MAKEWORD (0x02, 0x02), &wsaData);
@@ -169,6 +166,9 @@ bool LegacyChannel::connect(const ChannelConfig &config)
     m_socket.sensor_socket = sensor_socket;
     m_socket.server_socket_port = server_socket_port;
 
+    //
+    // Attach image callbacks to handle incoming image data
+    //
     m_message_assembler.register_callback(wire::ImageMeta::ID,
                                           std::bind(&LegacyChannel::image_meta_callback, this, std::placeholders::_1));
 
@@ -190,9 +190,6 @@ bool LegacyChannel::connect(const ChannelConfig &config)
     return true;
 }
 
-///
-/// @brief Disconnect from the camera
-///
 void LegacyChannel::disconnect()
 {
     using namespace crl::multisense::details;
@@ -215,14 +212,6 @@ void LegacyChannel::disconnect()
     return;
 }
 
-///
-/// @brief A blocking call that waits for one frame from the camera.
-///
-/// If you’ve set a receive timeout (via ChannelConfig), it will block until that timeout expires;
-/// otherwise, it blocks indefinitely until data arrives.
-///
-/// @return The newly received ImageFrame, or std::nullopt if timed out (and you used a timeout).
-///
 std::optional<ImageFrame> LegacyChannel::get_next_image_frame()
 {
     std::unique_lock<std::mutex> lock(m_next_mutex);
@@ -359,6 +348,9 @@ void LegacyChannel::handle_and_dispatch(Image image,
                                         const std::chrono::system_clock::time_point &capture_time,
                                         const std::chrono::system_clock::time_point &ptp_capture_time)
 {
+    //
+    // Create a new frame if one does not exist, or add the input image to the corresponding frame
+    //
     if (m_frame_buffer.count(frame_id) == 0)
     {
         const auto source = image.source;
@@ -378,20 +370,28 @@ void LegacyChannel::handle_and_dispatch(Image image,
     // Check if our frame is valid, if so dispatch to our callbacks and notify anyone who is waiting on
     // the next frame
     //
+    // TODO (malvarado): Only use image streams for this test
+    //
     if (const auto &frame = m_frame_buffer[frame_id];
             std::all_of(std::begin(m_active_streams),
                         std::end(m_active_streams),
                         [&frame](const auto &e){return frame.has_image(e);}))
     {
+        //
+        // Notify anyone waiting on the next frame
+        //
         std::lock_guard<std::mutex> lock(m_next_mutex);
         m_next_frame = frame;
         m_next_cv.notify_all();
 
+        //
+        // Service the callback if it's valid
+        //
         {
             std::lock_guard<std::mutex> lock(m_mutex);
-            if (m_user_frame_callback)
+            if (m_user_image_frame_callback)
             {
-                m_user_frame_callback(frame);
+                m_user_image_frame_callback(frame);
             }
         }
 
