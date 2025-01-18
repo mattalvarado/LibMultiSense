@@ -49,17 +49,6 @@ namespace multisense
 {
 
 ///
-/// @brief Pixel formats
-///
-enum class PixelFormat
-{
-    UNKNOWN,
-    MONO8,
-    RGB8,
-    MONO16
-};
-
-///
 /// @brief Identifies which camera or data source the image is from
 ///
 enum class DataSource
@@ -85,34 +74,34 @@ enum class DataSource
     COST_RAW
 };
 
-///
-/// @brief Distortion type
-///
-enum class DistortionType
-{
-    NONE,
-    PLUMBOB,
-    RATIONAL_POLYNOMIAL
-};
-
 struct CameraCalibration
 {
     ///
+    /// @brief Distortion type
+    ///
+    enum class DistortionType
+    {
+        NONE,
+        PLUMBOB,
+        RATIONAL_POLYNOMIAL
+    };
+
+    ///
     /// @brief Unrectified camera projection matrix stored in row-major ordering
     ///
-    std::array<double, 9> K = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+    std::array<std::array<float, 3>, 3> K = {{{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}}};
 
     ///
     /// @brief Rotation matrix which takes points in the unrectified camera frame and transform
     ///        them in to the rectified coordinate frame
     ///
-    std::array<double, 9> R = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+    std::array<std::array<float, 3>, 3> R = {{{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}}};
 
     ///
     /// @brief Rectified projection matrix which takes points in the origin camera coordinate
     ///        frame and projects them into the current camera
     ///
-    std::array<double, 12> P = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+    std::array<std::array<float, 4>, 3> P = {{{0.0, 0.0, 0.0, 0.0}, {0.0, 0.0, 0.0, 0.0}, {0.0, 0.0, 0.0, 0.0}}};
 
     ///
     /// @brief The type of the distortion model used for the unrectified camera
@@ -122,7 +111,7 @@ struct CameraCalibration
     ///
     /// @brief Coefficients for the distortion model
     ///
-    std::vector<double> distortion = {};
+    std::vector<float> D = {};
 };
 
 struct StereoCalibration
@@ -143,20 +132,148 @@ struct StereoCalibration
     CameraCalibration aux;
 };
 
+struct DeviceInfo
+{
+    struct PcbInfo
+    {
+        std::string name;
+        uint32_t revision;
+    };
+
+    enum class HardwareRevision
+    {
+        UNKNOWN,
+        SL,
+        S7,
+        S21,
+        ST21,
+        S27,
+        S30,
+        KS21,
+        MONOCAM,
+        KS21_SILVER,
+        ST25,
+        KS21i
+    };
+
+    enum class ImagerType
+    {
+        UNKNOWN,
+        CMV2000_GREY,
+        CMV2000_COLOR,
+        CMV4000_GREY,
+        CMV4000_COLOR,
+        FLIR_TAU2,
+        AR0234_GREY,
+        AR0239_COLOR
+    };
+
+    enum class LightingType
+    {
+        NONE,
+        INTERNAL,
+        EXTERNAL,
+        PATTERN_PROJECTOR
+    };
+
+    //
+    // TODO(malvarado): Populate this with valid inputs
+    //
+    enum class LensType
+    {
+        UNKNOWN
+    };
+
+    std::string camera_name;
+    std::string build_date;
+    std::string serial_number;
+    HardwareRevision hardware_revision;
+
+    uint8_t number_of_pcbs;
+    std::array<PcbInfo, 8>  pcb_info;
+
+    std::string imager_name;
+    ImagerType  imager_type;
+    uint32_t imager_width;
+    uint32_t imager_height;
+
+    std::string lens_name;
+    LensType lens_type;
+    float nominal_stereo_baseline;    // meters
+    float nominal_focal_lenght_m;     // meters
+    float nominal_relative_aperature; // f-stop
+
+    LightingType lighting_type;
+    uint32_t number_of_lights;
+};
+
 ///
 /// @brief Represents a single image plus metadata
 ///
 struct Image
 {
+
+    ///
+    /// @brief Pixel formats
+    ///
+    enum class PixelFormat
+    {
+        UNKNOWN,
+        MONO8,
+        RGB8,
+        MONO16
+    };
+
+    ///
+    /// @brief A pointer to the raw image data sent from the camera
+    ///
     std::shared_ptr<const std::vector<uint8_t>> raw_data = nullptr;
+
+    ///
+    /// @brief An offset into the raw_data pointer where the image data starts
+    ///
     int64_t image_data_offset = 0;
+
+    ///
+    /// @brief The length of the image data after the image_data_offset has been applied
+    ///
     size_t image_data_length = 0;
+
+    ///
+    /// @brief The format of the image data stored in the raw_data stored in the raw_data buffer
+    ///
     PixelFormat format = PixelFormat::UNKNOWN;
+
+    ///
+    /// @brief Width of the image in pixels
+    ///
     int width = -1;
+
+    ///
+    /// @brief Height of the image in pixels
+    ///
     int height = -1;
+
+    ///
+    /// @brief The timestamp associated with the image based on the camera's clock. Starts at 0
+    ///        on boot
+    ///
     std::chrono::system_clock::time_point camera_timestamp{};
+
+    ///
+    /// @brief The timestamp associated with the image based using the camera's clock which is potentially PTP
+    ///        synchronized with a remote PTP master
+    ///
     std::chrono::system_clock::time_point ptp_timestamp{};
+
+    ///
+    /// @brief The camera data source which this image corresponds to
+    ///
     DataSource source = DataSource::UNKNOWN;
+
+    ///
+    /// @brief The scaled calibration associated with the image
+    ///
     CameraCalibration calibration;
 };
 

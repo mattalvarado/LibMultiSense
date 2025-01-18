@@ -7,7 +7,7 @@
 # Make sure there is a reasonable version of CMAKE installed.
 #
 
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.10)
 
 set(CPACK_PACKAGE_VERSION "6.1.0")
 

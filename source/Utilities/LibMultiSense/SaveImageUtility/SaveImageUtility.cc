@@ -125,7 +125,7 @@ int main(int argc, char** argv)
         {
             for (const auto &[source, image] : image_frame->images)
             {
-                write_image(image, std::to_string(image_frame->frame_id) + "_" + std::to_string(static_cast<int>(source)) + ".png");
+                write_image(image, std::to_string(image_frame->frame_id) + "_" + std::to_string(static_cast<int>(source)) + ".pgm");
             }
         }
     }

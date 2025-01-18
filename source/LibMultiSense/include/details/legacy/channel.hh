@@ -100,7 +100,41 @@ public:
     ///
     virtual std::optional<ImageFrame> get_next_image_frame();
 
+    ///
+    /// @brief Get the current stereo calibration. The output calibration will correspond to the full-resolution
+    ///        operating mode of the camera
+    ///
+    virtual StereoCalibration get_calibration();
+
+    ///
+    /// @brief Set the current stereo calibration. The calibration is expected to be or the full-resolution
+    ///        operating mode of the camera
+    ///
+    virtual bool set_calibration(const StereoCalibration &calibration);
+
+    ///
+    /// @brief Get the device info associated with the camera
+    ///
+    virtual DeviceInfo get_device_info();
+
+    ///
+    /// @brief Set the camera's device info. This setting is protected via a key since invalid values in the
+    ///        device info can result in internal camera failures
+    ///
+    virtual bool set_device_info(const DeviceInfo &device_info, const std::string &key);
+
 private:
+
+    ///
+    /// @brief Query the calibration from the camera
+    ///
+    std::optional<StereoCalibration> query_calibration();
+
+    ///
+    /// @brief Query the device_info from the camera
+    ///
+    std::optional<DeviceInfo> query_device_info();
+
     ///
     /// @brief Image meta callback used to internally receive images sent from the MultiSense
     ///
@@ -125,9 +159,14 @@ private:
                             const std::chrono::system_clock::time_point &ptp_capture_time);
 
     ///
-    /// @brief Internal mutex used to handle updates to the user supplied frame callback
+    /// @brief Internal mutex used to handle updates from users
     ///
     std::mutex m_mutex;
+
+    ///
+    /// @brief Atomic flag to determine if we are connected to an active camera
+    ///
+    std::atomic_bool m_connected = false;
 
     ///
     /// @brief Channel config
@@ -162,7 +201,12 @@ private:
     ///
     /// @brief The current cached calibration stored here for convenience
     ///
-    CameraCalibration m_calibration;
+    StereoCalibration m_calibration;
+
+    ///
+    /// @brief The current cached device info stored here for convenience
+    ///
+    DeviceInfo m_device_info;
 
     ///
     /// @brief The current set of active data streams the MultiSense is transmitting.

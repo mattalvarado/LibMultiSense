@@ -237,7 +237,6 @@ void MessageAssembler::process_packet(const std::vector<uint8_t> &raw_data)
                                        raw_data.data() + sizeof(wire::Header),
                                        header.byteOffset,
                                        bytes_to_write);
-
         }
         else
         {

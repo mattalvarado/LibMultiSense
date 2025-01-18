@@ -137,6 +137,29 @@ public:
     /// @return The newly received ImageFrame, or std::nullopt if timed out (and you used a timeout).
     ///
     virtual std::optional<ImageFrame> get_next_image_frame() = 0;
+
+    ///
+    /// @brief Get the current stereo calibration. The output calibration will correspond to the full-resolution
+    ///        operating mode of the camera
+    ///
+    virtual StereoCalibration get_calibration() = 0;
+
+    ///
+    /// @brief Set the current stereo calibration. The calibration is expected to be or the full-resolution
+    ///        operating mode of the camera
+    ///
+    virtual bool set_calibration(const StereoCalibration &calibration) = 0;
+
+    ///
+    /// @brief Get the device info associated with the camera
+    ///
+    virtual DeviceInfo get_device_info() = 0;
+
+    ///
+    /// @brief Set the camera's device info. This setting is protected via a key since invalid values in the
+    ///        device info can result in internal camera failures
+    ///
+    virtual bool set_device_info(const DeviceInfo &device_info, const std::string &key) = 0;
 };
 
 }

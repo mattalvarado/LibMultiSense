@@ -34,6 +34,10 @@
  *   2025-01-15, malvarado@carnegierobotics.com, IRAD, Created file.
  **/
 
+#include <arpa/inet.h>
+
+#include <fstream>
+#include <iostream>
 #include <stdexcept>
 
 #ifdef HAVE_OPENCV
@@ -44,15 +48,86 @@
 
 namespace multisense
 {
+
+namespace
+{
+
+#ifndef HAVE_OPENCV
+bool write_binary_image(const Image &image, const std::filesystem::path &path)
+{
+    std::ofstream output(path, std::ios::binary | std::ios::out);
+
+    if (false == output.good())
+    {
+        std::cerr << "Failed to open: " << path << std::endl;
+        return false;
+    }
+
+    switch(image.format)
+    {
+        case Image::PixelFormat::MONO8:
+        {
+
+            output << "P5\n"
+                   << image.width << " " << image.height << "\n"
+                   << 0xFF << "\n";
+
+            output.write(reinterpret_cast<const char*>(image.raw_data->data()) + image.image_data_offset,
+                         image.image_data_length);
+            break;
+        }
+        case Image::PixelFormat::MONO16:
+        {
+            output << "P5\n"
+                   << image.width << " " << image.height << "\n"
+                   << 0xFFFF << "\n";
+
+            //
+            // Make sure we swap our byte order if needed
+            //
+            const uint16_t* raw_data = reinterpret_cast<const uint16_t*>(image.raw_data->data() + image.image_data_offset);
+            for (int i = 0 ; i < (image.width * image.height) ; ++i)
+            {
+                const uint16_t o = htons(raw_data[i]);
+                output.write(reinterpret_cast<const char*>(&o), sizeof(uint16_t));
+            }
+
+            break;
+        }
+        case Image::PixelFormat::RGB8:
+        {
+            output << "P6\n"
+                   << image.width << " " << image.height << "\n"
+                   << 0xFF << "\n";
+
+            output.write(reinterpret_cast<const char*>(image.raw_data->data()) + image.image_data_offset,
+                         image.image_data_length);
+
+            break;
+        }
+        default:
+        {
+            std::cerr << "Unhandled image format. Cannot write to disk" << std::endl;
+            return false;
+        }
+    }
+
+    output.close();
+    return true;
+}
+#endif
+
+}
+
 #ifdef HAVE_OPENCV
 cv::Mat to_cv_mat(const Image &image)
 {
     int cv_type = 0;
     switch(image.format)
     {
-        case PixelFormat::MONO8: {cv_type = CV_8UC1; break;}
-        case PixelFormat::RGB8: {cv_type = CV_8UC3; break;}
-        case PixelFormat::MONO16: {cv_type = CV_16UC1; break;}
+        case Image::PixelFormat::MONO8: {cv_type = CV_8UC1; break;}
+        case Image::PixelFormat::RGB8: {cv_type = CV_8UC3; break;}
+        case Image::PixelFormat::MONO16: {cv_type = CV_16UC1; break;}
         default: {throw std::runtime_error("invalid pixel format");}
     }
 
@@ -67,6 +142,13 @@ bool write_image(const Image &image, const std::filesystem::path &path)
 {
 #ifdef HAVE_OPENCV
     return cv::imwrite(path.string(), to_cv_mat(image));
+#else
+    const auto extension = path.extension();
+    if (extension == ".pgm" || extension == ".PGM" || extension == ".ppm" || extension == ".PPM")
+    {
+        return write_binary_image(image, path);
+    }
+    throw std::runtime_error("Unsupported path extension: " + extension.string() + ". Try compiling with OpenCV");
 #endif
     return false;
 }

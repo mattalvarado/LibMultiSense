@@ -75,7 +75,7 @@ std::optional<crl::multisense::details::wire::Ack> wait_for_ack(MessageAssembler
                                                                const QueryMessage &query,
                                                                uint16_t sequence_id,
                                                                uint16_t mtu,
-                                                               const std::chrono::duration<Rep, Period>& wait_time,
+                                                               const std::optional<std::chrono::duration<Rep, Period>>& wait_time,
                                                                size_t attempts = 1)
 {
     using namespace crl::multisense::details;
@@ -91,7 +91,7 @@ std::optional<crl::multisense::details::wire::Ack> wait_for_ack(MessageAssembler
             continue;
         }
 
-        if (auto ack = ack_waiter->wait_for<wire::Ack>(wait_time); ack)
+        if (auto ack = (wait_time ? ack_waiter->wait_for<wire::Ack>(wait_time.value()) : ack_waiter->wait<wire::Ack>()); ack)
         {
             output = std::move(ack);
             break;
@@ -114,7 +114,7 @@ std::optional<OutputMessage> wait_for_data(MessageAssembler &assembler,
                                            const QueryMessage &query,
                                            uint16_t sequence_id,
                                            uint16_t mtu,
-                                           const std::chrono::duration<Rep, Period>& wait_time,
+                                           const std::optional<std::chrono::duration<Rep, Period>>& wait_time,
                                            size_t attempts = 1)
 {
     using namespace crl::multisense::details;
@@ -131,9 +131,9 @@ std::optional<OutputMessage> wait_for_data(MessageAssembler &assembler,
             continue;
         }
 
-        if (auto ack = ack_waiter->wait_for<wire::Ack>(wait_time); ack)
+        if (auto ack = (wait_time ? ack_waiter->wait_for<wire::Ack>(wait_time.value()) : ack_waiter->wait<wire::Ack>()); ack)
         {
-            if (auto response = response_waiter->wait_for<OutputMessage>(wait_time); response)
+            if (auto response = (wait_time ? response_waiter->wait_for<OutputMessage>(wait_time.value()) : response_waiter->wait<OutputMessage>()); response)
             {
                 output = std::move(response);
                 break;

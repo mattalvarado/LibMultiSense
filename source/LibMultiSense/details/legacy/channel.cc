@@ -48,9 +48,12 @@
 #include <wire/StatusResponseMessage.hh>
 #include <wire/StreamControlMessage.hh>
 #include <wire/SysGetCameraCalibrationMessage.hh>
-#include <wire/SysCameraCalibrationMessage.hh>
+#include <wire/SysGetDeviceInfoMessage.hh>
+#include <wire/SysDeviceInfoMessage.hh>
 
 #include "details/legacy/channel.hh"
+#include "details/legacy/calibration.hh"
+#include "details/legacy/device_info.hh"
 #include "details/legacy/message.hh"
 #include "details/legacy/utilities.hh"
 
@@ -79,6 +82,11 @@ bool LegacyChannel::start_streams(const std::vector<DataSource> &sources)
     using namespace crl::multisense::details;
     using namespace std::chrono_literals;
 
+    if (!m_connected)
+    {
+        return false;
+    }
+
     wire::StreamControl cmd;
 
     cmd.enable(convert_sources(sources));
@@ -88,7 +96,7 @@ bool LegacyChannel::start_streams(const std::vector<DataSource> &sources)
                                       cmd,
                                       m_transmit_id++,
                                       m_config.mtu,
-                                      500ms); ack)
+                                      m_config.receive_timeout); ack)
     {
         if (ack->status != wire::Ack::Status_Ok)
         {
@@ -108,6 +116,11 @@ bool LegacyChannel::stop_streams(const std::vector<DataSource> &sources)
     using namespace crl::multisense::details;
     using namespace std::chrono_literals;
 
+    if (!m_connected)
+    {
+        return false;
+    }
+
     wire::StreamControl cmd;
 
     cmd.disable(convert_sources(sources));
@@ -117,7 +130,7 @@ bool LegacyChannel::stop_streams(const std::vector<DataSource> &sources)
                                       cmd,
                                       m_transmit_id++,
                                       m_config.mtu,
-                                      500ms); ack)
+                                      m_config.receive_timeout); ack)
     {
         if (ack->status != wire::Ack::Status_Ok)
         {
@@ -146,6 +159,14 @@ void LegacyChannel::add_image_frame_callback(std::function<void(const ImageFrame
 bool LegacyChannel::connect(const ChannelConfig &config)
 {
     using namespace crl::multisense::details;
+
+    if (m_connected)
+    {
+        CRL_DEBUG("Channel is already connected to the MultiSense");
+        return m_connected;
+    }
+
+    std::lock_guard<std::mutex> lock(m_mutex);
 
     //
     // Setup networking
@@ -187,12 +208,45 @@ bool LegacyChannel::connect(const ChannelConfig &config)
                                                        this->m_message_assembler.process_packet(data);
                                                    });
 
+    //
+    // Update our cached calibration
+    //
+    if (auto calibration = query_calibration(); calibration)
+    {
+        m_calibration = std::move(calibration.value());
+    }
+    else
+    {
+        CRL_EXCEPTION("Unable to query the camera's calibration");
+    }
+
+    //
+    // Update our cached device info
+    //
+    if (auto device_info = query_device_info(); device_info)
+    {
+        m_device_info = std::move(device_info.value());
+    }
+    else
+    {
+        CRL_EXCEPTION("Unable to query the camera's device info ");
+    }
+
+    m_connected = true;
+
     return true;
 }
 
 void LegacyChannel::disconnect()
 {
     using namespace crl::multisense::details;
+
+    if (!m_connected)
+    {
+        return;
+    }
+
+    std::lock_guard<std::mutex> lock(m_mutex);
 
     //
     // Free anyone waiting on the next image frame
@@ -204,11 +258,15 @@ void LegacyChannel::disconnect()
     //
     stop_streams({DataSource::ALL});
 
+    m_connected = false;
+
     m_message_assembler.remove_callback(wire::Image::ID);
 
     m_socket = NetworkSocket{};
 
     m_udp_receiver = nullptr;
+
+
     return;
 }
 
@@ -236,6 +294,116 @@ std::optional<ImageFrame> LegacyChannel::get_next_image_frame()
     m_next_frame = std::nullopt;
 
     return output_frame;
+}
+
+StereoCalibration LegacyChannel::get_calibration()
+{
+    std::lock_guard<std::mutex> lock(m_mutex);
+
+    return m_calibration;
+}
+
+bool LegacyChannel::set_calibration(const StereoCalibration &calibration)
+{
+    using namespace crl::multisense::details;
+
+    const wire::SysCameraCalibration wire_calibration = convert(calibration);
+
+    if (const auto ack = wait_for_ack(m_message_assembler,
+                                      m_socket,
+                                      wire_calibration,
+                                      m_transmit_id++,
+                                      m_config.mtu,
+                                      m_config.receive_timeout); ack)
+    {
+        //
+        // If we successfully set the calibration re-query it to update our internal cached value
+        //
+        if (ack->status == wire::Ack::Status_Ok)
+        {
+            if (const auto new_cal = query_calibration(); new_cal)
+            {
+                std::lock_guard<std::mutex> lock(m_mutex);
+                m_calibration = new_cal.value();
+                return true;
+            }
+
+        }
+    }
+
+    return false;
+}
+
+DeviceInfo LegacyChannel::get_device_info()
+{
+    std::lock_guard<std::mutex> lock(m_mutex);
+
+    return m_device_info;
+}
+
+bool LegacyChannel::set_device_info(const DeviceInfo &device_info, const std::string &key)
+{
+    using namespace crl::multisense::details;
+
+    const wire::SysDeviceInfo wire_device_info = convert(device_info, key);
+
+    if (const auto ack = wait_for_ack(m_message_assembler,
+                                      m_socket,
+                                      wire_device_info,
+                                      m_transmit_id++,
+                                      m_config.mtu,
+                                      m_config.receive_timeout); ack)
+    {
+        //
+        // If we successfully set the calibration re-query it to update our internal cached value
+        //
+        if (ack->status == wire::Ack::Status_Ok)
+        {
+            if (const auto new_device_info = query_device_info(); new_device_info)
+            {
+                std::lock_guard<std::mutex> lock(m_mutex);
+                m_device_info = new_device_info.value();
+                return true;
+            }
+
+        }
+    }
+
+    return false;
+}
+
+std::optional<StereoCalibration> LegacyChannel::query_calibration()
+{
+    using namespace crl::multisense::details;
+
+    if (const auto new_cal = wait_for_data<wire::SysCameraCalibration>(m_message_assembler,
+                                                                       m_socket,
+                                                                       wire::SysGetCameraCalibration(),
+                                                                       m_transmit_id++,
+                                                                       m_config.mtu,
+                                                                       m_config.receive_timeout); new_cal)
+    {
+        return std::make_optional(convert(new_cal.value()));
+    }
+
+    return std::nullopt;
+}
+
+std::optional<DeviceInfo> LegacyChannel::query_device_info()
+{
+    using namespace crl::multisense::details;
+
+    if (const auto device_info = wait_for_data<wire::SysDeviceInfo>(m_message_assembler,
+                                                                    m_socket,
+                                                                    wire::SysGetDeviceInfo(),
+                                                                    m_transmit_id++,
+                                                                    m_config.mtu,
+                                                                    m_config.receive_timeout); device_info)
+    {
+        return std::make_optional(convert(device_info.value()));
+    }
+
+    return std::nullopt;
 }
 
 void LegacyChannel::image_meta_callback(std::shared_ptr<const std::vector<uint8_t>> data)
@@ -266,11 +434,11 @@ void LegacyChannel::image_callback(std::shared_ptr<const std::vector<uint8_t>> d
 
     const system_clock::time_point ptp_capture_time{nanoseconds{meta->second.ptpNanoSeconds}};
 
-    PixelFormat pixel_format = PixelFormat::UNKNOWN;
+    Image::PixelFormat pixel_format = Image::PixelFormat::UNKNOWN;
     switch (wire_image.bitsPerPixel)
     {
-        case 8: {pixel_format = PixelFormat::MONO8; break;}
-        case 16: {pixel_format = PixelFormat::MONO16; break;}
+        case 8: {pixel_format = Image::PixelFormat::MONO8; break;}
+        case 16: {pixel_format = Image::PixelFormat::MONO16; break;}
         default: {CRL_DEBUG("Unknown pixel format %d", wire_image.bitsPerPixel);}
     }
 
@@ -281,6 +449,7 @@ void LegacyChannel::image_callback(std::shared_ptr<const std::vector<uint8_t>> d
         return;
     }
 
+    // TODO(malvarado): Scale calibration
     Image image{data,
                 reinterpret_cast<const uint8_t*>(wire_image.dataP) - data->data(),
                 ((wire_image.bitsPerPixel / 8) * wire_image.width * wire_image.height),
@@ -290,7 +459,7 @@ void LegacyChannel::image_callback(std::shared_ptr<const std::vector<uint8_t>> d
                 capture_time,
                 ptp_capture_time,
                 source.front(),
-                m_calibration};
+                m_calibration.left};
 
     handle_and_dispatch(std::move(image), wire_image.frameId, capture_time, ptp_capture_time);
 }
@@ -314,11 +483,11 @@ void LegacyChannel::disparity_callback(std::shared_ptr<const std::vector<uint8_t
 
     const system_clock::time_point ptp_capture_time{nanoseconds{meta->second.ptpNanoSeconds}};
 
-    PixelFormat pixel_format = PixelFormat::UNKNOWN;
+    Image::PixelFormat pixel_format = Image::PixelFormat::UNKNOWN;
     switch (wire::Disparity::API_BITS_PER_PIXEL)
     {
-        case 8: {pixel_format = PixelFormat::MONO8; break;}
-        case 16: {pixel_format = PixelFormat::MONO16; break;}
+        case 8: {pixel_format = Image::PixelFormat::MONO8; break;}
+        case 16: {pixel_format = Image::PixelFormat::MONO16; break;}
         default: {CRL_DEBUG("Unknown pixel format %d", wire::Disparity::API_BITS_PER_PIXEL);}
     }
 
@@ -329,6 +498,7 @@ void LegacyChannel::disparity_callback(std::shared_ptr<const std::vector<uint8_t
                             wire_image.width *
                             wire_image.height));
 
+    // TODO(malvarado): Scale calibration
     Image image{data,
                 reinterpret_cast<const uint8_t*>(wire_image.dataP) - data->data(),
                 disparity_length,
@@ -338,7 +508,7 @@ void LegacyChannel::disparity_callback(std::shared_ptr<const std::vector<uint8_t
                 capture_time,
                 ptp_capture_time,
                 source,
-                m_calibration};
+                m_calibration.left};
 
     handle_and_dispatch(std::move(image), wire_image.frameId, capture_time, ptp_capture_time);
 }
