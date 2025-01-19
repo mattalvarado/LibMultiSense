@@ -155,6 +155,7 @@ private:
     ///
     void handle_and_dispatch(Image image,
                             int64_t frame_id,
+                            const StereoCalibration &calibration,
                             const std::chrono::system_clock::time_point &capture_time,
                             const std::chrono::system_clock::time_point &ptp_capture_time);
 

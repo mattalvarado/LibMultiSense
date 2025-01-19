@@ -87,6 +87,19 @@ crl::multisense::details::wire::CameraCalData convert(const CameraCalibration &c
     return output;
 }
 
+StereoCalibration convert(const crl::multisense::details::wire::SysCameraCalibration &cal)
+{
+    using namespace crl::multisense::details;
+
+    StereoCalibration output;
+
+    output.left = convert(cal.left);
+    output.right = convert(cal.right);
+    output.aux = convert(cal.aux);
+
+    return output;
+}
+
 crl::multisense::details::wire::SysCameraCalibration convert(const StereoCalibration &cal)
 {
     using namespace crl::multisense::details;
@@ -100,17 +113,38 @@ crl::multisense::details::wire::SysCameraCalibration convert(const StereoCalibra
     return output;
 }
 
-StereoCalibration convert(const crl::multisense::details::wire::SysCameraCalibration &cal)
+CameraCalibration select_calibration(const StereoCalibration &input, const DataSource &source)
 {
-    using namespace crl::multisense::details;
-
-    StereoCalibration output;
-
-    output.left = convert(cal.left);
-    output.right = convert(cal.right);
-    output.aux = convert(cal.aux);
-
-    return output;
+    switch(source)
+    {
+        case DataSource::LEFT_MONO_RAW:
+        case DataSource::LEFT_MONO_COMPRESSED:
+        case DataSource::LEFT_RECTIFIED_RAW:
+        case DataSource::LEFT_RECTIFIED_COMPRESSED:
+        case DataSource::LEFT_DISPARITY_RAW:
+        case DataSource::LEFT_DISPARITY_COMPRESSED:
+        case DataSource::COST_RAW:
+        {
+            return input.left;
+        }
+        case DataSource::RIGHT_MONO_RAW:
+        case DataSource::RIGHT_MONO_COMPRESSED:
+        case DataSource::RIGHT_RECTIFIED_RAW:
+        case DataSource::RIGHT_RECTIFIED_COMPRESSED:
+        {
+            return input.right;
+        }
+        case DataSource::AUX_COMPRESSED:
+        case DataSource::AUX_RECTIFIED_COMPRESSED:
+        case DataSource::AUX_LUMA_RAW:
+        case DataSource::AUX_LUMA_RECTIFIED_RAW:
+        case DataSource::AUX_CHROMA_RAW:
+        case DataSource::AUX_CHROMA_RECTIFIED_RAW:
+        {
+            return input.aux;
+        }
+        default: {CRL_EXCEPTION("Input source does not correspond to a image calibration");}
+    }
 }
 
 CameraCalibration scale_calibration(const CameraCalibration &input, double x_scale, double y_scale)

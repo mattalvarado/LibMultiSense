@@ -65,6 +65,11 @@ StereoCalibration convert(const crl::multisense::details::wire::SysCameraCalibra
 crl::multisense::details::wire::SysCameraCalibration convert(const StereoCalibration &cal);
 
 ///
+/// @brief Get the correct calibration corresponding to the input source
+///
+CameraCalibration select_calibration(const StereoCalibration &input, const DataSource &source);
+
+///
 /// @brief Scale a calibration used to update a full-res calibration based on the current operating resolution
 ///
 CameraCalibration scale_calibration(const CameraCalibration &input, double x_scale, double y_scale);
@@ -73,6 +78,7 @@ CameraCalibration scale_calibration(const CameraCalibration &input, double x_sca
 /// @brief Scale a calibration used to update a full-res calibration based on the current operating resolution
 ///
 StereoCalibration scale_calibration(const StereoCalibration &input, double x_scale, double y_scale);
+
 
 }
 }

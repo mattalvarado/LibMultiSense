@@ -101,7 +101,29 @@ DeviceInfo convert(const crl::multisense::details::wire::SysDeviceInfo &info)
         default: {CRL_EXCEPTION("Unsupported imager type");}
     }
 
-    // TOOD(malvarado): finish this migration
+    output.imager_width = info.imagerWidth;
+    output.imager_height = info.imagerHeight;
+
+    output.lens_name = info.lensName;
+    //TODO (malvarado): Handle lens_type
+    output.nominal_stereo_baseline = info.nominalBaseline;
+    output.nominal_focal_length = info.nominalFocalLength;
+    output.nominal_relative_aperature = info.nominalRelativeAperture;;
+
+    switch (info.lightingType)
+    {
+        case wire::SysDeviceInfo::LIGHTING_TYPE_NONE:
+            {output.lighting_type = DeviceInfo::LightingType::NONE; break;}
+        case wire::SysDeviceInfo::LIGHTING_TYPE_SL_INTERNAL:
+            {output.lighting_type = DeviceInfo::LightingType::INTERNAL; break;}
+        case wire::SysDeviceInfo::LIGHTING_TYPE_S21_EXTERNAL:
+            {output.lighting_type = DeviceInfo::LightingType::EXTERNAL; break;}
+        case wire::SysDeviceInfo::LIGHTING_TYPE_S21_PATTERN_PROJECTOR:
+            {output.lighting_type = DeviceInfo::LightingType::PATTERN_PROJECTOR; break;}
+        default: {CRL_EXCEPTION("Unsupported lighting type");}
+    }
+
+    output.number_of_lights = info.numberOfLights;
 
     return output;
 }
@@ -119,10 +141,8 @@ crl::multisense::details::wire::SysDeviceInfo convert(const DeviceInfo &info, co
 
     switch (info.hardware_revision)
     {
-        case DeviceInfo::HardwareRevision::SL:
-            {output.hardwareRevision = wire::SysDeviceInfo::HARDWARE_REV_MULTISENSE_S7; break;}
         case DeviceInfo::HardwareRevision::S7:
-            {output.hardwareRevision = wire::SysDeviceInfo::HARDWARE_REV_MULTISENSE_S7S; break;}
+            {output.hardwareRevision = wire::SysDeviceInfo::HARDWARE_REV_MULTISENSE_S7; break;}
         case DeviceInfo::HardwareRevision::S21:
             {output.hardwareRevision = wire::SysDeviceInfo::HARDWARE_REV_MULTISENSE_S21; break;}
         case DeviceInfo::HardwareRevision::ST21:
@@ -150,6 +170,50 @@ crl::multisense::details::wire::SysDeviceInfo convert(const DeviceInfo &info, co
         output.pcbs[i].name = info.pcb_info[i].name;
         output.pcbs[i].revision = info.pcb_info[i].revision;
     }
+
+    output.imagerName = info.imager_name;
+    switch (info.imager_type)
+    {
+        case DeviceInfo::ImagerType::CMV2000_GREY:
+            {output.imagerType = wire::SysDeviceInfo::IMAGER_TYPE_CMV2000_GREY; break;}
+        case DeviceInfo::ImagerType::CMV2000_COLOR:
+            {output.imagerType = wire::SysDeviceInfo::IMAGER_TYPE_CMV2000_COLOR; break;}
+        case DeviceInfo::ImagerType::CMV4000_GREY:
+            {output.imagerType = wire::SysDeviceInfo::IMAGER_TYPE_CMV4000_GREY; break;}
+        case DeviceInfo::ImagerType::CMV4000_COLOR:
+            {output.imagerType = wire::SysDeviceInfo::IMAGER_TYPE_CMV4000_COLOR; break;}
+        case DeviceInfo::ImagerType::FLIR_TAU2:
+            {output.imagerType = wire::SysDeviceInfo::IMAGER_TYPE_FLIR_TAU2; break;}
+        case DeviceInfo::ImagerType::AR0234_GREY:
+            {output.imagerType = wire::SysDeviceInfo::IMAGER_TYPE_AR0234_GREY; break;}
+        case DeviceInfo::ImagerType::AR0239_COLOR:
+            {output.imagerType = wire::SysDeviceInfo::IMAGER_TYPE_AR0239_COLOR; break;}
+        default: {CRL_EXCEPTION("Unsupported hardware revision");}
+    }
+
+    output.imagerWidth = info.imager_width;
+    output.imagerHeight = info.imager_height;
+
+    output.lensName = info.lens_name;
+    //TODO (malvarado): Handle lens_type
+    output.nominalBaseline = info.nominal_stereo_baseline;
+    output.nominalFocalLength = info.nominal_focal_length;
+    output.nominalRelativeAperture = info.nominal_relative_aperature;;
+
+    switch (info.lighting_type)
+    {
+        case DeviceInfo::LightingType::NONE:
+            {output.lightingType = wire::SysDeviceInfo::LIGHTING_TYPE_NONE; break;}
+        case DeviceInfo::LightingType::INTERNAL:
+            {output.lightingType = wire::SysDeviceInfo::LIGHTING_TYPE_SL_INTERNAL; break;}
+        case DeviceInfo::LightingType::EXTERNAL:
+            {output.lightingType = wire::SysDeviceInfo::LIGHTING_TYPE_S21_EXTERNAL; break;}
+        case DeviceInfo::LightingType::PATTERN_PROJECTOR:
+            {output.lightingType = wire::SysDeviceInfo::LIGHTING_TYPE_S21_PATTERN_PROJECTOR; break;}
+        default: {CRL_EXCEPTION("Unsupported lighting type");}
+    }
+
+    output.numberOfLights = info.number_of_lights;
 
     return output;
 }

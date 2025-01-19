@@ -143,7 +143,6 @@ struct DeviceInfo
     enum class HardwareRevision
     {
         UNKNOWN,
-        SL,
         S7,
         S21,
         ST21,
@@ -199,8 +198,8 @@ struct DeviceInfo
 
     std::string lens_name;
     LensType lens_type;
-    float nominal_stereo_baseline;    // meters
-    float nominal_focal_lenght_m;     // meters
+    float nominal_stereo_baseline; // meters
+    float nominal_focal_length; // meters
     float nominal_relative_aperature; // f-stop
 
     LightingType lighting_type;
@@ -313,6 +312,7 @@ struct ImageFrame
 
     int64_t frame_id = 0;
     std::map<DataSource, Image> images;
+    StereoCalibration calibration;
     std::chrono::system_clock::time_point frame_time{};
     std::chrono::system_clock::time_point ptp_frame_time{};
 };

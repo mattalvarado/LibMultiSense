@@ -355,7 +355,7 @@ bool LegacyChannel::set_device_info(const DeviceInfo &device_info, const std::st
                                       m_config.receive_timeout); ack)
     {
         //
-        // If we successfully set the calibration re-query it to update our internal cached value
+        // If we successfully set the device info re-query it to update our internal cached value
         //
         if (ack->status == wire::Ack::Status_Ok)
         {
@@ -449,7 +449,20 @@ void LegacyChannel::image_callback(std::shared_ptr<const std::vector<uint8_t>> d
         return;
     }
 
-    // TODO(malvarado): Scale calibration
+    //
+    // Copy our calibration and device info locally to make this thread safe
+    //
+    StereoCalibration cal;
+    DeviceInfo info;
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        cal = m_calibration;
+        info = m_device_info;
+    }
+
+    const auto cal_x_scale = static_cast<double>(wire_image.width) / static_cast<double>(info.imager_width);
+    const auto cal_y_scale = static_cast<double>(wire_image.height) / static_cast<double>(info.imager_height);
+
     Image image{data,
                 reinterpret_cast<const uint8_t*>(wire_image.dataP) - data->data(),
                 ((wire_image.bitsPerPixel / 8) * wire_image.width * wire_image.height),
@@ -459,9 +472,13 @@ void LegacyChannel::image_callback(std::shared_ptr<const std::vector<uint8_t>> d
                 capture_time,
                 ptp_capture_time,
                 source.front(),
-                m_calibration.left};
+                scale_calibration(select_calibration(cal, source.front()), cal_x_scale, cal_y_scale)};
 
-    handle_and_dispatch(std::move(image), wire_image.frameId, capture_time, ptp_capture_time);
+    handle_and_dispatch(std::move(image),
+                        wire_image.frameId,
+                        scale_calibration(cal, cal_x_scale, cal_y_scale),
+                        capture_time,
+                        ptp_capture_time);
 }
 
 void LegacyChannel::disparity_callback(std::shared_ptr<const std::vector<uint8_t>> data)
@@ -497,8 +514,20 @@ void LegacyChannel::disparity_callback(std::shared_ptr<const std::vector<uint8_t
         static_cast<size_t>(((static_cast<double>(wire::Disparity::API_BITS_PER_PIXEL) / 8.0) *
                             wire_image.width *
                             wire_image.height));
+    //
+    // Copy our calibration and device info locally to make this thread safe
+    //
+    StereoCalibration cal;
+    DeviceInfo info;
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        cal = m_calibration;
+        info = m_device_info;
+    }
 
-    // TODO(malvarado): Scale calibration
+    const auto cal_x_scale = static_cast<double>(wire_image.width) / static_cast<double>(info.imager_width);
+    const auto cal_y_scale = static_cast<double>(wire_image.height) / static_cast<double>(info.imager_height);
+
     Image image{data,
                 reinterpret_cast<const uint8_t*>(wire_image.dataP) - data->data(),
                 disparity_length,
@@ -508,13 +537,18 @@ void LegacyChannel::disparity_callback(std::shared_ptr<const std::vector<uint8_t
                 capture_time,
                 ptp_capture_time,
                 source,
-                m_calibration.left};
+                scale_calibration(select_calibration(cal, source), cal_x_scale, cal_y_scale)};
 
-    handle_and_dispatch(std::move(image), wire_image.frameId, capture_time, ptp_capture_time);
+    handle_and_dispatch(std::move(image),
+                        wire_image.frameId,
+                        scale_calibration(cal, cal_x_scale, cal_y_scale),
+                        capture_time,
+                        ptp_capture_time);
 }
 
 void LegacyChannel::handle_and_dispatch(Image image,
                                         int64_t frame_id,
+                                        const StereoCalibration &calibration,
                                         const std::chrono::system_clock::time_point &capture_time,
                                         const std::chrono::system_clock::time_point &ptp_capture_time)
 {
@@ -526,6 +560,7 @@ void LegacyChannel::handle_and_dispatch(Image image,
         const auto source = image.source;
         ImageFrame frame{frame_id,
                          std::map<DataSource, Image>{std::make_pair(source, std::move(image))},
+                         calibration,
                          capture_time,
                          ptp_capture_time};
 
