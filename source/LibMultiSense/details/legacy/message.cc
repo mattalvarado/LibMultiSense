@@ -181,25 +181,22 @@ void MessageAssembler::process_packet(const std::vector<uint8_t> &raw_data)
             return;
         }
 
-        const auto max_active_messages = (is_large_buffer ? buffer_config.num_large_buffers :
-                                                            buffer_config.num_small_buffers);
-
         //
-        // Remove old messages that we may no longer need to make sure we can allocate a buffer. Give
-        // ourselves two buffers of headroom since we have both a callback and notification transmission
-        // mechanism
+        // Remove old messages until we can get a free buffer
         //
-        while ((ordered_messages.size() + 2) >= max_active_messages)
+        auto buffer = m_buffer_pool->get_buffer(final_message_size);
+        while(buffer == nullptr && !ordered_messages.empty())
         {
             const auto old_sequence = ordered_messages.front();
             ordered_messages.pop_front();
             m_active_messages.erase(old_sequence);
+
+            if (buffer = m_buffer_pool->get_buffer(final_message_size); buffer != nullptr)
+            {
+                break;
+            }
         }
 
-        //
-        // We received a new header, setup a new buffer for our message
-        //
-        auto buffer = m_buffer_pool->get_buffer(final_message_size);
         if (buffer == nullptr)
         {
             CRL_DEBUG("No free buffers available\n");
