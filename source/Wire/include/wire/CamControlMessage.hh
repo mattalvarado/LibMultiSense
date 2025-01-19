@@ -54,6 +54,8 @@ public:
     static CRL_CONSTEXPR IdType      ID      = ID_CMD_CAM_CONTROL;
     static CRL_CONSTEXPR VersionType VERSION = 10;
 
+    static CRL_CONSTEXPR float WIRE_IMAGER_GAIN_MAX = 1000.0f;
+
     //
     // Parameters representing the current camera configuration
 
@@ -178,8 +180,8 @@ public:
         {
             autoExposureRoiX = 0;
             autoExposureRoiY = 0;
-            autoExposureRoiWidth = crl::multisense::Roi_Full_Image;
-            autoExposureRoiHeight = crl::multisense::Roi_Full_Image;
+            autoExposureRoiWidth = 0;
+            autoExposureRoiHeight = 0;
         }
 
         if (version >= 6)
@@ -232,7 +234,7 @@ public:
         }
         else
         {
-            gainMax = ImagerGainMax;
+            gainMax = WIRE_IMAGER_GAIN_MAX;
         }
 
     }

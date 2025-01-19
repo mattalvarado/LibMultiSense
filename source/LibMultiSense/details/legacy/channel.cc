@@ -41,6 +41,13 @@
 #include <wire/Protocol.hh>
 #include <utility/BufferStream.hh>
 
+#include <wire/AuxCamConfigMessage.hh>
+#include <wire/AuxCamControlMessage.hh>
+#include <wire/AuxCamGetConfigMessage.hh>
+#include <wire/CamConfigMessage.hh>
+#include <wire/CamControlMessage.hh>
+#include <wire/CamGetConfigMessage.hh>
+#include <wire/CamSetResolutionMessage.hh>
 #include <wire/DisparityMessage.hh>
 #include <wire/ImageMessage.hh>
 #include <wire/ImageMetaMessage.hh>
@@ -53,6 +60,7 @@
 
 #include "details/legacy/channel.hh"
 #include "details/legacy/calibration.hh"
+#include "details/legacy/configuration.hh"
 #include "details/legacy/device_info.hh"
 #include "details/legacy/message.hh"
 #include "details/legacy/utilities.hh"
@@ -232,6 +240,18 @@ bool LegacyChannel::connect(const ChannelConfig &config)
         CRL_EXCEPTION("Unable to query the camera's device info ");
     }
 
+    //
+    // Update our cached multisense configuration
+    //
+    if (auto config = query_configuration(m_device_info.has_aux_camera()); config)
+    {
+        m_multisense_config = std::move(config.value());
+    }
+    else
+    {
+        CRL_EXCEPTION("Unable to query the camera's device info ");
+    }
+
     m_connected = true;
 
     return true;
@@ -294,6 +314,90 @@ std::optional<ImageFrame> LegacyChannel::get_next_image_frame()
     m_next_frame = std::nullopt;
 
     return output_frame;
+}
+
+MultiSenseConfiguration LegacyChannel::get_configuration()
+{
+    std::lock_guard<std::mutex> lock(m_mutex);
+
+    return m_multisense_config;
+}
+
+bool LegacyChannel::set_configuration(const MultiSenseConfiguration &config)
+{
+    using namespace crl::multisense::details;
+
+    std::lock_guard<std::mutex> lock(m_mutex);
+
+    //
+    // Set the camera resolution
+    //
+    const auto res_ack = wait_for_ack(m_message_assembler,
+                                      m_socket,
+                                      convert<wire::CamSetResolution>(config),
+                                      m_transmit_id++,
+                                      m_config.mtu,
+                                      m_config.receive_timeout);
+
+    //
+    // Bail early if we failed to set the resolution
+    //
+    if (!res_ack || res_ack->status != wire::Ack::Status_Ok)
+    {
+        return false;
+    }
+
+    //
+    // Set the generic camera controls
+    //
+    const auto cam_ack = wait_for_ack(m_message_assembler,
+                                      m_socket,
+                                      convert<wire::CamControl>(config),
+                                      m_transmit_id++,
+                                      m_config.mtu,
+                                      m_config.receive_timeout);
+
+    //
+    // Bail early if we failed to set the main stereo controls
+    //
+    if (!cam_ack || cam_ack->status != wire::Ack::Status_Ok)
+    {
+        return false;
+    }
+
+    //
+    // Set aux controls if they are valid
+    //
+    if (config.aux_config && m_device_info.has_aux_camera())
+    {
+        //
+        // Set the aux camera controls
+        //
+        const auto aux_ack = wait_for_ack(m_message_assembler,
+                                          m_socket,
+                                          convert(config.aux_config.value()),
+                                          m_transmit_id++,
+                                          m_config.mtu,
+                                          m_config.receive_timeout);
+        //
+        // Bail early if we failed to set the aux controls
+        //
+        if (!aux_ack || aux_ack->status != wire::Ack::Status_Ok)
+        {
+            return false;
+        }
+    }
+
+    //
+    // Update our internal cached image config after we successfully set everything
+    //
+    if (const auto new_config = query_configuration(m_device_info.has_aux_camera()); new_config)
+    {
+        m_multisense_config = new_config.value();
+        return true;
+    }
+
+    return false;
 }
 
 StereoCalibration LegacyChannel::get_calibration()
@@ -370,6 +474,31 @@ bool LegacyChannel::set_device_info(const DeviceInfo &device_info, const std::st
     }
 
     return false;
+}
+
+std::optional<MultiSenseConfiguration> LegacyChannel::query_configuration(bool has_aux_camera)
+{
+    using namespace crl::multisense::details;
+
+    const auto camera_config = wait_for_data<wire::CamConfig>(m_message_assembler,
+                                                              m_socket,
+                                                              wire::CamGetConfig(),
+                                                              m_transmit_id++,
+                                                              m_config.mtu,
+                                                              m_config.receive_timeout);
+
+    const auto aux_config = has_aux_camera ? wait_for_data<wire::AuxCamConfig>(m_message_assembler,
+                                                                               m_socket,
+                                                                               wire::AuxCamGetConfig(),
+                                                                               m_transmit_id++,
+                                                                               m_config.mtu,
+                                                                               m_config.receive_timeout): std::nullopt;
+    if (camera_config)
+    {
+        return convert(camera_config.value(), aux_config);
+    }
+
+    return std::nullopt;
 }
 
 std::optional<StereoCalibration> LegacyChannel::query_calibration()

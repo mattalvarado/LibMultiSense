@@ -8,6 +8,7 @@ set(DETAILS_SRC details/factory.cc
                 details/utilities.cc
                 details/legacy/calibration.cc
                 details/legacy/channel.cc
+                details/legacy/configuration.cc
                 details/legacy/device_info.cc
                 details/legacy/ip.cc
                 details/legacy/message.cc

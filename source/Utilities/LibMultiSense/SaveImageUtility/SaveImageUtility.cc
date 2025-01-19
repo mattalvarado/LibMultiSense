@@ -113,6 +113,14 @@ int main(int argc, char** argv)
 
     const auto channel = lms::Channel::create(lms::ChannelConfig{ip_address, mtu});
 
+    auto config = channel->get_configuration();
+    config.frames_per_second = 30.0;
+    if (!channel->set_configuration(config))
+    {
+        std::cerr << "Cannot set config" << std::endl;
+        return 1;
+    }
+
     if (!channel->start_streams({lms::DataSource::LEFT_RECTIFIED_RAW, lms::DataSource::LEFT_DISPARITY_RAW}))
     {
         std::cerr << "Cannot start streams" << std::endl;

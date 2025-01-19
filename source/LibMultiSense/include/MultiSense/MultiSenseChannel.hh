@@ -139,6 +139,16 @@ public:
     virtual std::optional<ImageFrame> get_next_image_frame() = 0;
 
     ///
+    /// @brief Get the current MultiSense configuration
+    ///
+    virtual MultiSenseConfiguration get_configuration() = 0;
+
+    ///
+    /// @brief Get set the current MultiSense configuration
+    ///
+    virtual bool set_configuration(const MultiSenseConfiguration &config) = 0;
+
+    ///
     /// @brief Get the current stereo calibration. The output calibration will correspond to the full-resolution
     ///        operating mode of the camera
     ///

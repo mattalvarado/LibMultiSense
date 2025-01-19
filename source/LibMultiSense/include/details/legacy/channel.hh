@@ -101,6 +101,16 @@ public:
     virtual std::optional<ImageFrame> get_next_image_frame();
 
     ///
+    /// @brief Get the current MultiSense configuration
+    ///
+    virtual MultiSenseConfiguration get_configuration();
+
+    ///
+    /// @brief Get set the current MultiSense configuration
+    ///
+    virtual bool set_configuration(const MultiSenseConfiguration &config);
+
+    ///
     /// @brief Get the current stereo calibration. The output calibration will correspond to the full-resolution
     ///        operating mode of the camera
     ///
@@ -124,6 +134,11 @@ public:
     virtual bool set_device_info(const DeviceInfo &device_info, const std::string &key);
 
 private:
+
+    ///
+    /// @brief Query the full configuration
+    ///
+    std::optional<MultiSenseConfiguration> query_configuration(bool has_aux_camera);
 
     ///
     /// @brief Query the calibration from the camera
@@ -208,6 +223,11 @@ private:
     /// @brief The current cached device info stored here for convenience
     ///
     DeviceInfo m_device_info;
+
+    ///
+    /// @brief The current cached MultiSense configuration stored for convenience
+    ///
+    MultiSenseConfiguration m_multisense_config;
 
     ///
     /// @brief The current set of active data streams the MultiSense is transmitting.

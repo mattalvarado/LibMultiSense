@@ -204,6 +204,22 @@ struct DeviceInfo
 
     LightingType lighting_type;
     uint32_t number_of_lights;
+
+    constexpr bool has_aux_camera() const
+    {
+        switch (hardware_revision)
+        {
+            case HardwareRevision::S27:
+            case HardwareRevision::S30:
+            case HardwareRevision::MONOCAM:
+            case HardwareRevision::KS21i:
+                return true;
+            default:
+                return false;
+        }
+
+        return false;
+    }
 };
 
 ///
@@ -211,7 +227,6 @@ struct DeviceInfo
 ///
 struct Image
 {
-
     ///
     /// @brief Pixel formats
     ///
@@ -315,6 +330,85 @@ struct ImageFrame
     StereoCalibration calibration;
     std::chrono::system_clock::time_point frame_time{};
     std::chrono::system_clock::time_point ptp_frame_time{};
+};
+
+struct MultiSenseConfiguration
+{
+    struct StereoConfiguration
+    {
+        float postfilter_strength = 0.85;
+    };
+
+    struct ManualExposureConfiguration
+    {
+        float gain = 1.7;
+        std::chrono::microseconds exposure_time{10000};
+    };
+
+    struct AutoExposureRoiConfiguration
+    {
+        uint16_t top_left_x_position = 0;
+        uint16_t top_left_y_position = 0;
+        uint16_t width = 0;
+        uint16_t height = 0;
+    };
+
+    struct AutoExposureConfiguration
+    {
+        std::chrono::microseconds max_exposure_time{10000};
+        uint32_t decay = 7;
+        float target_intensity = 0.5;
+        float target_threshold = 0.85;
+        float max_gain = 2.0;
+
+        AutoExposureRoiConfiguration roi;
+    };
+
+    struct ManualWhiteBalanceConfiguration
+    {
+        float red = 1.0;
+        float blue = 1.0;
+    };
+
+    struct AutoWhiteBalanceConfiguration
+    {
+        uint32_t decay = 3;
+        float threshold = 0.5;
+    };
+
+    struct ImageConfiguration
+    {
+        float gamma = 2.2;
+        bool hdr_enabled = false;
+
+        bool auto_exposure_enabled = true;
+        ManualExposureConfiguration manual_exposure;
+        AutoExposureConfiguration auto_exposure;
+
+        bool auto_white_balance_enabled = true;
+        ManualWhiteBalanceConfiguration manual_white_balance;
+        AutoWhiteBalanceConfiguration auto_white_balance;
+    };
+
+    struct AuxConfiguration
+    {
+        ImageConfiguration image_config;
+
+        bool sharpening_enabled = false;
+        float sharpening_percentage = 50.0;
+        uint8_t sharpening_limit = 100;
+    };
+
+    uint32_t width = 960;
+    uint32_t height = 600;
+    int32_t disparities = 256;
+    float frames_per_second = 10;
+
+    StereoConfiguration stereo_config;
+
+    ImageConfiguration image_config;
+
+    std::optional<AuxConfiguration> aux_config = std::nullopt;
 };
 
 }
