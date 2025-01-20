@@ -136,6 +136,16 @@ public:
 private:
 
     ///
+    /// @brief Try and set the MTU
+    ///
+    bool set_mtu(uint16_t mtu);
+
+    ///
+    /// @brief Set the MTU. If the MTU is invalid, try and find the best MTU via a basic search
+    ///
+    bool set_mtu(const std::optional<uint16_t> &mtu);
+
+    ///
     /// @brief Query the full configuration
     ///
     std::optional<MultiSenseConfiguration> query_configuration(bool has_aux_camera);
@@ -183,6 +193,11 @@ private:
     /// @brief Atomic flag to determine if we are connected to an active camera
     ///
     std::atomic_bool m_connected = false;
+
+    ///
+    /// @brief The current MTU the camera is operating with
+    ///
+    std::atomic_uint16_t m_current_mtu = 1500;
 
     ///
     /// @brief Channel config

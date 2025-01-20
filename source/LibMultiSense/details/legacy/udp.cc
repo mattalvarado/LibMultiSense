@@ -51,7 +51,7 @@ UdpReceiver::UdpReceiver(const NetworkSocket &socket,
     m_socket_port(socket.server_socket_port),
     m_stop(false),
     m_max_mtu(max_mtu),
-    m_incoming_buffer(max_mtu),
+    m_incoming_buffer(max_mtu, 0),
     m_receive_callback(receive_callback)
 
 {

@@ -57,6 +57,9 @@
 #include <wire/SysGetCameraCalibrationMessage.hh>
 #include <wire/SysGetDeviceInfoMessage.hh>
 #include <wire/SysDeviceInfoMessage.hh>
+#include <wire/SysMtuMessage.hh>
+#include <wire/SysTestMtuMessage.hh>
+#include <wire/SysTestMtuResponseMessage.hh>
 
 #include "details/legacy/channel.hh"
 #include "details/legacy/calibration.hh"
@@ -67,6 +70,18 @@
 
 namespace multisense {
 namespace legacy {
+
+namespace {
+    ///
+    /// @brief The largest MTU we will ever see the camera use. This is used to bound the data read size
+    ///
+    constexpr uint16_t MAX_MTU = 9000;
+
+    ///
+    /// @brief MTU's to test if the user would like to pick the largest MTU
+    ///
+    constexpr std::array<uint16_t, 10> MTUS_TO_TEST{9000, 8167, 7333, 6500, 5667, 4833, 4000, 3167, 2333, 1500};
+}
 
 LegacyChannel::LegacyChannel(const ChannelConfig &config):
     m_config(config),
@@ -103,7 +118,7 @@ bool LegacyChannel::start_streams(const std::vector<DataSource> &sources)
                                       m_socket,
                                       cmd,
                                       m_transmit_id++,
-                                      m_config.mtu,
+                                      m_current_mtu,
                                       m_config.receive_timeout); ack)
     {
         if (ack->status != wire::Ack::Status_Ok)
@@ -137,7 +152,7 @@ bool LegacyChannel::stop_streams(const std::vector<DataSource> &sources)
                                       m_socket,
                                       cmd,
                                       m_transmit_id++,
-                                      m_config.mtu,
+                                      m_current_mtu,
                                       m_config.receive_timeout); ack)
     {
         if (ack->status != wire::Ack::Status_Ok)
@@ -210,11 +225,18 @@ bool LegacyChannel::connect(const ChannelConfig &config)
     //
     // Main thread which services incoming data and dispatches to callbacks and conditions attached to the channel
     //
-    m_udp_receiver = std::make_unique<UdpReceiver>(m_socket, config.mtu,
+    m_udp_receiver = std::make_unique<UdpReceiver>(m_socket, MAX_MTU,
                                                    [this](const std::vector<uint8_t>& data)
                                                    {
                                                        this->m_message_assembler.process_packet(data);
                                                    });
+    //
+    // Set the user requested MTU
+    //
+    if (!set_mtu(config.mtu))
+    {
+        CRL_EXCEPTION("Unable to set MTU");
+    }
 
     //
     // Update our cached calibration
@@ -336,7 +358,7 @@ bool LegacyChannel::set_configuration(const MultiSenseConfiguration &config)
                                       m_socket,
                                       convert<wire::CamSetResolution>(config),
                                       m_transmit_id++,
-                                      m_config.mtu,
+                                      m_current_mtu,
                                       m_config.receive_timeout);
 
     //
@@ -354,7 +376,7 @@ bool LegacyChannel::set_configuration(const MultiSenseConfiguration &config)
                                       m_socket,
                                       convert<wire::CamControl>(config),
                                       m_transmit_id++,
-                                      m_config.mtu,
+                                      m_current_mtu,
                                       m_config.receive_timeout);
 
     //
@@ -377,7 +399,7 @@ bool LegacyChannel::set_configuration(const MultiSenseConfiguration &config)
                                           m_socket,
                                           convert(config.aux_config.value()),
                                           m_transmit_id++,
-                                          m_config.mtu,
+                                          m_current_mtu,
                                           m_config.receive_timeout);
         //
         // Bail early if we failed to set the aux controls
@@ -417,7 +439,7 @@ bool LegacyChannel::set_calibration(const StereoCalibration &calibration)
                                       m_socket,
                                       wire_calibration,
                                       m_transmit_id++,
-                                      m_config.mtu,
+                                      m_current_mtu,
                                       m_config.receive_timeout); ack)
     {
         //
@@ -455,7 +477,7 @@ bool LegacyChannel::set_device_info(const DeviceInfo &device_info, const std::st
                                       m_socket,
                                       wire_device_info,
                                       m_transmit_id++,
-                                      m_config.mtu,
+                                      m_current_mtu,
                                       m_config.receive_timeout); ack)
     {
         //
@@ -476,6 +498,63 @@ bool LegacyChannel::set_device_info(const DeviceInfo &device_info, const std::st
     return false;
 }
 
+bool LegacyChannel::set_mtu(uint16_t mtu)
+{
+    using namespace crl::multisense::details;
+
+    if (const auto test_mtu = wait_for_data<wire::SysTestMtuResponse>(m_message_assembler,
+                                                                  m_socket,
+                                                                  wire::SysTestMtu(mtu),
+                                                                  m_transmit_id++,
+                                                                  m_current_mtu,
+                                                                  m_config.receive_timeout); !test_mtu)
+    {
+        CRL_DEBUG("Testing MTU of %u bytes failed."
+                  " Please verify you can ping the MultiSense with a MTU of %u bytes.\n", mtu, mtu);
+        return false;
+    }
+
+    if (const auto ack = wait_for_ack(m_message_assembler,
+                                      m_socket,
+                                      wire::SysMtu(mtu),
+                                      m_transmit_id++,
+                                      m_current_mtu,
+                                      m_config.receive_timeout); ack)
+    {
+        if (ack->status != wire::Ack::Status_Ok)
+        {
+            CRL_DEBUG("Unable to set MTU to %u bytes: %i\n", mtu, ack->status);
+            return false;
+        }
+    }
+
+    m_current_mtu = mtu;
+    return true;
+}
+
+bool LegacyChannel::set_mtu(const std::optional<uint16_t> &mtu)
+{
+    using namespace crl::multisense::details;
+
+    if (mtu)
+    {
+        return set_mtu(mtu.value());
+    }
+    else
+    {
+        for (const auto &value : MTUS_TO_TEST)
+        {
+            if (const auto ret = set_mtu(value); ret)
+            {
+                return ret;
+            }
+        }
+        CRL_DEBUG("Unable to find a MTU that works for the camera\n");
+    }
+
+    return false;
+}
+
 std::optional<MultiSenseConfiguration> LegacyChannel::query_configuration(bool has_aux_camera)
 {
     using namespace crl::multisense::details;
@@ -484,14 +563,14 @@ std::optional<MultiSenseConfiguration> LegacyChannel::query_configuration(bool h
                                                               m_socket,
                                                               wire::CamGetConfig(),
                                                               m_transmit_id++,
-                                                              m_config.mtu,
+                                                              m_current_mtu,
                                                               m_config.receive_timeout);
 
     const auto aux_config = has_aux_camera ? wait_for_data<wire::AuxCamConfig>(m_message_assembler,
                                                                                m_socket,
                                                                                wire::AuxCamGetConfig(),
                                                                                m_transmit_id++,
-                                                                               m_config.mtu,
+                                                                               m_current_mtu,
                                                                                m_config.receive_timeout): std::nullopt;
     if (camera_config)
     {
@@ -509,7 +588,7 @@ std::optional<StereoCalibration> LegacyChannel::query_calibration()
                                                                        m_socket,
                                                                        wire::SysGetCameraCalibration(),
                                                                        m_transmit_id++,
-                                                                       m_config.mtu,
+                                                                       m_current_mtu,
                                                                        m_config.receive_timeout); new_cal)
     {
         return std::make_optional(convert(new_cal.value()));
@@ -526,7 +605,7 @@ std::optional<DeviceInfo> LegacyChannel::query_device_info()
                                                                     m_socket,
                                                                     wire::SysGetDeviceInfo(),
                                                                     m_transmit_id++,
-                                                                    m_config.mtu,
+                                                                    m_current_mtu,
                                                                     m_config.receive_timeout); device_info)
     {
         return std::make_optional(convert(device_info.value()));

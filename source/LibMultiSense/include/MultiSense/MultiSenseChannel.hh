@@ -53,29 +53,72 @@ public:
     ///
     enum class ChannelImplementation
     {
+        ///
+        /// @brief Use the Legacy MultiSense wire protocol implemented as part of LibMultiSense
+        ///
         LEGACY
     };
 
     ///
-    /// @brief Certain implementations may use a fixed set of internal buffers to mannage
+    /// @brief Certain implementations may use a fixed set of internal buffers to manage
     ///        incoming camera data. For those implementations specify configurations for
     ///        both small and large buffers
     ///
     struct ReceiveBufferConfiguration
     {
+        ///
+        /// @brief The number of small buffers to preallocate for receiving small MultiSense messages
+        ///
         size_t num_small_buffers = 0;
+        ///
+        /// @brief The size of each small buffer in bytes
+        ///
         size_t small_buffer_size = 0;
+        ///
+        /// @brief The number of large buffers to preallocate for receiving MultiSense sensor data
+        ///
         size_t num_large_buffers = 0;
+        ///
+        /// @brief The size of each small buffer in bytes
+        ///
         size_t large_buffer_size = 0;
     };
 
     struct ChannelConfig
     {
+        ///
+        /// @brief the IP address of the MultiSense camera to connect to
+        ///
         std::string ip_address = "10.66.171.21";
-        int16_t mtu = 1500;
+
+        ///
+        /// @brief The MTU to use for sending and receiving data from the camera. Setting the MTU to nullopt
+        ///        will trigger a automatic search for the largest available MTU. For more information
+        ///        on MTU see: https://docs.carnegierobotics.com/network/network.html#mtu
+        ///
+        std::optional<int16_t> mtu = 1500;
+
+        ///
+        /// @brief Timeout to use when waiting for MultiSense command responses. Setting the timeout to nullopt
+        ///        will result in the camera waiting forever for a command response
+        ///
         std::optional<std::chrono::milliseconds> receive_timeout = std::chrono::milliseconds(500);
+
+        ///
+        /// @brief The UDP port on the MultiSense which accepts user commands. All production firmware builds use
+        ///        port 9001
+        ///
         uint16_t command_port = 9001;
+
+        ///
+        /// @brief An optional name of network interface to bind to. (i.e. eth0)
+        ///
         std::optional<std::string> interface = std::nullopt;
+
+        ///
+        /// @brief Configuration for the number and size of internal buffers used to receive data without
+        ///        recurring memory allocations. May only be valid for certain implementations
+        ///
         ReceiveBufferConfiguration receive_buffer_configuration{100, 1500, 16, 1920*1200*3};
     };
 
