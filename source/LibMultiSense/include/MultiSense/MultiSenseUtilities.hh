@@ -38,10 +38,6 @@
 
 #include <filesystem>
 
-#ifdef HAVE_OPENCV
-#include <opencv2/core/mat.hpp>
-#endif
-
 #include "MultiSenseTypes.hh"
 
 namespace multisense
