@@ -120,10 +120,10 @@ bool write_binary_image(const Image &image, const std::filesystem::path &path)
 }
 
 #ifdef HAVE_OPENCV
-cv::Mat to_cv_mat(const Image &image)
+cv::Mat Image::cv_mat() const
 {
     int cv_type = 0;
-    switch(image.format)
+    switch(format)
     {
         case Image::PixelFormat::MONO8: {cv_type = CV_8UC1; break;}
         case Image::PixelFormat::RGB8: {cv_type = CV_8UC3; break;}
@@ -131,17 +131,17 @@ cv::Mat to_cv_mat(const Image &image)
         default: {throw std::runtime_error("invalid pixel format");}
     }
 
-    return cv::Mat{image.height,
-                   image.width,
+    return cv::Mat{height,
+                   width,
                    cv_type,
-                   const_cast<uint8_t*>(image.raw_data->data() + image.image_data_offset)};
+                   const_cast<uint8_t*>(raw_data->data() + image_data_offset)};
 }
 #endif
 
 bool write_image(const Image &image, const std::filesystem::path &path)
 {
 #ifdef HAVE_OPENCV
-    return cv::imwrite(path.string(), to_cv_mat(image));
+    return cv::imwrite(path.string(), image.cv_mat());
 #else
     const auto extension = path.extension();
     if (extension == ".pgm" || extension == ".PGM" || extension == ".ppm" || extension == ".PPM")
@@ -152,4 +152,5 @@ bool write_image(const Image &image, const std::filesystem::path &path)
 #endif
     return false;
 }
+
 }

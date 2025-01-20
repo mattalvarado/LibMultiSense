@@ -45,6 +45,11 @@
 #include <string>
 #include <vector>
 
+#ifdef HAVE_OPENCV
+#include <opencv2/core/mat.hpp>
+#endif
+
+
 namespace multisense
 {
 
@@ -289,6 +294,17 @@ struct Image
     /// @brief The scaled calibration associated with the image
     ///
     CameraCalibration calibration;
+
+    ///
+    /// @brief Transform a image into a cv::Mat object if the user wants to build OpenCV utilities
+    ///        The cv::Mat returned here wraps the underlying image data pointer associated with
+    ///        the Image object. If the input Image object goes out of scope while you are still using
+    ///        the corresponding cv::Mat, you will need to `clone` the cv::Mat creating an internal copy
+    ///        of all the data
+    ///
+#ifdef HAVE_OPENCV
+    cv::Mat cv_mat() const;
+#endif
 };
 
 ///

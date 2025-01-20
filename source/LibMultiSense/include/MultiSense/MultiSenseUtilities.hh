@@ -47,17 +47,6 @@
 namespace multisense
 {
 
-#ifdef HAVE_OPENCV
-///
-/// @brief Transform a image into a cv::Mat object if the user wants to build OpenCV utilities
-///        The cv::Mat returned here wraps the underlying image data pointer associated with
-///        the Image object. If the input Image object goes out of scope while you are still using
-///        the corresponding cv::Mat, you will need to `clone` the cv::Mat creating an internal copy
-///        of all the data
-///
-cv::Mat to_cv_mat(const Image &image);
-#endif
-
 ///
 /// @brief Write a image to a specific path on disk. The type of serialization is determined by the
 ///        input path

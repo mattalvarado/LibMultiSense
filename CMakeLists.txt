@@ -48,7 +48,7 @@ option (MULTISENSE_BUILD_UTILITIES "Build MultiSense utility applications. Defau
 option (BUILD_SHARED_LIBS "Build LibMultiSense as a shared library. Defaults to ON." ON)
 option (BUILD_TESTS "Build LibMultiSense GTests. Defaults to ON." ON)
 option (USE_OPENCV "Use OpenCV if found on the host system" OFF)
-
+option(BUILD_PYTHON_BINDINGS "Build Python bindings with pybind11." ON)
 
 if (BUILD_TESTS)
     enable_testing()
@@ -92,10 +92,28 @@ set (CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/lib)
 set (CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 #
+# Setup optional dependencies
+#
+if (USE_OPENCV)
+   find_package(OpenCV QUIET)
+
+  if(OpenCV_FOUND)
+    message(STATUS "OpenCV found. Enabling OpenCV-specific code.")
+  else()
+    message(STATUS "OpenCV not found. Building without OpenCV support.")
+  endif()
+endif()
+
+
+#
 # Dispatch to subordinate CMakeList.txt files.
 #
 
 add_subdirectory(source)
+
+if (BUILD_PYTHON_BINDINGS)
+    add_subdirectory(python)
+endif()
 
 #
 # Generate pc file, for pkgconfig compatibility

@@ -44,40 +44,40 @@
 namespace multisense
 {
 
-///
-/// @brief Identifiers for the different Channel implementations. Used for
-///        selecting a implementation at runtime
-///
-enum class ChannelImplementation
-{
-    LEGACY
-};
-
-///
-/// @brief Certain implementations may use a fixed set of internal buffers to mannage
-///        incoming camera data. For those implementations specify configurations for
-///        both small and large buffers
-///
-struct ReceiveBufferConfiguration
-{
-    size_t num_small_buffers = 0;
-    size_t small_buffer_size = 0;
-    size_t num_large_buffers = 0;
-    size_t large_buffer_size = 0;
-};
-
-struct ChannelConfig
-{
-    std::string ip_address = "10.66.171.21";
-    int16_t mtu = 1500;
-    std::optional<std::chrono::milliseconds> receive_timeout = std::chrono::milliseconds(500);
-    uint16_t command_port = 9001;
-    std::optional<std::string> interface = std::nullopt;
-    ReceiveBufferConfiguration receive_buffer_configuration{100, 1500, 16, 1920*1200*3};
-};
 
 class Channel {
 public:
+    ///
+    /// @brief Identifiers for the different Channel implementations. Used for
+    ///        selecting a implementation at runtime
+    ///
+    enum class ChannelImplementation
+    {
+        LEGACY
+    };
+
+    ///
+    /// @brief Certain implementations may use a fixed set of internal buffers to mannage
+    ///        incoming camera data. For those implementations specify configurations for
+    ///        both small and large buffers
+    ///
+    struct ReceiveBufferConfiguration
+    {
+        size_t num_small_buffers = 0;
+        size_t small_buffer_size = 0;
+        size_t num_large_buffers = 0;
+        size_t large_buffer_size = 0;
+    };
+
+    struct ChannelConfig
+    {
+        std::string ip_address = "10.66.171.21";
+        int16_t mtu = 1500;
+        std::optional<std::chrono::milliseconds> receive_timeout = std::chrono::milliseconds(500);
+        uint16_t command_port = 9001;
+        std::optional<std::string> interface = std::nullopt;
+        ReceiveBufferConfiguration receive_buffer_configuration{100, 1500, 16, 1920*1200*3};
+    };
 
     ///
     /// @brief Factory create function which allows for switching between different channel

@@ -111,7 +111,7 @@ int main(int argc, char** argv)
         }
     }
 
-    const auto channel = lms::Channel::create(lms::ChannelConfig{ip_address, mtu});
+    const auto channel = lms::Channel::create(lms::Channel::ChannelConfig{ip_address, mtu});
 
     auto config = channel->get_configuration();
     config.frames_per_second = 30.0;

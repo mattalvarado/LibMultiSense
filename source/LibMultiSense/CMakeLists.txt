@@ -25,18 +25,12 @@ target_include_directories(MultiSense
         PUBLIC $<INSTALL_INTERFACE:include>)
 
 if (USE_OPENCV)
-   find_package(OpenCV QUIET)
-
   if(OpenCV_FOUND)
-    message(STATUS "OpenCV found. Enabling OpenCV-specific code.")
-
     target_compile_definitions(MultiSense PRIVATE HAVE_OPENCV)
 
     target_include_directories(MultiSense PUBLIC ${OpenCV_INCLUDE_DIRS})
 
     target_link_libraries(MultiSense ${OpenCV_LIBS})
-  else()
-    message(STATUS "OpenCV not found. Building without OpenCV support.")
   endif()
 endif()
 
