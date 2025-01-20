@@ -91,7 +91,7 @@ std::vector<uint8_t> serialize(const T& message, uint16_t sequence_id, size_t mt
     const wire::IdType      id      = T::ID;
     const wire::VersionType version = T::VERSION;
 
-    std::vector<uint8_t> output_buffer(mtu - wire::COMBINED_HEADER_LENGTH);
+    std::vector<uint8_t> output_buffer(mtu - wire::COMBINED_HEADER_LENGTH, static_cast<uint8_t>(0));
 
     utility::BufferStreamWriter stream(output_buffer.data(), output_buffer.size());
 

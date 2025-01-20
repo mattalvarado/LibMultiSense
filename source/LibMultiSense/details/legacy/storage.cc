@@ -47,14 +47,14 @@ BufferPool::BufferPool(const BufferPoolConfig &config):
     for (size_t i = 0 ; i < config.num_small_buffers ; ++i)
     {
         auto small_buffer = std::make_shared<std::vector<uint8_t>>();
-        small_buffer->resize(config.small_buffer_size);
+        small_buffer->reserve(config.small_buffer_size);
         m_small_buffers.emplace_back(std::move(small_buffer));
     }
 
     for (size_t i = 0 ; i < config.num_large_buffers ; ++i)
     {
         auto large_buffer = std::make_shared<std::vector<uint8_t>>();
-        large_buffer->resize(config.large_buffer_size);
+        large_buffer->reserve(config.large_buffer_size);
         m_large_buffers.emplace_back(std::move(large_buffer));
     }
 }
@@ -73,7 +73,7 @@ std::shared_ptr<std::vector<uint8_t>> BufferPool::get_buffer(size_t target_size)
 
         if (small_buffer != std::end(m_small_buffers))
         {
-            (*small_buffer)->resize(target_size);
+            (*small_buffer)->resize(target_size, 0);
             return *small_buffer;
         }
     }
@@ -87,7 +87,7 @@ std::shared_ptr<std::vector<uint8_t>> BufferPool::get_buffer(size_t target_size)
 
         if (large_buffer != std::end(m_large_buffers))
         {
-            (*large_buffer)->resize(target_size);
+            (*large_buffer)->resize(target_size, 0);
             return *large_buffer;
         }
     }
