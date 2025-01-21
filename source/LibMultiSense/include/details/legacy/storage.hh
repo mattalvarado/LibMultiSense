@@ -80,6 +80,9 @@ public:
     ///
     std::shared_ptr<std::vector<uint8_t>> get_buffer(size_t target_size);
 
+    ///
+    /// @brief Get the current active configuration
+    ///
     BufferPoolConfig get_config() const
     {
         return m_config;
@@ -87,11 +90,19 @@ public:
 
 private:
 
-    std::mutex m_mutex;
-
+    ///
+    /// @brief The configured numbers and sizes of our internal buffers
+    ///
     BufferPoolConfig m_config;
 
+    ///
+    /// @brief The collection of small buffers
+    ///
     std::vector<std::shared_ptr<std::vector<uint8_t>>> m_small_buffers;
+
+    ///
+    /// @brief The collection of large buffers
+    ///
     std::vector<std::shared_ptr<std::vector<uint8_t>>> m_large_buffers;
 
 };

@@ -47,8 +47,14 @@
 namespace multisense {
 namespace legacy {
 
+///
+/// @param Convert a wire DeviceInfo message to our API's DeviceInfo
+///
 DeviceInfo convert(const crl::multisense::details::wire::SysDeviceInfo &info);
 
+///
+/// @param Convert our API's DeviceInfo to a wire DeviceInfo message
+///
 crl::multisense::details::wire::SysDeviceInfo convert(const DeviceInfo &info, const std::string &key);
 
 }

@@ -76,9 +76,18 @@ MultiSenseConfiguration convert(const crl::multisense::details::wire::CamConfig 
                                         std::move(manual_white_balance),
                                         std::move(auto_white_balance)};
 
+    auto disparities = ms_config::MaxDisparities::D256;
+    switch (config.disparities)
+    {
+        case 64: {disparities = ms_config::MaxDisparities::D64; break;}
+        case 128: {disparities = ms_config::MaxDisparities::D128; break;}
+        case 256: {disparities = ms_config::MaxDisparities::D256; break;}
+        default: {CRL_EXCEPTION("Unsupported disaprity value %d", config.disparities);}
+    }
+
     return MultiSenseConfiguration{config.width,
                                    config.height,
-                                   config.disparities,
+                                   disparities,
                                    config.framesPerSecond,
                                    std::move(stereo),
                                    std::move(image),
@@ -129,7 +138,16 @@ crl::multisense::details::wire::CamSetResolution convert<crl::multisense::detail
 {
     using namespace crl::multisense::details;
 
-    wire::CamSetResolution output{config.width, config.height, config.disparities};
+    int32_t disparities = 256;
+
+    switch(config.disparities)
+    {
+        case MultiSenseConfiguration::MaxDisparities::D64: {disparities = 64; break;}
+        case MultiSenseConfiguration::MaxDisparities::D128: {disparities = 128; break;}
+        case MultiSenseConfiguration::MaxDisparities::D256: {disparities = 256; break;}
+    }
+
+    wire::CamSetResolution output{config.width, config.height, disparities};
 
     return output;
 }

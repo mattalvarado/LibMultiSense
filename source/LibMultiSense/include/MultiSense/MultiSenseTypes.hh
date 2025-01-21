@@ -134,17 +134,28 @@ struct StereoCalibration
     ///
     /// @brief Calibration information for the aux camera (optional 3rd center camera)
     ///
-    CameraCalibration aux;
+    std::optional<CameraCalibration> aux = std::nullopt;
 };
 
+///
+/// @brief The Device information associated with the MultiSense. The DeviceInfo is used to determine what features
+///        the MultiSense offers, and provides debug information to the Carnegie Robotics' team.
+///        The DeviceInfo can only be set at the factory
+///
 struct DeviceInfo
 {
+    ///
+    /// @brief Info for the PCBs contained in the unit
+    ///
     struct PcbInfo
     {
         std::string name;
         uint32_t revision;
     };
 
+    ///
+    /// @brief MultiSense Hardware revisions
+    ///
     enum class HardwareRevision
     {
         UNKNOWN,
@@ -160,6 +171,9 @@ struct DeviceInfo
         KS21i
     };
 
+    ///
+    /// @brief Different imager types
+    ///
     enum class ImagerType
     {
         UNKNOWN,
@@ -172,11 +186,26 @@ struct DeviceInfo
         AR0239_COLOR
     };
 
+    ///
+    /// @brief MultiSense lighting types
+    ///
     enum class LightingType
     {
+        ///
+        /// @brief No lights
+        ///
         NONE,
+        ///
+        /// @brief Lights driven internally
+        ///
         INTERNAL,
+        ///
+        /// @brief Drive lights via an external output
+        ///
         EXTERNAL,
+        ///
+        /// @brief A pattern projector
+        ///
         PATTERN_PROJECTOR
     };
 
@@ -188,28 +217,96 @@ struct DeviceInfo
         UNKNOWN
     };
 
+    ///
+    /// @brief The name of the MultiSense variant
+    ///
     std::string camera_name;
+
+    ///
+    /// @brief The date the MultiSense was manufactured
+    ///
     std::string build_date;
+
+    ///
+    /// @brief The unique serial number of the MultiSense
+    ///
     std::string serial_number;
+
+    ///
+    /// @brief The hardware revision of the MultiSense
+    ///
     HardwareRevision hardware_revision;
 
+    ///
+    /// @brief The number of valid pcb_info objects
+    ///
     uint8_t number_of_pcbs;
+
+    ///
+    /// @brief Information about each PCB
+    ///
     std::array<PcbInfo, 8>  pcb_info;
 
+    ///
+    /// @brief The name of the imager used by the primary camera. For stereo cameras this is the
+    ///        Left/Right stereo pair. For mono cameras this is the single imager
+    ///
     std::string imager_name;
+
+    ///
+    /// @brief The type of the imager
+    ///
     ImagerType  imager_type;
+
+    ///
+    /// @brief The native width of the primary imager
+    ///
     uint32_t imager_width;
+
+    ///
+    /// @brief The native height of the primary imager
+    ///
     uint32_t imager_height;
 
+    ///
+    /// @brief The name of the lens used for the primary camera For stereo cameras this is the
+    ///        Left/Right stereo pair. For mono cameras this is the single camera
+    ///
     std::string lens_name;
-    LensType lens_type;
-    float nominal_stereo_baseline; // meters
-    float nominal_focal_length; // meters
-    float nominal_relative_aperature; // f-stop
 
+    ///
+    /// @brief The type of the primary imager
+    ///
+    LensType lens_type;
+
+    ///
+    /// @brief The nominal stereo baseline in meters
+    ///
+    float nominal_stereo_baseline;
+
+    ///
+    /// @brief The nominal focal length for the primary lens in meters
+    ///
+    float nominal_focal_length;
+
+    ///
+    /// @brief The nominal relative aperture for the primary camera modules in f-stop
+    ///
+    float nominal_relative_aperature;
+
+    ///
+    /// @brief The type of lighting used in the MultiSense
+    ///
     LightingType lighting_type;
+
+    ///
+    /// @brief The number of lights the MultiSense controls
+    ///
     uint32_t number_of_lights;
 
+    ///
+    /// @brief Determine if the MultiSense has a Aux color camera based on the DeviceInfo
+    ///
     constexpr bool has_aux_camera() const
     {
         switch (hardware_revision)
@@ -341,89 +438,296 @@ struct ImageFrame
         return (images.find(source) != images.end());
     }
 
+    ///
+    /// @brief The unique monotonically increasing ID for each frame populated by the MultiSense
+    ///
     int64_t frame_id = 0;
+
+    ///
+    /// @brief The images assocated with each source in the frame
+    ///
     std::map<DataSource, Image> images;
+
+    ///
+    /// @brief The scaled calibration for the entire camera
+    ///
     StereoCalibration calibration;
     std::chrono::system_clock::time_point frame_time{};
     std::chrono::system_clock::time_point ptp_frame_time{};
 };
 
+///
+/// @brief Complete configuration object for configuring the MultiSense
+///
 struct MultiSenseConfiguration
 {
+    ///
+    /// @brief Stereo specific configuration
+    ///
     struct StereoConfiguration
     {
+        ///
+        ///
+        /// @brief This is used to filter low confidence stereo data before it is sent to the
+        ///        host. Larger numbers indicate more aggressive filtering.
+        ///        Valid range is [0, 1.0]
+        ///
         float postfilter_strength = 0.85;
     };
 
+    ///
+    /// @brief Manual exposure specific configuration
+    ///
     struct ManualExposureConfiguration
     {
-        float gain = 1.7;
+        ///
+        /// @brief The desired electrical and digital gain used to brighten the image.
+        ///        Valid range is [1.6842, 16]
+        ///
+        float gain = 1.68;
+
+        ///
+        /// @brief The manual exposure time in microseconds
+        ///        Valid range is [0, 33000]
+        ///
         std::chrono::microseconds exposure_time{10000};
     };
 
+    ///
+    /// @brief Auto-exposure Region-of-Interest (ROI) specific configuration
+    ///
     struct AutoExposureRoiConfiguration
     {
+        ///
+        /// @brief The x value of the top left corner of the ROI in the full resolution image. Note (0,0) is the top
+        ///        left corner in the image coordinate frame.
+        ///
         uint16_t top_left_x_position = 0;
+        ///
+        /// @brief The y value of the top left corner of the ROI in the full resolution image. Note (0,0) is the top
+        ///        left corner in the image coordinate frame.
+        ///
         uint16_t top_left_y_position = 0;
+        ///
+        /// @brief The width of the ROI in the full resolution image. A value of 0 disables the ROI
+        ///
         uint16_t width = 0;
+        ///
+        /// @brief The height of the ROI in the full resolution image. A value of 0 disables the ROI
+        ///
         uint16_t height = 0;
     };
 
+    ///
+    /// @brief Auto-exposure specific configuration
+    ///
     struct AutoExposureConfiguration
     {
+        ///
+        /// @brief The max exposure time auto exposure algorithm can set in microseconds
+        ///        Valid range is [0, 33000]
+        ///
         std::chrono::microseconds max_exposure_time{10000};
+
+        ///
+        /// @brief The desired auto-exposure decay rate.
+        ///         Valid range is [0, 20]
+        ///
         uint32_t decay = 7;
+
+        ///
+        /// @brief The target intensity in the form of a ratio the auto exposure algorithm is trying to achieve.j
+        ///        This ratio is multiplied by the max pixel value (255), to get the target auto-exposure pixel value.
+        ///        The auto exposure algorithm tries to drive the target_threshold percentage of pixels below the target
+        ///        intensity value
+        ///
         float target_intensity = 0.5;
+
+        ///
+        /// @brief The ratio of pixels which must be equal or below the pixel value set by the target intensity setting.
+        ///
         float target_threshold = 0.85;
+
+        ///
+        /// @brief The auto exposure algorithm adjusts both exposure and gain. This caps the gain the auto exposure
+        ///        algorithm can use
+        ///
         float max_gain = 2.0;
 
+        ///
+        /// @brief The auto exposure region-of-interest used to restrict the portion of the image which the
+        ///        auto exposure algorithm is run on
+        ///
         AutoExposureRoiConfiguration roi;
     };
 
+    ///
+    /// @brief Manual white balance specific configuration
+    ///
     struct ManualWhiteBalanceConfiguration
     {
+        ///
+        /// @brief The manual red white-balance setting
+        ///        Valid range is [0.25, 4]
+        ///
         float red = 1.0;
+
+        ///
+        /// @brief The manual blue white-balance setting
+        ///        Valid range is [0.25, 4]
+        ///
         float blue = 1.0;
     };
 
+    ///
+    /// @brief Auto white balance specific configuration
+    ///
     struct AutoWhiteBalanceConfiguration
     {
+        ///
+        /// @brief The decay rate used for auto-white-balance
+        ///        Valid range [0, 20]
+        ///
         uint32_t decay = 3;
+
+        ///
+        /// @brief The auto white balance threshold
+        ///        Valid range [0.0, 1.0]
+        ///
         float threshold = 0.5;
     };
 
+    ///
+    /// @brief Image specific configuration
+    ///
     struct ImageConfiguration
     {
+        ///
+        /// @brief Set the gamma correction for the image.
+        ///        Valid range [1.0, 2,2]
+        ///
         float gamma = 2.2;
+
+        ///
+        /// @brief Enable HDR. Note this is not supported by the default MultiSense firmware. Please contact
+        ///        support team (https://carnegierobotics.com/submitaticket) if you are interested in this feature
+        ///
         bool hdr_enabled = false;
 
+        ///
+        /// @brief Enable or disable auto exposure
+        ///
         bool auto_exposure_enabled = true;
+
+        ///
+        /// @brief The exposure config to use if auto exposure is disabled
+        ///
         ManualExposureConfiguration manual_exposure;
+
+        ///
+        /// @brief The exposure config to use if auto exposure is enabled
+        ///
         AutoExposureConfiguration auto_exposure;
 
+        ///
+        /// @brief Enable or disable auto white balance
+        ///
         bool auto_white_balance_enabled = true;
+
+        ///
+        /// @brief The white balance parameters to use if auto white balance is disabled
+        ///
         ManualWhiteBalanceConfiguration manual_white_balance;
+
+        ///
+        /// @brief The white balance parameters to use if auto white balance is enabled
+        ///
         AutoWhiteBalanceConfiguration auto_white_balance;
     };
 
+    ///
+    /// @brief Image specific configuration for the Aux imager
+    ///
     struct AuxConfiguration
     {
+        ///
+        /// @brief Image configuration for the Aux imager
+        ///
         ImageConfiguration image_config;
 
+        ///
+        /// @brief Enable sharpening
+        ///
         bool sharpening_enabled = false;
+
+        ///
+        /// @brief The percentage of the aux image to sharpen
+        ///        Valid range is [0, 100]
+        ///
         float sharpening_percentage = 50.0;
+
+        ///
+        ///
+        ///  @brief The maximum difference in pixels that sharpening is
+        ///         is allowed to change between neighboring pixels. This is useful for clamping
+        ///         the sharpening percentage, while still maintaining a large gain.
+        ///
         uint8_t sharpening_limit = 100;
     };
 
+    ///
+    /// @brief Predefined disparity pixel search windows. Larger values allows the camera to see objects
+    ///        closer to the camera
+    ///
+    enum class MaxDisparities
+    {
+        ///
+        /// @brief 64 pixels
+        ///
+        D64,
+        ///
+        /// @brief 128 pixels
+        ///
+        D128,
+        ///
+        /// @brief 256 pixels
+        ///
+        D256
+    };
+
+    ///
+    /// @brief The MultiSense operating width
+    ///
     uint32_t width = 960;
+
+    ///
+    /// @brief The MultiSense operating height
+    ///
     uint32_t height = 600;
-    int32_t disparities = 256;
+
+    ///
+    /// @brief The max number of pixels the MultiSense searches when computing the disparity output
+    ///
+    MaxDisparities disparities = MaxDisparities::D256;
+
+    ///
+    /// @brief The target framerate the MultiSense should operate at
+    ///
     float frames_per_second = 10;
 
+    ///
+    /// @brief The stereo configuration to use
+    ///
     StereoConfiguration stereo_config;
 
+    ///
+    /// @brief The image configuration to use for the main stereo pair
+    ///
     ImageConfiguration image_config;
 
+    ///
+    /// @brief The image configuration to use for the aux camera if present
+    ///
     std::optional<AuxConfiguration> aux_config = std::nullopt;
 };
 

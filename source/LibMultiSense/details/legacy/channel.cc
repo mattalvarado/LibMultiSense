@@ -34,6 +34,7 @@
  *   2024-12-24, malvarado@carnegierobotics.com, IRAD, Created file.
  **/
 
+#include <arpa/inet.h>
 #include <cstring>
 #include <iostream>
 
@@ -491,7 +492,6 @@ bool LegacyChannel::set_device_info(const DeviceInfo &device_info, const std::st
                 m_device_info = new_device_info.value();
                 return true;
             }
-
         }
     }
 
@@ -503,14 +503,15 @@ bool LegacyChannel::set_mtu(uint16_t mtu)
     using namespace crl::multisense::details;
 
     if (const auto test_mtu = wait_for_data<wire::SysTestMtuResponse>(m_message_assembler,
-                                                                  m_socket,
-                                                                  wire::SysTestMtu(mtu),
-                                                                  m_transmit_id++,
-                                                                  m_current_mtu,
-                                                                  m_config.receive_timeout); !test_mtu)
+                                                                      m_socket,
+                                                                      wire::SysTestMtu(mtu),
+                                                                      m_transmit_id++,
+                                                                      m_current_mtu,
+                                                                      m_config.receive_timeout); !test_mtu)
     {
         CRL_DEBUG("Testing MTU of %u bytes failed."
-                  " Please verify you can ping the MultiSense with a MTU of %u bytes.\n", mtu, mtu);
+                  " Please verify you can ping the MultiSense with a MTU of %u bytes at %s.\n",
+                  mtu, mtu, inet_ntoa(m_socket.sensor_address->sin_addr));
         return false;
     }
 
@@ -546,10 +547,12 @@ bool LegacyChannel::set_mtu(const std::optional<uint16_t> &mtu)
         {
             if (const auto ret = set_mtu(value); ret)
             {
+                CRL_DEBUG("Auto-setting MTU to %u bytes \n", value);
                 return ret;
             }
         }
-        CRL_DEBUG("Unable to find a MTU that works for the camera\n");
+        CRL_DEBUG("Unable to find a MTU that works with the MultiSense. "
+                  "Please verify you can ping the MultiSense at %s\n", inet_ntoa(m_socket.sensor_address->sin_addr));
     }
 
     return false;

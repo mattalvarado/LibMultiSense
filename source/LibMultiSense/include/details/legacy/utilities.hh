@@ -44,6 +44,9 @@
 namespace multisense{
 namespace legacy{
 
+///
+/// @brief All the supported wire source types created for convenience
+///
 constexpr crl::multisense::details::wire::SourceType all_sources = {
     crl::multisense::details::wire::SOURCE_LUMA_LEFT |
     crl::multisense::details::wire::SOURCE_LUMA_RIGHT |
@@ -61,8 +64,14 @@ constexpr crl::multisense::details::wire::SourceType all_sources = {
     crl::multisense::details::wire::SOURCE_DISPARITY_COST
 };
 
+///
+/// @brief Convert wire sources to a vector of DataSources
+///
 std::vector<DataSource> convert_sources(const crl::multisense::details::wire::SourceType &source);
 
+///
+/// @brief Convert a vector of DataSources to a wire source
+///
 crl::multisense::details::wire::SourceType convert_sources(const std::vector<DataSource> &sources);
 
 ///

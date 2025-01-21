@@ -294,6 +294,12 @@ PYBIND11_MODULE(libmultisense, m) {
         .def_readwrite("sharpening_percentage", &multisense::MultiSenseConfiguration::AuxConfiguration::sharpening_percentage)
         .def_readwrite("sharpening_limit", &multisense::MultiSenseConfiguration::AuxConfiguration::sharpening_limit);
 
+    // MultiSenseConfiguration::MaxDisparities
+    py::enum_<multisense::MultiSenseConfiguration::MaxDisparities>(m, "MaxDisparities")
+        .value("D64", multisense::MultiSenseConfiguration::MaxDisparities::D64)
+        .value("D128", multisense::MultiSenseConfiguration::MaxDisparities::D128)
+        .value("D256", multisense::MultiSenseConfiguration::MaxDisparities::D256);
+
     // MultiSenseConfiguration
     py::class_<multisense::MultiSenseConfiguration>(m, "MultiSenseConfiguration")
         .def(py::init<>())

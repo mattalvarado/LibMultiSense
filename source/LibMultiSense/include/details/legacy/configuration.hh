@@ -53,8 +53,14 @@
 namespace multisense {
 namespace legacy {
 
+///
+/// @brief Convert a wire AuxCameraConfiuration to our AuxConfiguration API
+///
 MultiSenseConfiguration::AuxConfiguration convert(const crl::multisense::details::wire::AuxCamConfig &aux_config);
 
+///
+/// @brief Convert wire Cam and Aux config object to our MultiSenseConfiguration
+///
 MultiSenseConfiguration convert(const crl::multisense::details::wire::CamConfig &config,
                                 const std::optional<crl::multisense::details::wire::AuxCamConfig> &aux_config);
 
@@ -64,6 +70,9 @@ MultiSenseConfiguration convert(const crl::multisense::details::wire::CamConfig 
 template <typename T>
 T convert(const MultiSenseConfiguration &config);
 
+//
+// @brief Convert our AuxConfiguration object to a wire AuxControl message
+//
 crl::multisense::details::wire::AuxCamControl convert(const MultiSenseConfiguration::AuxConfiguration &config);
 
 }

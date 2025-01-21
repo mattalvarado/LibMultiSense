@@ -48,10 +48,18 @@ namespace multisense {
 namespace legacy {
 
 ///
+/// @brief Check if the CameraCalData object is valid
+///
+bool is_valid(const crl::multisense::details::wire::CameraCalData &cal);
+
+///
 /// @brief Convert a wire calibration to our API calibration object
 ///
 CameraCalibration convert(const crl::multisense::details::wire::CameraCalData &cal);
 
+///
+/// @brief Convert our API calibration object to a wire message
+///
 crl::multisense::details::wire::CameraCalData convert(const CameraCalibration &cal);
 
 ///

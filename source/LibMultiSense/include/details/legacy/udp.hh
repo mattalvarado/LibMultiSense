@@ -45,6 +45,9 @@
 namespace multisense{
 namespace legacy{
 
+///
+/// @brief Convenience network socket object which contains the data corresponding to our connection
+///
 struct NetworkSocket
 {
     std::unique_ptr<sockaddr_in> sensor_address = nullptr;
@@ -52,10 +55,21 @@ struct NetworkSocket
     uint16_t server_socket_port = 0;
 };
 
+///
+/// @brief Convenience object which receives data from a UDP socket and dispatches to a user defined callback.
+///        This object internally manages a single receive thread which is used to read data off the socket, and
+///        dispatch to the user callback. Note that the dispatch is serial with the UDP receive commands, so
+///        blocking callbacks will cause data to be dropped
+///
 class UdpReceiver
 {
 public:
 
+    ///
+    /// @brief Construct a UDP receiver for a given socket, and call a user callback whenever there is data
+    ///        available. The max_mtu will be the size of the internal buffer used to read data from the
+    ///        socket
+    ///
     UdpReceiver(const NetworkSocket &socket,
                 size_t max_mtu,
                 std::function<void(const std::vector<uint8_t>&)> receive_callback);
@@ -64,21 +78,51 @@ public:
 
 private:
 
+    ///
+    /// @brief The rx thread function which is receives UDP data
+    ///
     void rx_thread();
 
+    ///
+    /// @brief The internal socket which UDP data is receive on
+    ///
     socket_t m_socket;
+
+    ///
+    /// @brief The host machine UDP port which data is received on
+    ///
     uint16_t m_socket_port = 0;
 
+    ///
+    /// @brief The rx_thread object which is spawned on construction
+    ///
     std::thread m_rx_thread;
+
+    ///
+    /// @brief Atomic flag to stop the rx_tread on destruction
+    ///
     std::atomic_bool m_stop{false};
 
+    ///
+    /// @brief The amount of data to read off the socket during each read operation
+    ///
     size_t m_max_mtu = 0;
+
+    ///
+    /// @brief Internal buffer used to write incoming UDP data into
+    ///
     std::vector<uint8_t> m_incoming_buffer;
 
+    ///
+    /// @brief User specified callback which is called once UDP data is received
+    ///
     std::function<void(const std::vector<uint8_t>&)> m_receive_callback;
 };
 
 
+///
+/// @brief Convenience function used to user specified data out on the host's UDP socket
+///
 int64_t publish_data(const NetworkSocket &socket, const std::vector<uint8_t> &data);
 
 }

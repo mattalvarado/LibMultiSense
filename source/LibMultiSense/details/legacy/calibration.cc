@@ -39,6 +39,20 @@
 namespace multisense {
 namespace legacy {
 
+bool is_valid(const crl::multisense::details::wire::CameraCalData &cal)
+{
+    //
+    // Do a crude check the un-rectified focal length image center and distortion values. If these values
+    // are zero, then the cal is invalid
+    //
+    if (cal.M[0][0] < 0.1 || cal.M[0][2] < 0.1 || cal.M[1][1] < 0.1 || cal.M[1][2] < 0.1 || cal.D[0] < 1e-10)
+    {
+        return false;
+    }
+
+    return true;
+}
+
 CameraCalibration convert(const crl::multisense::details::wire::CameraCalData &cal)
 {
     const auto distortion_type = (cal.D[5] == 0.f && cal.D[6] == 0.f && cal.D[7] == 0.f) ?
@@ -95,7 +109,11 @@ StereoCalibration convert(const crl::multisense::details::wire::SysCameraCalibra
 
     output.left = convert(cal.left);
     output.right = convert(cal.right);
-    output.aux = convert(cal.aux);
+
+    if (is_valid(cal.aux))
+    {
+        output.aux = convert(cal.aux);
+    }
 
     return output;
 }
@@ -108,7 +126,18 @@ crl::multisense::details::wire::SysCameraCalibration convert(const StereoCalibra
 
     output.left = convert(cal.left);
     output.right = convert(cal.right);
-    output.aux = convert(cal.aux);
+
+    if (cal.aux)
+    {
+        output.aux = convert(cal.aux.value());
+    }
+    else
+    {
+        memset(output.aux.M, 0, sizeof(float) * 3 * 3);
+        memset(output.aux.D, 0, sizeof(float) * 8);
+        memset(output.aux.R, 0, sizeof(float) * 3 * 3);
+        memset(output.aux.P, 0, sizeof(float) * 3 * 4);
+    }
 
     return output;
 }
@@ -141,7 +170,11 @@ CameraCalibration select_calibration(const StereoCalibration &input, const DataS
         case DataSource::AUX_CHROMA_RAW:
         case DataSource::AUX_CHROMA_RECTIFIED_RAW:
         {
-            return input.aux;
+            if (!input.aux)
+            {
+                CRL_EXCEPTION("Input source corresponds to invalid aux calibration");
+            }
+            return input.aux.value();
         }
         default: {CRL_EXCEPTION("Input source does not correspond to a image calibration");}
     }
@@ -171,7 +204,10 @@ StereoCalibration scale_calibration(const StereoCalibration &input, double x_sca
 
     output.left = scale_calibration(input.left, x_scale, y_scale);
     output.right = scale_calibration(input.right, x_scale, y_scale);
-    output.aux = scale_calibration(input.aux, x_scale, y_scale);
+    if (input.aux)
+    {
+        output.aux = scale_calibration(input.aux.value(), x_scale, y_scale);
+    }
 
     return output;
 }

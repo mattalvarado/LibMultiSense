@@ -36,33 +36,65 @@
 
 #include <algorithm>
 
+#include <utility/Exception.hh>
+
 #include "details/legacy/storage.hh"
 
 namespace multisense{
 namespace legacy{
 
+namespace {
+    constexpr size_t NUM_ALLOCATION_RETRIES = 5;
+}
+
 BufferPool::BufferPool(const BufferPoolConfig &config):
     m_config(config)
 {
+
     for (size_t i = 0 ; i < config.num_small_buffers ; ++i)
     {
-        auto small_buffer = std::make_shared<std::vector<uint8_t>>();
-        small_buffer->reserve(config.small_buffer_size);
-        m_small_buffers.emplace_back(std::move(small_buffer));
+        for (size_t t = 0; t < NUM_ALLOCATION_RETRIES ; ++t)
+        {
+            try
+            {
+                auto small_buffer = std::make_shared<std::vector<uint8_t>>();
+                small_buffer->reserve(config.small_buffer_size);
+                m_small_buffers.emplace_back(std::move(small_buffer));
+                break;
+            }
+            catch(const std::exception &e)
+            {
+                CRL_DEBUG("Failed to allocate small buffer. Retrying\n");
+            }
+        }
     }
 
     for (size_t i = 0 ; i < config.num_large_buffers ; ++i)
     {
-        auto large_buffer = std::make_shared<std::vector<uint8_t>>();
-        large_buffer->reserve(config.large_buffer_size);
-        m_large_buffers.emplace_back(std::move(large_buffer));
+        for (size_t t = 0; t < NUM_ALLOCATION_RETRIES ; ++t)
+        {
+            try
+            {
+                auto large_buffer = std::make_shared<std::vector<uint8_t>>();
+                large_buffer->reserve(config.large_buffer_size);
+                m_large_buffers.emplace_back(std::move(large_buffer));
+                break;
+            }
+            catch(const std::exception &e)
+            {
+                CRL_DEBUG("Failed to allocate large buffer\n");
+            }
+        }
+    }
+
+    if (m_small_buffers.size() != config.num_small_buffers || m_large_buffers.size() != config.num_large_buffers)
+    {
+        CRL_EXCEPTION("Failed to allocate buffers");
     }
 }
 
 std::shared_ptr<std::vector<uint8_t>> BufferPool::get_buffer(size_t target_size)
 {
-    std::lock_guard<std::mutex> lock(m_mutex);
-
     if (target_size <= m_config.small_buffer_size)
     {
         const auto &small_buffer = std::find_if(std::begin(m_small_buffers), std::end(m_small_buffers),

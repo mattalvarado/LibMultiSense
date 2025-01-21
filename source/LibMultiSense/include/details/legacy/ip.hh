@@ -74,6 +74,9 @@ namespace legacy{
     typedef int32_t socket_t;
 #endif
 
+///
+/// @brief Create a socketaddr_in object for a given IP address and port
+///
 std::unique_ptr<sockaddr_in> get_sockaddr(const std::string &ip_address, uint16_t command_port);
 
 ///
