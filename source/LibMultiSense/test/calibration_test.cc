@@ -40,7 +40,7 @@
 
 using namespace multisense::legacy;
 
-crl::multisense::details::wire::CameraCalData create_valid_wire_cal(float fx, float fy, float cx, float cy)
+crl::multisense::details::wire::CameraCalData create_valid_wire_cal(float fx, float fy, float cx, float cy, float tx)
 {
     using namespace crl::multisense::details;
 
@@ -70,6 +70,7 @@ crl::multisense::details::wire::CameraCalData create_valid_wire_cal(float fx, fl
 
     cal.P[0][0] = fx;
     cal.P[0][2] = cx;
+    cal.P[0][2] = fx * tx;
     cal.P[1][1] = fy;
     cal.P[1][2] = cy;
     cal.P[2][2] = 1.0;
@@ -90,27 +91,16 @@ crl::multisense::details::wire::CameraCalData create_invalid_wire_cal()
     return cal;
 }
 
-multisense::CameraCalibration create_valid_cal(float fx, float fy, float cx, float cy)
+multisense::CameraCalibration create_valid_cal(float fx, float fy, float cx, float cy, float tx)
 {
     multisense::CameraCalibration cal;
 
     cal.K = {{{fx, 0.0, cx}, {0.0, fy, cy}, {0.0, 0.0, 1.0}}};
     cal.R = {{{1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}}};
-    cal.P = {{{fx, 0.0, cx, 0.0}, {0.0, fy, cy, 0.0}, {0.0, 0.0, 1.0, 0.0}}};
+    cal.P = {{{fx, 0.0, cx, fx * tx}, {0.0, fy, cy, 0.0}, {0.0, 0.0, 1.0, 0.0}}};
 
     cal.distortion_type = multisense::CameraCalibration::DistortionType::RATIONAL_POLYNOMIAL;
     cal.D = {1.0, 0.1, 0.2, 0.3, 0.4, 5.1, 6.2, 7.3};
-
-    return cal;
-}
-
-multisense::CameraCalibration create_invalid_cal()
-{
-    multisense::CameraCalibration cal;
-    memset(&cal.K[0][0], 0, sizeof(float) * 9);
-    memset(&cal.R[0][0], 0, sizeof(float) * 9);
-    memset(&cal.P[0][0], 0, sizeof(float) * 12);
-    memset(&cal.D[0], 0, sizeof(float) * 8);
 
     return cal;
 }
@@ -121,8 +111,8 @@ void check_equal(const crl::multisense::details::wire::CameraCalData &wire, cons
     {
         for (size_t w = 0 ; w < 3 ; ++w)
         {
-            ASSERT_DOUBLE_EQ(wire.M[h][w], cal.K[h][w]);
-            ASSERT_DOUBLE_EQ(wire.R[h][w], cal.R[h][w]);
+            ASSERT_FLOAT_EQ(wire.M[h][w], cal.K[h][w]);
+            ASSERT_FLOAT_EQ(wire.R[h][w], cal.R[h][w]);
         }
     }
 
@@ -130,15 +120,41 @@ void check_equal(const crl::multisense::details::wire::CameraCalData &wire, cons
     {
         for (size_t w = 0 ; w < 4 ; ++w)
         {
-            ASSERT_DOUBLE_EQ(wire.P[h][w], cal.P[h][w]);
+            ASSERT_FLOAT_EQ(wire.P[h][w], cal.P[h][w]);
         }
     }
 
     for (size_t i = 0 ; i < cal.D.size() ; ++i)
     {
-        ASSERT_DOUBLE_EQ(wire.D[i], cal.D[i]);
+        ASSERT_FLOAT_EQ(wire.D[i], cal.D[i]);
     }
 }
+
+void check_equal(const multisense::CameraCalibration &lhs, const multisense::CameraCalibration &rhs)
+{
+    for (size_t h = 0 ; h < 3 ; ++h)
+    {
+        for (size_t w = 0 ; w < 3 ; ++w)
+        {
+            ASSERT_FLOAT_EQ(lhs.K[h][w], rhs.K[h][w]);
+            ASSERT_FLOAT_EQ(lhs.R[h][w], rhs.R[h][w]);
+        }
+    }
+
+    for (size_t h = 0 ; h < 3 ; ++h)
+    {
+        for (size_t w = 0 ; w < 4 ; ++w)
+        {
+            ASSERT_FLOAT_EQ(lhs.P[h][w], rhs.P[h][w]);
+        }
+    }
+
+    for (size_t i = 0 ; i < rhs.D.size() ; ++i)
+    {
+        ASSERT_FLOAT_EQ(lhs.D[i], rhs.D[i]);
+    }
+}
+
 
 TEST(is_valid, invalid)
 {
@@ -152,19 +168,19 @@ TEST(is_valid, valid)
 {
     using namespace crl::multisense::details;
 
-    ASSERT_TRUE(is_valid(create_valid_wire_cal(800.0, 800.0, 400.0, 200.0)));
+    ASSERT_TRUE(is_valid(create_valid_wire_cal(800.0, 800.0, 400.0, 200.0, 0.2)));
 }
 
 TEST(convert, cal_to_wire)
 {
-    const auto cal = create_valid_cal(800.0, 800.0, 400.0, 200.0);
+    const auto cal = create_valid_cal(800.0, 800.0, 400.0, 200.0, -0.2);
 
     check_equal(convert(cal), cal);
 }
 
 TEST(convert, wire_to_cal)
 {
-    const auto cal = create_valid_wire_cal(800.0, 800.0, 400.0, 200.0);
+    const auto cal = create_valid_wire_cal(800.0, 800.0, 400.0, 200.0, -0.2);
 
     check_equal(cal, convert(cal));
 }
@@ -174,9 +190,9 @@ TEST(convert, wire_to_stereo_valid_axu)
     using namespace crl::multisense::details;
 
     wire::SysCameraCalibration wire;
-    wire.left = create_valid_wire_cal(800.0, 8001.0, 300.0, 200.0);
-    wire.right = create_valid_wire_cal(801.0, 8001.0, 300.0, 200.0);
-    wire.aux = create_valid_wire_cal(802.0, 8001.0, 300.0, 200.0);
+    wire.left = create_valid_wire_cal(800.0, 8001.0, 300.0, 200.0, -0.2);
+    wire.right = create_valid_wire_cal(801.0, 8001.0, 300.0, 200.0, -0.2);
+    wire.aux = create_valid_wire_cal(802.0, 8001.0, 300.0, 200.0, -0.2);
 
     auto stereo = convert(wire);
 
@@ -192,8 +208,8 @@ TEST(convert, wire_to_stereo_invalid_axu)
     using namespace crl::multisense::details;
 
     wire::SysCameraCalibration wire;
-    wire.left = create_valid_wire_cal(800.0, 8001.0, 300.0, 200.0);
-    wire.right = create_valid_wire_cal(801.0, 8001.0, 300.0, 200.0);
+    wire.left = create_valid_wire_cal(800.0, 8001.0, 300.0, 200.0, -0.2);
+    wire.right = create_valid_wire_cal(801.0, 8001.0, 300.0, 200.0, -0.2);
     wire.aux = create_invalid_wire_cal();
 
     auto stereo = convert(wire);
@@ -202,4 +218,195 @@ TEST(convert, wire_to_stereo_invalid_axu)
     check_equal(wire.right, stereo.right);
 
     ASSERT_FALSE(static_cast<bool>(stereo.aux));
+}
+
+TEST(convert, stereo_to_wire_valid_axu)
+{
+    using namespace crl::multisense::details;
+
+    const multisense::StereoCalibration cal{create_valid_cal(800.0, 8001.0, 300.0, 200.0, -0.2),
+                                            create_valid_cal(801.0, 8001.0, 300.0, 200.0, -0.2),
+                                            create_valid_cal(802.0, 8001.0, 300.0, 200.0, -0.2)};
+
+    auto wire = convert(cal);
+
+    check_equal(wire.left, cal.left);
+    check_equal(wire.right, cal.right);
+    check_equal(wire.aux, cal.aux.value());
+}
+
+TEST(convert, stereo_to_wire_invalid_aux)
+{
+    using namespace crl::multisense::details;
+
+    const multisense::StereoCalibration cal{create_valid_cal(800.0, 8001.0, 300.0, 200.0, -0.2),
+                                            create_valid_cal(801.0, 8001.0, 300.0, 200.0, -0.2),
+                                            std::nullopt};
+
+    auto wire = convert(cal);
+
+    check_equal(wire.left, cal.left);
+    check_equal(wire.right, cal.right);
+}
+
+TEST(convert, select_calibration_valid_aux)
+{
+    using namespace multisense;
+
+    const multisense::StereoCalibration cal{create_valid_cal(800.0, 8001.0, 300.0, 200.0, -0.2),
+                                            create_valid_cal(801.0, 8001.0, 300.0, 200.0, -0.2),
+                                            create_valid_cal(802.0, 8001.0, 300.0, 200.0, -0.2)};
+
+    const auto left_sources = {DataSource::LEFT_MONO_RAW,
+                               DataSource::LEFT_MONO_COMPRESSED,
+                               DataSource::LEFT_RECTIFIED_RAW,
+                               DataSource::LEFT_RECTIFIED_COMPRESSED,
+                               DataSource::LEFT_DISPARITY_RAW,
+                               DataSource::LEFT_DISPARITY_COMPRESSED,
+                               DataSource::COST_RAW};
+
+    const auto right_sources = {DataSource::RIGHT_MONO_RAW,
+                                DataSource::RIGHT_MONO_COMPRESSED,
+                                DataSource::RIGHT_RECTIFIED_RAW,
+                                DataSource::RIGHT_RECTIFIED_COMPRESSED};
+
+    const auto aux_sources = {DataSource::AUX_COMPRESSED,
+                              DataSource::AUX_RECTIFIED_COMPRESSED,
+                              DataSource::AUX_LUMA_RAW,
+                              DataSource::AUX_LUMA_RECTIFIED_RAW,
+                              DataSource::AUX_CHROMA_RAW,
+                              DataSource::AUX_CHROMA_RECTIFIED_RAW};
+
+    for (const auto &left: left_sources)
+    {
+        const auto cam_cal = select_calibration(cal, left);
+        check_equal(cam_cal, cal.left);
+    }
+
+    for (const auto &right: right_sources)
+    {
+        const auto cam_cal = select_calibration(cal, right);
+        check_equal(cam_cal, cal.right);
+    }
+
+    for (const auto &aux: aux_sources)
+    {
+        const auto cam_cal = select_calibration(cal, aux);
+        check_equal(cam_cal, cal.aux.value());
+    }
+}
+
+TEST(convert, select_calibration_invalid_aux)
+{
+    using namespace multisense;
+
+    const multisense::StereoCalibration cal{create_valid_cal(800.0, 8001.0, 300.0, 200.0, -0.2),
+                                            create_valid_cal(801.0, 8001.0, 300.0, 200.0, -0.2),
+                                            std::nullopt};
+
+    const auto left_sources = {DataSource::LEFT_MONO_RAW,
+                               DataSource::LEFT_MONO_COMPRESSED,
+                               DataSource::LEFT_RECTIFIED_RAW,
+                               DataSource::LEFT_RECTIFIED_COMPRESSED,
+                               DataSource::LEFT_DISPARITY_RAW,
+                               DataSource::LEFT_DISPARITY_COMPRESSED,
+                               DataSource::COST_RAW};
+
+    const auto right_sources = {DataSource::RIGHT_MONO_RAW,
+                                DataSource::RIGHT_MONO_COMPRESSED,
+                                DataSource::RIGHT_RECTIFIED_RAW,
+                                DataSource::RIGHT_RECTIFIED_COMPRESSED};
+
+    const auto aux_sources = {DataSource::AUX_COMPRESSED,
+                              DataSource::AUX_RECTIFIED_COMPRESSED,
+                              DataSource::AUX_LUMA_RAW,
+                              DataSource::AUX_LUMA_RECTIFIED_RAW,
+                              DataSource::AUX_CHROMA_RAW,
+                              DataSource::AUX_CHROMA_RECTIFIED_RAW};
+
+    for (const auto &left: left_sources)
+    {
+        const auto cam_cal = select_calibration(cal, left);
+        check_equal(cam_cal, cal.left);
+    }
+
+    for (const auto &right: right_sources)
+    {
+        const auto cam_cal = select_calibration(cal, right);
+        check_equal(cam_cal, cal.right);
+    }
+
+    for (const auto &aux: aux_sources)
+    {
+        ASSERT_THROW(select_calibration(cal, aux), std::exception);
+    }
+}
+
+TEST(scale_calibration, scale)
+{
+    const auto cal = create_valid_cal(800.0, 8001.0, 300.0, 200.0, -0.2);
+    const auto scaled = scale_calibration(cal, 0.1, 0.2);
+
+    check_equal(scaled, create_valid_cal(80.0, 1600.2, 30.0, 40.0, -0.2));
+}
+
+TEST(scale_calibration, round_trip)
+{
+    const auto cal = create_valid_cal(800.0, 8001.0, 300.0, 200.0, -0.2);
+
+    check_equal(cal, scale_calibration(scale_calibration(cal, 0.25, 0.1), 4.0, 10.0));
+}
+
+TEST(scale_calibration, scale_valid_aux)
+{
+    const multisense::StereoCalibration cal{create_valid_cal(800.0, 8001.0, 300.0, 200.0, -0.2),
+                                            create_valid_cal(801.0, 8001.0, 300.0, 200.0, -0.2),
+                                            create_valid_cal(802.0, 8001.0, 300.0, 200.0, -0.2)};
+
+    const auto scaled = scale_calibration(cal, 0.1, 0.2);
+
+    check_equal(scaled.left, create_valid_cal(80.0, 1600.2, 30.0, 40.0, -0.2));
+    check_equal(scaled.right, create_valid_cal(80.1, 1600.2, 30.0, 40.0, -0.2));
+    ASSERT_TRUE(static_cast<bool>(scaled.aux));
+    check_equal(scaled.aux.value(), create_valid_cal(80.2, 1600.2, 30.0, 40.0, -0.2));
+}
+
+TEST(scale_calibration, round_trip_valid_aux)
+{
+    const multisense::StereoCalibration cal{create_valid_cal(800.0, 8001.0, 300.0, 200.0, -0.2),
+                                            create_valid_cal(801.0, 8001.0, 300.0, 200.0, -0.2),
+                                            std::nullopt};
+
+    const auto scaled = scale_calibration(cal, 0.1, 0.2);
+
+    check_equal(scaled.left, create_valid_cal(80.0, 1600.2, 30.0, 40.0, -0.2));
+    check_equal(scaled.right, create_valid_cal(80.1, 1600.2, 30.0, 40.0, -0.2));
+    ASSERT_FALSE(static_cast<bool>(scaled.aux));
+}
+
+TEST(scale_calibration, scale_invalid_aux)
+{
+    const multisense::StereoCalibration cal{create_valid_cal(800.0, 8001.0, 300.0, 200.0, -0.2),
+                                            create_valid_cal(801.0, 8001.0, 300.0, 200.0, -0.2),
+                                            create_valid_cal(802.0, 8001.0, 300.0, 200.0, -0.2)};
+
+    const auto round_trip = scale_calibration(scale_calibration(cal, 0.1, 0.2), 10.0, 5.0);
+
+    check_equal(round_trip.left, cal.left);
+    check_equal(round_trip.right, cal.right);
+    ASSERT_TRUE(static_cast<bool>(round_trip.aux));
+    check_equal(round_trip.aux.value(), cal.aux.value());
+}
+
+TEST(scale_calibration, round_trip_invalid_aux)
+{
+    const multisense::StereoCalibration cal{create_valid_cal(800.0, 8001.0, 300.0, 200.0, -0.2),
+                                            create_valid_cal(801.0, 8001.0, 300.0, 200.0, -0.2),
+                                            std::nullopt};
+
+    const auto round_trip = scale_calibration(scale_calibration(cal, 0.1, 0.2), 10.0, 5.0);
+
+    check_equal(round_trip.left, cal.left);
+    check_equal(round_trip.right, cal.right);
+    ASSERT_FALSE(static_cast<bool>(round_trip.aux));
 }
