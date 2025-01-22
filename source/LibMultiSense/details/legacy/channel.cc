@@ -229,7 +229,10 @@ bool LegacyChannel::connect(const ChannelConfig &config)
     m_udp_receiver = std::make_unique<UdpReceiver>(m_socket, MAX_MTU,
                                                    [this](const std::vector<uint8_t>& data)
                                                    {
-                                                       this->m_message_assembler.process_packet(data);
+                                                       if (!this->m_message_assembler.process_packet(data))
+                                                       {
+                                                           CRL_DEBUG("Processing packet of %li bytes failed", data.size());
+                                                       }
                                                    });
     //
     // Set the user requested MTU

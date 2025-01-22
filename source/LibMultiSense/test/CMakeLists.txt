@@ -1,8 +1,10 @@
 find_package(GTest REQUIRED)
 
 set(TEST_NAMES
+    calibration_test
     message_test
-    storage_test)
+    storage_test
+    utilities_test)
 
 foreach(TEST_NAME ${TEST_NAMES})
     add_executable(${TEST_NAME} ${TEST_NAME}.cc)

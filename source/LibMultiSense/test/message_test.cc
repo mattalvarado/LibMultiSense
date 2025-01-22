@@ -38,6 +38,8 @@
 
 #include <details/legacy/message.hh>
 
+#include <wire/SysDeviceInfoMessage.hh>
+
 using namespace multisense::legacy;
 
 TEST(unwrap_sequence_id, null)
@@ -70,4 +72,269 @@ TEST(unwrap_sequence_id, rollover)
     const auto full_sequence_id = unwrap_sequence_id(0, 65535);
 
     EXPECT_EQ(full_sequence_id, 65536);
+}
+
+TEST(get_message_type, basic)
+{
+    using namespace crl::multisense::details;
+
+    wire::SysDeviceInfo info{};
+
+    auto serialized = serialize(info, 10, 9000);
+
+    const auto type = get_message_type(serialized);
+
+    ASSERT_EQ(type, wire::SysDeviceInfo::ID);
+}
+
+TEST(seralize_deseralize, roundtrip)
+{
+    using namespace crl::multisense::details;
+
+    wire::SysDeviceInfo info{};
+    info.name = "test";
+    info.numberOfPcbs = 0;
+    info.motorName = "bar";
+
+    auto serialized = serialize(info, 10, 9000);
+
+    //
+    // Remove the wire::Header we added for the MultiSense
+    //
+    serialized.erase(std::begin(serialized), std::begin(serialized) + sizeof(wire::Header));
+
+
+    const auto round_trip = deserialize<wire::SysDeviceInfo>(serialized);
+
+    ASSERT_EQ(round_trip.name, info.name);
+    ASSERT_EQ(round_trip.numberOfPcbs, info.numberOfPcbs);
+    ASSERT_EQ(round_trip.motorName, info.motorName);
+}
+
+TEST(MessageAssembler, process_notify_wait_for)
+{
+    using namespace crl::multisense::details;
+    using namespace std::chrono_literals;
+
+    wire::SysDeviceInfo info{};
+    info.name = "test";
+    auto serialized = serialize(info, 10, 9000);
+
+    MessageAssembler assembler{std::make_shared<BufferPool>(BufferPoolConfig{10, 9000, 2, 100000})};
+    auto registration = assembler.register_message(wire::SysDeviceInfo::ID);
+    ASSERT_TRUE(assembler.process_packet(serialized));
+
+    const auto output = registration->wait_for<wire::SysDeviceInfo>(500ms);
+
+    ASSERT_TRUE(static_cast<bool>(output));
+
+    ASSERT_EQ(output->name, info.name);
+}
+
+
+TEST(MessageAssembler, process_notify_wait)
+{
+    using namespace crl::multisense::details;
+    using namespace std::chrono_literals;
+
+    wire::SysDeviceInfo info{};
+    info.name = "test_wait";
+    auto serialized = serialize(info, 10, 9000);
+
+    MessageAssembler assembler{std::make_shared<BufferPool>(BufferPoolConfig{10, 9000, 2, 100000})};
+    auto registration = assembler.register_message(wire::SysDeviceInfo::ID);
+    ASSERT_TRUE(assembler.process_packet(serialized));
+
+    const auto output = registration->wait<wire::SysDeviceInfo>();
+
+    ASSERT_EQ(output.name, info.name);
+}
+
+TEST(MessageAssembler, process_notify_wait_for_multi_registrations)
+{
+    using namespace crl::multisense::details;
+    using namespace std::chrono_literals;
+
+    wire::SysDeviceInfo info{};
+    info.name = "test";
+    auto serialized = serialize(info, 10, 9000);
+
+    MessageAssembler assembler{std::make_shared<BufferPool>(BufferPoolConfig{10, 9000, 2, 100000})};
+    auto registration0 = assembler.register_message(wire::SysDeviceInfo::ID);
+    auto registration1 = assembler.register_message(wire::SysDeviceInfo::ID);
+    ASSERT_TRUE(assembler.process_packet(serialized));
+
+    const auto output0 = registration0->wait_for<wire::SysDeviceInfo>(500ms);
+    const auto output1 = registration1->wait_for<wire::SysDeviceInfo>(500ms);
+
+    ASSERT_TRUE(static_cast<bool>(output0));
+    ASSERT_TRUE(static_cast<bool>(output1));
+
+    ASSERT_EQ(output0->name, info.name);
+    ASSERT_EQ(output1->name, info.name);
+}
+
+TEST(MessageAssembler, process_notify_remove_registration)
+{
+    using namespace crl::multisense::details;
+    using namespace std::chrono_literals;
+
+    wire::SysDeviceInfo info{};
+    info.name = "test";
+    auto serialized = serialize(info, 10, 9000);
+
+    MessageAssembler assembler{std::make_shared<BufferPool>(BufferPoolConfig{10, 9000, 2, 100000})};
+    auto registration = assembler.register_message(wire::SysDeviceInfo::ID);
+    assembler.remove_registration(wire::SysDeviceInfo::ID);
+    ASSERT_TRUE(assembler.process_packet(serialized));
+
+    //
+    // Since we don't have an active registration we should not get a valid message
+    //
+    const auto output = registration->wait_for<wire::SysDeviceInfo>(500ms);
+
+    ASSERT_FALSE(static_cast<bool>(output));
+}
+
+TEST(MessageAssembler, process_callback)
+{
+    using namespace crl::multisense::details;
+    using namespace std::chrono_literals;
+
+    wire::SysDeviceInfo info{};
+    info.name = "test_callback";
+    auto serialized = serialize(info, 10, 9000);
+
+    //
+    // Our lambda should be called when the packet is processed
+    //
+    wire::SysDeviceInfo output;
+    MessageAssembler assembler{std::make_shared<BufferPool>(BufferPoolConfig{10, 9000, 2, 100000})};
+    assembler.register_callback(wire::SysDeviceInfo::ID,
+                               [&output](const auto &data)
+                               {
+                                   output = deserialize<wire::SysDeviceInfo>(*data);
+                               });
+    ASSERT_TRUE(assembler.process_packet(serialized));
+
+    ASSERT_EQ(output.name, info.name);
+
+    //
+    // Remove our callback and make sure our output does not get updated
+    //
+    assembler.remove_callback(wire::SysDeviceInfo::ID);
+
+    info.name = "test_callback_new";
+    serialized = serialize(info, 11, 9000);
+    ASSERT_TRUE(assembler.process_packet(serialized));
+
+    ASSERT_NE(output.name, info.name);
+}
+
+TEST(MessageAssembler, use_all_buffers)
+{
+    using namespace crl::multisense::details;
+    using namespace std::chrono_literals;
+
+    wire::SysDeviceInfo info{};
+    info.name = "test_callback";
+    auto serialized = serialize(info, 10, 9000);
+
+    //
+    // Our lambda should be called when the packet is processed
+    //
+    std::vector<std::shared_ptr<const std::vector<uint8_t>>> outputs;
+    MessageAssembler assembler{std::make_shared<BufferPool>(BufferPoolConfig{2, 9000, 1, 100000})};
+    assembler.register_callback(wire::SysDeviceInfo::ID,
+                               [&outputs](const auto data)
+                               {
+                                   outputs.push_back(data);
+                               });
+    ASSERT_TRUE(assembler.process_packet(serialized));
+    ASSERT_TRUE(assembler.process_packet(serialized));
+
+    //
+    // At this point we should be out of our small buffers
+    //
+    ASSERT_FALSE(assembler.process_packet(serialized));
+}
+
+TEST(MessageAssembler, invalid_message)
+{
+    using namespace crl::multisense::details;
+    using namespace std::chrono_literals;
+
+    wire::SysDeviceInfo info{};
+    info.name = "test_callback";
+    auto serialized = serialize(info, 10, 9000);
+
+    //
+    // Mess up our message
+    //
+    serialized[0] = 123;
+
+    MessageAssembler assembler{std::make_shared<BufferPool>(BufferPoolConfig{2, 9000, 1, 100000})};
+
+    //
+    // Processing should return false
+    //
+    ASSERT_FALSE(assembler.process_packet(serialized));
+    ASSERT_FALSE(assembler.process_packet(std::vector<uint8_t>{}));
+}
+
+TEST(MessageAssembler, only_large_buffers)
+{
+    using namespace crl::multisense::details;
+    using namespace std::chrono_literals;
+
+    wire::SysDeviceInfo info{};
+    info.name = "test_callback";
+    auto serialized = serialize(info, 10, 9000);
+
+    MessageAssembler assembler{std::make_shared<BufferPool>(BufferPoolConfig{1, 1, 1, 100000})};
+    auto registration = assembler.register_message(wire::SysDeviceInfo::ID);
+
+    ASSERT_TRUE(assembler.process_packet(serialized));
+
+    const auto output = registration->wait_for<wire::SysDeviceInfo>(500ms);
+
+    ASSERT_TRUE(static_cast<bool>(output));
+
+    ASSERT_EQ(output->name, info.name);
+}
+
+TEST(MessageAssembler, multi_large_packets)
+{
+    using namespace crl::multisense::details;
+    using namespace std::chrono_literals;
+
+    wire::SysDeviceInfo info{};
+    info.name = "test_callback";
+    auto serialized = serialize(info, 0, 9000);
+
+    //
+    // Update our message size to indicate our message is huge
+    //
+    auto sequence_id = reinterpret_cast<uint16_t*>(&serialized[8]);
+    auto message_length = reinterpret_cast<uint32_t*>(&serialized[10]);
+    *message_length = 10000;
+
+    MessageAssembler assembler{std::make_shared<BufferPool>(BufferPoolConfig{1, 1, 1, 100000})};
+    auto registration = assembler.register_message(wire::SysDeviceInfo::ID);
+
+    //
+    // We should be able to process the message, but we wont get a valid message since we messed with
+    // the message length. We should be internally dropping all these messages when a message with the
+    // next sequence id shows up
+    //
+    for (size_t i = 1 ; i < 100 ; ++i)
+    {
+        ASSERT_TRUE(assembler.process_packet(serialized));
+        {
+            const auto output = registration->wait_for<wire::SysDeviceInfo>(1us);
+            ASSERT_FALSE(static_cast<bool>(output));
+        }
+
+        *sequence_id = i;
+    }
 }

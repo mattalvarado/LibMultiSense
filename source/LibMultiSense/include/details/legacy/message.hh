@@ -53,6 +53,10 @@
 namespace multisense{
 namespace legacy{
 
+///
+/// @brief deserialize the raw bytes of a message. Note this does not account for the wire::Header which
+///        is transmitted as part of most messages
+///
 template <typename T>
 T deserialize(const std::vector<uint8_t>& data)
 {
@@ -60,8 +64,8 @@ T deserialize(const std::vector<uint8_t>& data)
 
     utility::BufferStreamReader stream{data.data(), data.size()};
 
-    wire::IdType      id;
-    wire::VersionType version;
+    wire::IdType id = 0;
+    wire::VersionType version = 0;
 
     stream & id;
     stream & version;
@@ -76,19 +80,21 @@ T deserialize(const std::vector<uint8_t>& data)
 int64_t unwrap_sequence_id(uint16_t current_wire_id, int32_t previous_wire_id);
 
 ///
-/// @brief Get the message type of the message from the buffer
+/// @brief Get the message type of the message from the buffer over the wire. Note this does account
+///        for the wire::Header that is transmitted from the camera
 ///
 crl::multisense::details::wire::IdType get_message_type(const std::vector<uint8_t>& raw_buffer);
 
 ///
-/// @brief Serialize a MultiSense Wire message for transmission
+/// @brief Serialize a MultiSense Wire message for transmission. This adds the wire header to the message
+///        for transmission
 ///
 template <typename T>
 std::vector<uint8_t> serialize(const T& message, uint16_t sequence_id, size_t mtu)
 {
     using namespace crl::multisense::details;
 
-    const wire::IdType      id      = T::ID;
+    const wire::IdType id = T::ID;
     const wire::VersionType version = T::VERSION;
 
     std::vector<uint8_t> output_buffer(mtu - wire::COMBINED_HEADER_LENGTH, static_cast<uint8_t>(0));
@@ -107,7 +113,7 @@ std::vector<uint8_t> serialize(const T& message, uint16_t sequence_id, size_t mt
     stream & version;
     const_cast<T*>(&message)->serialize(stream, version);
 
-    header.messageLength = static_cast<uint32_t> (stream.tell() - sizeof(wire::Header));
+    header.messageLength = static_cast<uint32_t>(stream.tell() - sizeof(wire::Header));
     header.byteOffset = 0;
 
     output_buffer.resize(stream.tell());
@@ -164,7 +170,7 @@ public:
 
     ~MessageAssembler() = default;
 
-    void process_packet(const std::vector<uint8_t> &raw_data);
+    bool process_packet(const std::vector<uint8_t> &raw_data);
 
     ///
     /// @brief Register to be notified when a message of a given id arrives. Note this registration will only
@@ -179,7 +185,8 @@ public:
 
     ///
     /// @brief Register a callback to receive valid messages of a given id. Note currently only one callback
-    ///        can be registered for a message_id
+    ///        can be registered for a message_id. Note this will pass the raw image buffer to the callback.
+    ///        It's up to the user to deserialize the message into it's appropriate type
     ///
     void register_callback(const crl::multisense::details::wire::IdType& message_id,
                            std::function<void(std::shared_ptr<const std::vector<uint8_t>>)> callback);

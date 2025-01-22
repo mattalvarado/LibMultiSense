@@ -110,37 +110,38 @@ MessageAssembler::MessageAssembler(std::shared_ptr<BufferPool> buffer_pool):
 {
 }
 
-void MessageAssembler::process_packet(const std::vector<uint8_t> &raw_data)
+bool MessageAssembler::process_packet(const std::vector<uint8_t> &raw_data)
 {
     using namespace crl::multisense::details;
 
     if (!m_buffer_pool)
     {
-        CRL_EXCEPTION("Buffer pool uninitialized. Cannot recieve images");
+        CRL_DEBUG("Buffer pool uninitialized. Cannot recieve images\n");
+        return false;
     }
 
     if (raw_data.size() < static_cast<int>(sizeof(wire::Header)))
     {
-        CRL_EXCEPTION("undersized packet: %d/%d bytes\n",
-                      raw_data.size(), sizeof(wire::Header));
+        CRL_DEBUG("undersized packet: %lu/%lu bytes\n", raw_data.size(), sizeof(wire::Header));
+        return false;
     }
 
     const wire::Header& header = *(reinterpret_cast<const wire::Header*>(raw_data.data()));
 
     if (wire::HEADER_MAGIC != header.magic)
     {
-        CRL_EXCEPTION("bad protocol magic: 0x%x, expecting 0x%x",
-                      header.magic, wire::HEADER_MAGIC);
+        CRL_DEBUG("bad protocol magic: 0x%x, expecting 0x%x\n", header.magic, wire::HEADER_MAGIC);
+        return false;
     }
     else if (wire::HEADER_VERSION != header.version)
     {
-        CRL_EXCEPTION("bad protocol version: 0x%x, expecting 0x%x",
-                      header.version, wire::HEADER_VERSION);
+        CRL_DEBUG("bad protocol version: 0x%x, expecting 0x%x\n", header.version, wire::HEADER_VERSION);
+        return false;
     }
     else if (wire::HEADER_GROUP != header.group)
     {
-        CRL_EXCEPTION("bad protocol group: 0x%x, expecting 0x%x",
-                      header.group, wire::HEADER_GROUP);
+        CRL_DEBUG("bad protocol group: 0x%x, expecting 0x%x\n", header.group, wire::HEADER_GROUP);
+        return false;
     }
 
     //
@@ -178,7 +179,7 @@ void MessageAssembler::process_packet(const std::vector<uint8_t> &raw_data)
         if (final_message_size > buffer_config.large_buffer_size)
         {
             CRL_DEBUG("No buffers large enough to fit a message of %d bytes\n", final_message_size);
-            return;
+            return false;
         }
 
         //
@@ -200,7 +201,7 @@ void MessageAssembler::process_packet(const std::vector<uint8_t> &raw_data)
         if (buffer == nullptr)
         {
             CRL_DEBUG("No free buffers available\n");
-            return;
+            return false;
         }
 
         auto [inserted_iterator,_] = m_active_messages.emplace(full_sequence_id,
@@ -276,6 +277,8 @@ void MessageAssembler::process_packet(const std::vector<uint8_t> &raw_data)
     {
         CRL_DEBUG("Missed first packet. Dropping entire message\n");
     }
+
+    return true;
 }
 
 std::shared_ptr<MessageCondition> MessageAssembler::register_message(const crl::multisense::details::wire::IdType &message_id)

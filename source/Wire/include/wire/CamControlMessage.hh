@@ -87,12 +87,12 @@ public:
     //
     // Additions in version 4
 
-    bool  storeSettingsInFlash;  // boolean
+    bool  storeSettingsInFlash = false;  // boolean
 
     //
     // Additions in version 5
 
-    uint16_t autoExposureRoiX;
+    uint16_t autoExposureRoiX ;
     uint16_t autoExposureRoiY;
     uint16_t autoExposureRoiWidth;
     uint16_t autoExposureRoiHeight;
@@ -100,12 +100,12 @@ public:
     //
     // Additions in version 6
 
-    uint32_t cameraProfile;
+    uint32_t cameraProfile = 0;
 
     //
     // Additions in version 7
 
-    uint32_t exposureSource; // Deprecated
+    uint32_t exposureSource = 0; // Deprecated
     std::vector<ExposureConfig> secondaryExposureConfigs; // Deprecated
 
     //
@@ -117,9 +117,9 @@ public:
     //
     // Additions in version 9
 
-    bool  sharpeningEnable; // Deprecated
-    float sharpeningPercentage; // Deprecated
-    uint8_t sharpeningLimit; // Deprecated
+    bool  sharpeningEnable = false; // Deprecated
+    float sharpeningPercentage = 0.0f; // Deprecated
+    uint8_t sharpeningLimit = 0; // Deprecated
 
     //
     // Additions in version 10
@@ -145,15 +145,12 @@ public:
         message & exposure;
         message & autoExposure;
         message & autoExposureMax;
-        message & autoExposureDecay;
-        message & autoExposureThresh;
+        message & autoExposureDecay; message & autoExposureThresh;
 
-        message & whiteBalanceRed;
-        message & whiteBalanceBlue;
+        message & whiteBalanceRed; message & whiteBalanceBlue;
         message & autoWhiteBalance;
         message & autoWhiteBalanceDecay;
         message & autoWhiteBalanceThresh;
-
         if (version >= 2)
             message & stereoPostFilterStrength;
         else
