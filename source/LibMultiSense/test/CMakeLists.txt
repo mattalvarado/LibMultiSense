@@ -2,6 +2,7 @@ find_package(GTest REQUIRED)
 
 set(TEST_NAMES
     calibration_test
+    configuration_test
     device_info_tests
     message_test
     storage_test
