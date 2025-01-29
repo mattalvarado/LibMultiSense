@@ -47,6 +47,7 @@
 #include <wire/CamControlMessage.hh>
 #include <wire/CamGetConfigMessage.hh>
 #include <wire/CamSetResolutionMessage.hh>
+#include <wire/SysSetPtpMessage.hh>
 
 #include "MultiSense/MultiSenseTypes.hh"
 
@@ -62,7 +63,8 @@ MultiSenseConfiguration::AuxConfiguration convert(const crl::multisense::details
 /// @brief Convert wire Cam and Aux config object to our MultiSenseConfiguration
 ///
 MultiSenseConfiguration convert(const crl::multisense::details::wire::CamConfig &config,
-                                const std::optional<crl::multisense::details::wire::AuxCamConfig> &aux_config);
+                                const std::optional<crl::multisense::details::wire::AuxCamConfig> &aux_config,
+                                bool ptp_enabled);
 
 ///
 /// @brief generic conversions between the MultiSenseConfiguration config object an MultiSense wire types
@@ -70,10 +72,14 @@ MultiSenseConfiguration convert(const crl::multisense::details::wire::CamConfig 
 template <typename T>
 T convert(const MultiSenseConfiguration &config);
 
-//
-// @brief Convert our AuxConfiguration object to a wire AuxControl message
-//
+///
+/// @brief Convert a AuxConfiguration object to a wire AuxControl message
+///
 crl::multisense::details::wire::AuxCamControl convert(const MultiSenseConfiguration::AuxConfiguration &config);
 
+///
+/// @brief Convert a TimeConfig object to a wire message
+///
+crl::multisense::details::wire::SysSetPtp convert(const MultiSenseConfiguration::TimeConfig &config);
 }
 }

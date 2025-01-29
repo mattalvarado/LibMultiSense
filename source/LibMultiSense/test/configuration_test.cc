@@ -71,6 +71,7 @@ multisense::MultiSenseConfiguration create_valid_config()
 
     MultiSenseConfiguration::AuxConfiguration aux_config{image_config, true, 10.0, 80};
 
+    MultiSenseConfiguration::TimeConfig time{true};
 
     return MultiSenseConfiguration{1920,
                                    1200,
@@ -78,7 +79,8 @@ multisense::MultiSenseConfiguration create_valid_config()
                                    11.0,
                                    stereo_config,
                                    image_config,
-                                   aux_config};
+                                   aux_config,
+                                   time};
 }
 
 crl::multisense::details::wire::CamConfig create_valid_wire_config()
@@ -292,7 +294,7 @@ TEST(convert, cam_config)
     const auto wire_config = create_valid_wire_config();
     const auto wire_aux_config = create_valid_wire_aux_config();
 
-    const auto config = convert(wire_config, wire_aux_config);
+    const auto config = convert(wire_config, wire_aux_config, false);
 
     ASSERT_TRUE(static_cast<bool>(config.aux_config));
 
@@ -304,7 +306,7 @@ TEST(convert, cam_config_invalid_aux)
 {
     const auto wire_config = create_valid_wire_config();
 
-    const auto config = convert(wire_config, std::nullopt);
+    const auto config = convert(wire_config, std::nullopt, false);
 
     ASSERT_FALSE(static_cast<bool>(config.aux_config));
 

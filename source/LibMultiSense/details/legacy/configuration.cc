@@ -40,7 +40,8 @@ namespace multisense {
 namespace legacy {
 
 MultiSenseConfiguration convert(const crl::multisense::details::wire::CamConfig &config,
-                                const std::optional<crl::multisense::details::wire::AuxCamConfig> &aux_config)
+                                const std::optional<crl::multisense::details::wire::AuxCamConfig> &aux_config,
+                                bool ptp_enabled)
 {
     using namespace crl::multisense::details;
 
@@ -91,7 +92,8 @@ MultiSenseConfiguration convert(const crl::multisense::details::wire::CamConfig 
                                    config.framesPerSecond,
                                    std::move(stereo),
                                    std::move(image),
-                                   (aux_config ? std::make_optional(convert(aux_config.value())) : std::nullopt)};
+                                   (aux_config ? std::make_optional(convert(aux_config.value())) : std::nullopt),
+                                   ms_config::TimeConfig{ptp_enabled}};
 }
 
 MultiSenseConfiguration::AuxConfiguration convert(const crl::multisense::details::wire::AuxCamConfig &config)
@@ -223,6 +225,16 @@ crl::multisense::details::wire::AuxCamControl convert(const MultiSenseConfigurat
     output.sharpeningEnable = config.sharpening_enabled;
     output.sharpeningPercentage = config.sharpening_percentage;
     output.sharpeningLimit = config.sharpening_limit;
+
+    return output;
+}
+
+crl::multisense::details::wire::SysSetPtp convert(const MultiSenseConfiguration::TimeConfig &config)
+{
+    using namespace crl::multisense::details;
+
+    wire::SysSetPtp output;
+    output.enable = config.ptp_enabled ? 1 : 0;
 
     return output;
 }

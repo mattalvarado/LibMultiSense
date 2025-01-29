@@ -696,6 +696,17 @@ struct MultiSenseConfiguration
     };
 
     ///
+    /// @brief Configuration for time-based controls
+    ///
+    struct TimeConfig
+    {
+        ///
+        /// @brief Enable PTP sync on the camera
+        ///
+        bool ptp_enabled = false;
+    };
+
+    ///
     /// @brief The MultiSense operating width
     ///
     uint32_t width = 960;
@@ -729,6 +740,15 @@ struct MultiSenseConfiguration
     /// @brief The image configuration to use for the aux camera if present
     ///
     std::optional<AuxConfiguration> aux_config = std::nullopt;
+
+    ///
+    /// @brief Configuration for the MultiSense time-sync options
+    ///
+    TimeConfig time_config;
+};
+
+struct MultiSenseStatus
+{
 };
 
 }

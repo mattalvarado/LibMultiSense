@@ -148,7 +148,7 @@ private:
     ///
     /// @brief Query the full configuration
     ///
-    std::optional<MultiSenseConfiguration> query_configuration(bool has_aux_camera);
+    std::optional<MultiSenseConfiguration> query_configuration(bool has_aux_camera, bool ptp_enabled);
 
     ///
     /// @brief Query the calibration from the camera

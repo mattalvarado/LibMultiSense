@@ -268,8 +268,9 @@ bool LegacyChannel::connect(const ChannelConfig &config)
 
     //
     // Update our cached multisense configuration
+    // TODO (malvarado): Query the PTP status from the camera
     //
-    if (auto config = query_configuration(m_device_info.has_aux_camera()); config)
+    if (auto config = query_configuration(m_device_info.has_aux_camera(), false); config)
     {
         m_multisense_config = std::move(config.value());
     }
@@ -415,9 +416,28 @@ bool LegacyChannel::set_configuration(const MultiSenseConfiguration &config)
     }
 
     //
+    // Enable/disable ptp
+    //
+    const auto ptp_ack = wait_for_ack(m_message_assembler,
+                                      m_socket,
+                                      convert(config.time_config),
+                                      m_transmit_id++,
+                                      m_current_mtu,
+                                      m_config.receive_timeout);
+
+    //
+    // Bail early if we failed to set the ptp config controls
+    //
+    if (!ptp_ack || ptp_ack->status != wire::Ack::Status_Ok)
+    {
+        return false;
+    }
+
+    //
     // Update our internal cached image config after we successfully set everything
     //
-    if (const auto new_config = query_configuration(m_device_info.has_aux_camera()); new_config)
+    const auto ptp_enabled = config.time_config.ptp_enabled;
+    if (const auto new_config = query_configuration(m_device_info.has_aux_camera(), ptp_enabled); new_config)
     {
         m_multisense_config = new_config.value();
         return true;
@@ -561,7 +581,7 @@ bool LegacyChannel::set_mtu(const std::optional<uint16_t> &mtu)
     return false;
 }
 
-std::optional<MultiSenseConfiguration> LegacyChannel::query_configuration(bool has_aux_camera)
+std::optional<MultiSenseConfiguration> LegacyChannel::query_configuration(bool has_aux_camera, bool ptp_enabled)
 {
     using namespace crl::multisense::details;
 
@@ -580,7 +600,7 @@ std::optional<MultiSenseConfiguration> LegacyChannel::query_configuration(bool h
                                                                                m_config.receive_timeout): std::nullopt;
     if (camera_config)
     {
-        return convert(camera_config.value(), aux_config);
+        return convert(camera_config.value(), aux_config, ptp_enabled);
     }
 
     return std::nullopt;
