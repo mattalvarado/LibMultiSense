@@ -78,8 +78,8 @@ T convert(const MultiSenseConfiguration &config);
 crl::multisense::details::wire::AuxCamControl convert(const MultiSenseConfiguration::AuxConfiguration &config);
 
 ///
-/// @brief Convert a TimeConfig object to a wire message
+/// @brief Convert a TimeConfiguration object to a wire message
 ///
-crl::multisense::details::wire::SysSetPtp convert(const MultiSenseConfiguration::TimeConfig &config);
+crl::multisense::details::wire::SysSetPtp convert(const MultiSenseConfiguration::TimeConfiguration &config);
 }
 }

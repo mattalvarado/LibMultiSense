@@ -213,6 +213,11 @@ public:
     ///        device info can result in internal camera failures
     ///
     virtual bool set_device_info(const DeviceInfo &device_info, const std::string &key) = 0;
+
+    ///
+    /// @brief Query the current system status
+    ///
+    virtual std::optional<MultiSenseStatus> get_system_status() = 0;
 };
 
 }

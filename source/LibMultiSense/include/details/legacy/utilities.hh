@@ -142,9 +142,88 @@ std::optional<OutputMessage> wait_for_data(MessageAssembler &assembler,
 
         if (auto ack = (wait_time ? ack_waiter->wait_for<wire::Ack>(wait_time.value()) : ack_waiter->wait<wire::Ack>()); ack)
         {
+            if (ack->status != wire::Ack::Status_Ok)
+            {
+                continue;
+            }
+
             if (auto response = (wait_time ? response_waiter->wait_for<OutputMessage>(wait_time.value()) : response_waiter->wait<OutputMessage>()); response)
             {
                 output = std::move(response);
+                break;
+            }
+        }
+    }
+
+    assembler.remove_registration(MSG_ID(QueryMessage::ID));
+    assembler.remove_registration(MSG_ID(OutputMessage::ID));
+
+    return output;
+}
+
+template <typename T>
+struct TimedResponse
+{
+    ///
+    /// @brief The host system time the request which triggered the response message was sent
+    ///
+    std::chrono::nanoseconds host_start_transmit_time{0};
+
+    ///
+    /// @brief The time between when the status request was sent and when the camera ack'd the response
+    ///
+    std::chrono::nanoseconds host_transmit_receive_roundtrip{0};
+
+    ///
+    /// @brief The response message
+    ///
+    T message{};
+};
+
+///
+/// @brief Helper to wait for data from the camera from a given query command. Once a query
+///        command is sent to the MultiSense, it Ack's the command before sending the response
+///
+template <typename OutputMessage, typename QueryMessage, class Rep, class Period>
+std::optional<TimedResponse<OutputMessage>> wait_for_data_timed(MessageAssembler &assembler,
+                                                                const NetworkSocket &socket,
+                                                                const QueryMessage &query,
+                                                                uint16_t sequence_id,
+                                                                uint16_t mtu,
+                                                                const std::optional<std::chrono::duration<Rep, Period>>& wait_time,
+                                                                size_t attempts = 1)
+{
+    using namespace crl::multisense::details;
+
+    std::optional<TimedResponse<OutputMessage>> output = std::nullopt;
+
+    auto ack_waiter = assembler.register_message(MSG_ID(QueryMessage::ID));
+    auto response_waiter = assembler.register_message(MSG_ID(OutputMessage::ID));
+
+    for (size_t i = 0 ; i < attempts ; ++i)
+    {
+        const auto serialized_data = serialize(query, sequence_id, mtu);
+
+        const auto send = std::chrono::system_clock::now().time_since_epoch();
+        const auto start = std::chrono::high_resolution_clock::now();
+
+        if(publish_data(socket, serialized_data) < 0)
+        {
+            continue;
+        }
+
+        if (auto ack = (wait_time ? ack_waiter->wait_for<wire::Ack>(wait_time.value()) : ack_waiter->wait<wire::Ack>()); ack)
+        {
+            const auto end = std::chrono::high_resolution_clock::now();
+
+            if (ack->status != wire::Ack::Status_Ok)
+            {
+                continue;
+            }
+
+            if (auto response = (wait_time ? response_waiter->wait_for<OutputMessage>(wait_time.value()) : response_waiter->wait<OutputMessage>()); response)
+            {
+                output = TimedResponse<OutputMessage>{send, end - start, response.value()};
                 break;
             }
         }

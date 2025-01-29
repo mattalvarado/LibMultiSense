@@ -300,6 +300,11 @@ PYBIND11_MODULE(libmultisense, m) {
         .value("D128", multisense::MultiSenseConfiguration::MaxDisparities::D128)
         .value("D256", multisense::MultiSenseConfiguration::MaxDisparities::D256);
 
+    // MultiSenseConfiguration::TimeConfig
+    py::class_<multisense::MultiSenseConfiguration::TimeConfiguration>(m, "TimeConfiguration")
+        .def(py::init<>())
+        .def_readwrite("ptp_enabled", &multisense::MultiSenseConfiguration::TimeConfiguration::ptp_enabled);
+
     // MultiSenseConfiguration
     py::class_<multisense::MultiSenseConfiguration>(m, "MultiSenseConfiguration")
         .def(py::init<>())
@@ -309,7 +314,8 @@ PYBIND11_MODULE(libmultisense, m) {
         .def_readwrite("frames_per_second", &multisense::MultiSenseConfiguration::frames_per_second)
         .def_readwrite("stereo_config", &multisense::MultiSenseConfiguration::stereo_config)
         .def_readwrite("image_config", &multisense::MultiSenseConfiguration::image_config)
-        .def_readwrite("aux_config", &multisense::MultiSenseConfiguration::aux_config);
+        .def_readwrite("aux_config", &multisense::MultiSenseConfiguration::aux_config)
+        .def_readwrite("time_config", &multisense::MultiSenseConfiguration::time_config);
 
     // ChannelImplementation
     py::enum_<multisense::Channel::ChannelImplementation>(m, "ChannelImplementation")

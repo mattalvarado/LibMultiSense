@@ -133,6 +133,11 @@ public:
     ///
     virtual bool set_device_info(const DeviceInfo &device_info, const std::string &key);
 
+    ///
+    /// @brief Query the current MultiSense status
+    ///
+    virtual std::optional<MultiSenseStatus> get_system_status();
+
 private:
 
     ///

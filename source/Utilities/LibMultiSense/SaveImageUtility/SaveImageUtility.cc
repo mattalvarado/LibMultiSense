@@ -136,6 +136,11 @@ int main(int argc, char** argv)
                 write_image(image, std::to_string(image_frame->frame_id) + "_" + std::to_string(static_cast<int>(source)) + ".pgm");
             }
         }
+
+        if (const auto status = channel->get_system_status())
+        {
+            (void) status;
+        }
     }
 
     return 0;

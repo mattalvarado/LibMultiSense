@@ -93,7 +93,7 @@ MultiSenseConfiguration convert(const crl::multisense::details::wire::CamConfig 
                                    std::move(stereo),
                                    std::move(image),
                                    (aux_config ? std::make_optional(convert(aux_config.value())) : std::nullopt),
-                                   ms_config::TimeConfig{ptp_enabled}};
+                                   ms_config::TimeConfiguration{ptp_enabled}};
 }
 
 MultiSenseConfiguration::AuxConfiguration convert(const crl::multisense::details::wire::AuxCamConfig &config)
@@ -229,7 +229,7 @@ crl::multisense::details::wire::AuxCamControl convert(const MultiSenseConfigurat
     return output;
 }
 
-crl::multisense::details::wire::SysSetPtp convert(const MultiSenseConfiguration::TimeConfig &config)
+crl::multisense::details::wire::SysSetPtp convert(const MultiSenseConfiguration::TimeConfiguration &config)
 {
     using namespace crl::multisense::details;
 

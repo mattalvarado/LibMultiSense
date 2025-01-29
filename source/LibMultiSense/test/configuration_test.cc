@@ -71,7 +71,7 @@ multisense::MultiSenseConfiguration create_valid_config()
 
     MultiSenseConfiguration::AuxConfiguration aux_config{image_config, true, 10.0, 80};
 
-    MultiSenseConfiguration::TimeConfig time{true};
+    MultiSenseConfiguration::TimeConfiguration time{true};
 
     return MultiSenseConfiguration{1920,
                                    1200,

@@ -52,6 +52,8 @@
 #include <wire/DisparityMessage.hh>
 #include <wire/ImageMessage.hh>
 #include <wire/ImageMetaMessage.hh>
+#include <wire/PtpStatusRequestMessage.hh>
+#include <wire/PtpStatusResponseMessage.hh>
 #include <wire/StatusRequestMessage.hh>
 #include <wire/StatusResponseMessage.hh>
 #include <wire/StreamControlMessage.hh>
@@ -519,6 +521,28 @@ bool LegacyChannel::set_device_info(const DeviceInfo &device_info, const std::st
     }
 
     return false;
+}
+
+std::optional<MultiSenseStatus> LegacyChannel::get_system_status()
+{
+    using namespace crl::multisense::details;
+
+    std::lock_guard<std::mutex> lock(m_mutex);
+
+    //
+    // Query the main status info, and time when we send the ack, and when we recieve the response
+    //
+    if (const auto status = wait_for_data_timed<wire::StatusResponse>(m_message_assembler,
+                                                                      m_socket,
+                                                                      wire::StatusRequest(),
+                                                                      m_transmit_id++,
+                                                                      m_current_mtu,
+                                                                      m_config.receive_timeout); status)
+    {
+        std::cout << status->host_start_transmit_time.count() << " " << status->host_transmit_receive_roundtrip.count() << std::endl;
+    }
+
+    return std::nullopt;
 }
 
 bool LegacyChannel::set_mtu(uint16_t mtu)

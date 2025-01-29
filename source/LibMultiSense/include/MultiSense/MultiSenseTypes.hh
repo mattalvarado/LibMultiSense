@@ -698,7 +698,7 @@ struct MultiSenseConfiguration
     ///
     /// @brief Configuration for time-based controls
     ///
-    struct TimeConfig
+    struct TimeConfiguration
     {
         ///
         /// @brief Enable PTP sync on the camera
@@ -744,11 +744,146 @@ struct MultiSenseConfiguration
     ///
     /// @brief Configuration for the MultiSense time-sync options
     ///
-    TimeConfig time_config;
+    TimeConfiguration time_config;
 };
 
+///
+/// @brief Consolidated status information which can be queried on demand from the MultiSense
+///
 struct MultiSenseStatus
 {
+    struct PtpStatus
+    {
+        ///
+        /// @brief Status of the grandmaster clock. true if synchronized to a non-local grandmaster OR if
+        ///        a non-local grandmaster was present any time during the current boot
+        ///
+        bool grandmaster_present = false;
+
+        ///
+        /// @brief The id of the current grandmaster clock
+        ///
+        uint8_t grandmaster_id = 0;
+
+        ///
+        /// @brief Offset between the camera's PTP Hardware Clock and the grandmaster clock
+        ///
+        std::chrono::nanoseconds grandmaster_offset{0};
+
+        ///
+        /// @brief The estimate delay of the PTP synchronization messages from the grandmaster
+        ///
+        std::chrono::nanoseconds path_delay{0};
+
+        ///
+        /// @brief The number of network hops from the grandmaster to the camera's clock
+        ///
+        uint16_t steps_from_local_to_grandmaster = 0;
+    };
+
+    struct CameraStatus
+    {
+        ///
+        /// @brief True if the cameras are operating and currently streaming data
+        ///
+        bool cameras_ok = false;
+
+        ///
+        /// @brief True if the onboard processing pipeline is ok and currently processing images
+        ///
+        bool processing_pipeline_ok = false;
+    };
+
+    struct TemperatureStatus
+    {
+        ///
+        /// @brief Temperature of the FPGA  in Celsius
+        ///
+        float fpga_temperature_C = 0.0f;
+
+        ///
+        /// @brief Temperature of the left imager in Celsius
+        ///
+        float left_imager_temperature_C = 0.0f;
+
+        ///
+        /// @brief Temperature of the right imager in Celsius
+        ///
+        float right_imager_temperature_C = 0.0f;
+
+        ///
+        /// @brief Temperature of the internal switching power supply in Celsius
+        ///
+        float power_supply_temperature_C = 0.0f;
+    };
+
+    struct PowerStatus
+    {
+        ///
+        /// @brief The current input voltage in volts
+        ///
+        float input_voltage = 0.0f;
+
+        ///
+        /// @brief The current input current in Amperes
+        ///
+        float input_current = 0.0f;
+
+        ///
+        /// @brief The current power draw of the FPGA in Watts
+        ///
+        float fpga_power = 0.0f;
+    };
+
+    struct ClientNetworkStatus
+    {
+        ///
+        /// @brief The total number of dropped messages on the client side
+        ///
+        size_t dropped_messages = 0;
+
+        ///
+        /// @brief The total number of valid messages received from the client
+        ///
+        size_t received_messages = 0;
+    };
+
+    struct TimeStatus
+    {
+        ///
+        /// @brief The camera's system time when the status message request was received
+        ///
+        std::chrono::nanoseconds camera_time{0};
+
+        ///
+        /// @brief The time of the host machine running the client when the status request was sent
+        ///
+        std::chrono::nanoseconds client_host_time{0};
+
+        ///
+        /// @brief The estimated network delay between when the status request was sent, and when the
+        ///        status request was received. This is computed by measuring the time between when the client
+        ///        machine sent the status request, and received the status response
+        ///
+        std::chrono::nanoseconds network_delay{0};
+    };
+
+    ///
+    /// @brief summary of the current MultiSense state. True if the MultiSense is operating properly
+    ///
+    bool system_ok = false;
+
+    PtpStatus ptp;
+
+    CameraStatus camera;
+
+    TemperatureStatus temperature;
+
+    PowerStatus power;
+
+    ClientNetworkStatus client_network;
+
+    TimeStatus timee;
 };
 
 }
