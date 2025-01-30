@@ -761,9 +761,9 @@ struct MultiSenseStatus
         bool grandmaster_present = false;
 
         ///
-        /// @brief The id of the current grandmaster clock
+        /// @brief The id of the current grandmaster clock (8 bytes, 0xXXXXXX.XXXX.XXXXXX)
         ///
-        uint8_t grandmaster_id = 0;
+        std::array<uint8_t, 8> grandmaster_id = {0, 0, 0, 0, 0, 0, 0, 0};
 
         ///
         /// @brief Offset between the camera's PTP Hardware Clock and the grandmaster clock
@@ -838,14 +838,14 @@ struct MultiSenseStatus
     struct ClientNetworkStatus
     {
         ///
-        /// @brief The total number of dropped messages on the client side
-        ///
-        size_t dropped_messages = 0;
-
-        ///
         /// @brief The total number of valid messages received from the client
         ///
         size_t received_messages = 0;
+
+        ///
+        /// @brief The total number of dropped messages on the client side
+        ///
+        size_t dropped_messages = 0;
     };
 
     struct TimeStatus
@@ -873,7 +873,7 @@ struct MultiSenseStatus
     ///
     bool system_ok = false;
 
-    PtpStatus ptp;
+    std::optional<PtpStatus> ptp;
 
     CameraStatus camera;
 
@@ -883,7 +883,7 @@ struct MultiSenseStatus
 
     ClientNetworkStatus client_network;
 
-    TimeStatus timee;
+    TimeStatus time;
 };
 
 }

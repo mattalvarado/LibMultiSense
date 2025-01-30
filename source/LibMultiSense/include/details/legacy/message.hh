@@ -160,6 +160,19 @@ struct MessageCondition
     }
 };
 
+struct MessageStatistics
+{
+    ///
+    /// @brief The number of received messages
+    ///
+    size_t received_messages = 0;
+
+    ///
+    /// @brief The number of dropped messages
+    ///
+    size_t dropped_messages = 0;
+};
+
 ///
 /// @brief Process incoming network data, and try the data into valid MultiSense Wire messages
 ///
@@ -196,6 +209,11 @@ public:
     ///
     void remove_callback(const crl::multisense::details::wire::IdType& message_id);
 
+    MessageStatistics get_message_statistics() const
+    {
+        return MessageStatistics{m_received_messages, m_dropped_messages};
+    }
+
 private:
 
     ///
@@ -215,9 +233,14 @@ private:
                   std::shared_ptr<std::vector<uint8_t>> data);
 
     ///
-    /// @brief Mutex to ensure calls into the MessageAssembler are thread safe
+    /// @brief Mutex to ensure registrations MessageAssembler are thread safe
     ///
-    std::mutex m_mutex;
+    std::mutex m_condition_mutex;
+
+    ///
+    /// @brief Mutex to ensure callback calls into the MessageAssembler are thread safe
+    ///
+    std::mutex m_callback_mutex;
 
     ///
     /// @brief Buffer pool used to allocate messages into
@@ -258,6 +281,15 @@ private:
     std::map<crl::multisense::details::wire::IdType,
              std::function<void(std::shared_ptr<const std::vector<uint8_t>>)>> m_callbacks;
 
+    ///
+    /// @brief A counter for the number of messages we have received
+    ///
+    std::atomic_uint64_t m_received_messages = 0;
+
+    ///
+    /// @brief A counter for the number of messages we have dropped
+    ///
+    std::atomic_uint64_t m_dropped_messages = 0;
 };
 
 }

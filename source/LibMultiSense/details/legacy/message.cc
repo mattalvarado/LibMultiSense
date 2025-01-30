@@ -161,6 +161,11 @@ bool MessageAssembler::process_packet(const std::vector<uint8_t> &raw_data)
     //
     if (m_active_messages.count(full_sequence_id) == 0)
     {
+        if (!m_active_messages.empty())
+        {
+            ++m_dropped_messages;
+        }
+
         const auto message_type = get_message_type(raw_data);
 
         //
@@ -210,6 +215,7 @@ bool MessageAssembler::process_packet(const std::vector<uint8_t> &raw_data)
         ordered_messages.emplace_back(full_sequence_id);
     }
 
+
     active_message = (active_message == std::end(m_active_messages)) ? m_active_messages.find(full_sequence_id) : active_message;
 
     if (active_message != std::end(m_active_messages))
@@ -247,6 +253,8 @@ bool MessageAssembler::process_packet(const std::vector<uint8_t> &raw_data)
 
         if (message.bytes_written == header.messageLength)
         {
+            ++m_received_messages;
+
             //
             // Handle the special case for Ack messages. To avoid collisions for all the Ack
             // registrations, we extract the command associated with the Ack, and dispatch
@@ -283,7 +291,7 @@ bool MessageAssembler::process_packet(const std::vector<uint8_t> &raw_data)
 
 std::shared_ptr<MessageCondition> MessageAssembler::register_message(const crl::multisense::details::wire::IdType &message_id)
 {
-    std::lock_guard<std::mutex> lock(m_mutex);
+    std::lock_guard<std::mutex> lock(m_condition_mutex);
     if (auto it = m_conditions.find(message_id); it != std::end(m_conditions))
     {
         std::lock_guard<std::mutex> lock(it->second->mutex);
@@ -305,7 +313,7 @@ std::shared_ptr<MessageCondition> MessageAssembler::register_message(const crl::
 
 void MessageAssembler::remove_registration(const crl::multisense::details::wire::IdType &message_id)
 {
-    std::lock_guard<std::mutex> lock(m_mutex);
+    std::lock_guard<std::mutex> lock(m_condition_mutex);
     if (auto it = m_conditions.find(message_id); it != std::end(m_conditions))
     {
         m_conditions.erase(it);
@@ -315,13 +323,13 @@ void MessageAssembler::remove_registration(const crl::multisense::details::wire:
 void MessageAssembler::register_callback(const crl::multisense::details::wire::IdType& message_id,
                                          std::function<void(std::shared_ptr<const std::vector<uint8_t>>)> callback)
 {
-    std::lock_guard<std::mutex> lock(m_mutex);
+    std::lock_guard<std::mutex> lock(m_callback_mutex);
     m_callbacks.emplace(message_id, callback);
 }
 
 void MessageAssembler::remove_callback(const crl::multisense::details::wire::IdType& message_id)
 {
-    std::lock_guard<std::mutex> lock(m_mutex);
+    std::lock_guard<std::mutex> lock(m_callback_mutex);
     if (auto it = m_callbacks.find(message_id); it != std::end(m_callbacks))
     {
         m_callbacks.erase(it);
@@ -331,21 +339,24 @@ void MessageAssembler::remove_callback(const crl::multisense::details::wire::IdT
 void MessageAssembler::dispatch(const crl::multisense::details::wire::IdType& message_id,
                                 std::shared_ptr<std::vector<uint8_t>> data)
 {
-    std::lock_guard<std::mutex> lock(m_mutex);
-
-    if (auto condition = m_conditions.find(message_id); condition != std::end(m_conditions))
     {
-        std::lock_guard<std::mutex> lock(condition->second->mutex);
-        condition->second->data = *data;
-        condition->second->notified = true;
-        condition->second->cv.notify_all();
+        std::lock_guard<std::mutex> lock(m_condition_mutex);
 
-        //
-        // Remove our registration after we dispatch the message
-        //
-        m_conditions.erase(condition);
+        if (auto condition = m_conditions.find(message_id); condition != std::end(m_conditions))
+        {
+            std::lock_guard<std::mutex> lock(condition->second->mutex);
+            condition->second->data = *data;
+            condition->second->notified = true;
+            condition->second->cv.notify_all();
+
+            //
+            // Remove our registration after we dispatch the message
+            //
+            m_conditions.erase(condition);
+        }
     }
 
+    std::lock_guard<std::mutex> lock(m_callback_mutex);
     if (auto callback = m_callbacks.find(message_id); callback != std::end(m_callbacks))
     {
         callback->second(data);

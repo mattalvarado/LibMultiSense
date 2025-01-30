@@ -195,6 +195,11 @@ private:
     std::mutex m_mutex;
 
     ///
+    /// @brief Internal mutex used to handle user callbacks
+    ///
+    std::mutex m_callback_mutex;
+
+    ///
     /// @brief Atomic flag to determine if we are connected to an active camera
     ///
     std::atomic_bool m_connected = false;

@@ -69,6 +69,7 @@
 #include "details/legacy/configuration.hh"
 #include "details/legacy/device_info.hh"
 #include "details/legacy/message.hh"
+#include "details/legacy/status.hh"
 #include "details/legacy/utilities.hh"
 
 namespace multisense {
@@ -177,7 +178,7 @@ bool LegacyChannel::stop_streams(const std::vector<DataSource> &sources)
 
 void LegacyChannel::add_image_frame_callback(std::function<void(const ImageFrame&)> callback)
 {
-    std::lock_guard<std::mutex> lock(m_mutex);
+    std::lock_guard<std::mutex> lock(m_callback_mutex);
 
     m_user_image_frame_callback = callback;
 }
@@ -528,21 +529,54 @@ std::optional<MultiSenseStatus> LegacyChannel::get_system_status()
     using namespace crl::multisense::details;
 
     std::lock_guard<std::mutex> lock(m_mutex);
+    //
+    // Query the main status info, and time when we send the ack, and when we receive the response
+    //
+    const auto status = wait_for_data_timed<wire::StatusResponse>(m_message_assembler,
+                                                                  m_socket,
+                                                                  wire::StatusRequest(),
+                                                                  m_transmit_id++,
+                                                                  m_current_mtu,
+                                                                  m_config.receive_timeout);
 
-    //
-    // Query the main status info, and time when we send the ack, and when we recieve the response
-    //
-    if (const auto status = wait_for_data_timed<wire::StatusResponse>(m_message_assembler,
-                                                                      m_socket,
-                                                                      wire::StatusRequest(),
-                                                                      m_transmit_id++,
-                                                                      m_current_mtu,
-                                                                      m_config.receive_timeout); status)
+    if (!status)
     {
-        std::cout << status->host_start_transmit_time.count() << " " << status->host_transmit_receive_roundtrip.count() << std::endl;
+        CRL_DEBUG("Unable to query status\n");
+        return std::nullopt;
     }
 
-    return std::nullopt;
+    const auto ptp_status = wait_for_data<wire::PtpStatusResponse>(m_message_assembler,
+                                                                   m_socket,
+                                                                   wire::PtpStatusRequest(),
+                                                                   m_transmit_id++,
+                                                                   m_current_mtu,
+                                                                   m_config.receive_timeout);
+
+    if (m_multisense_config.time_config.ptp_enabled && !ptp_status)
+    {
+        CRL_DEBUG("Unable to query ptp status\n");
+        return std::nullopt;
+    }
+
+    //
+    // To compute our network delay (i.e. offset between client host time and the camera uptime take our
+    // total roundtrip and divide by 2 to account for the transmit/receive
+    //
+    MultiSenseStatus::TimeStatus time_status{std::chrono::nanoseconds{status->message.uptime.getNanoSeconds()},
+                                             status->host_start_transmit_time,
+                                             status->host_transmit_receive_roundtrip / 2};
+
+    const auto message_stats = m_message_assembler.get_message_statistics();
+    MultiSenseStatus::ClientNetworkStatus client_stats{message_stats.received_messages,
+                                                       message_stats.dropped_messages};
+
+    return MultiSenseStatus{system_ok(status->message),
+                            (ptp_status ? std::make_optional(convert(ptp_status.value())) : std::nullopt),
+                            convert<MultiSenseStatus::CameraStatus>(status->message),
+                            convert<MultiSenseStatus::TemperatureStatus>(status->message),
+                            convert<MultiSenseStatus::PowerStatus>(status->message),
+                            std::move(client_stats),
+                            std::move(time_status)};
 }
 
 bool LegacyChannel::set_mtu(uint16_t mtu)
@@ -851,7 +885,7 @@ void LegacyChannel::handle_and_dispatch(Image image,
         // Service the callback if it's valid
         //
         {
-            std::lock_guard<std::mutex> lock(m_mutex);
+            std::lock_guard<std::mutex> lock(m_callback_mutex);
             if (m_user_image_frame_callback)
             {
                 m_user_image_frame_callback(frame);

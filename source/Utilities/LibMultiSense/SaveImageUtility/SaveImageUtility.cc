@@ -111,7 +111,7 @@ int main(int argc, char** argv)
         }
     }
 
-    const auto channel = lms::Channel::create(lms::Channel::ChannelConfig{ip_address, mtu});
+    const auto channel = lms::Channel::create(lms::Channel::ChannelConfig{ip_address, mtu, std::chrono::milliseconds{500}});
 
     auto config = channel->get_configuration();
     config.frames_per_second = 30.0;
@@ -139,7 +139,7 @@ int main(int argc, char** argv)
 
         if (const auto status = channel->get_system_status())
         {
-            (void) status;
+            std::cout << status->system_ok << " " << status->client_network.received_messages << std::endl;
         }
     }
 
