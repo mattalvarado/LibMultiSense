@@ -65,12 +65,12 @@ public:
     ///        call and a disparity stream in a second call, both streams would be active until stop_streams
     ///        is called for either
     ///
-    virtual bool start_streams(const std::vector<DataSource> &sources);
+    bool start_streams(const std::vector<DataSource> &sources) final override;
 
     ///
     /// @brief Stop a collection of streams
     ///
-    virtual bool stop_streams(const std::vector<DataSource> &sources);
+    bool stop_streams(const std::vector<DataSource> &sources) final override;
 
     ///
     /// @brief Add a frame callback to get serviced inline with the receipt of a new frame. Only
@@ -78,17 +78,17 @@ public:
     ///        NOTE: Perform minimal work in this callback, and ideally copy the lightweight
     ///        ImageFrame object out to another processing thread
     ///
-    virtual void add_image_frame_callback(std::function<void(const ImageFrame&)> callback);
+    void add_image_frame_callback(std::function<void(const ImageFrame&)> callback) final override;
 
     ///
     /// @brief Initialize the connection to the camera
     ///
-    virtual bool connect(const ChannelConfig &config);
+    bool connect(const ChannelConfig &config) final override;
 
     ///
     /// @brief Disconnect from the camera
     ///
-    virtual void disconnect();
+    void disconnect() final override;
 
     ///
     /// @brief A blocking call that waits for one frame from the camera.
@@ -98,45 +98,45 @@ public:
     ///
     /// @return The newly received ImageFrame, or std::nullopt if timed out (and you used a timeout).
     ///
-    virtual std::optional<ImageFrame> get_next_image_frame();
+    std::optional<ImageFrame> get_next_image_frame() final override;
 
     ///
     /// @brief Get the current MultiSense configuration
     ///
-    virtual MultiSenseConfiguration get_configuration();
+    MultiSenseConfiguration get_configuration() final override;
 
     ///
     /// @brief Get set the current MultiSense configuration
     ///
-    virtual bool set_configuration(const MultiSenseConfiguration &config);
+    bool set_configuration(const MultiSenseConfiguration &config) final override;
 
     ///
     /// @brief Get the current stereo calibration. The output calibration will correspond to the full-resolution
     ///        operating mode of the camera
     ///
-    virtual StereoCalibration get_calibration();
+    StereoCalibration get_calibration() final override;
 
     ///
     /// @brief Set the current stereo calibration. The calibration is expected to be or the full-resolution
     ///        operating mode of the camera
     ///
-    virtual bool set_calibration(const StereoCalibration &calibration);
+    bool set_calibration(const StereoCalibration &calibration) final override;
 
     ///
     /// @brief Get the device info associated with the camera
     ///
-    virtual DeviceInfo get_device_info();
+    DeviceInfo get_device_info() final override;
 
     ///
     /// @brief Set the camera's device info. This setting is protected via a key since invalid values in the
     ///        device info can result in internal camera failures
     ///
-    virtual bool set_device_info(const DeviceInfo &device_info, const std::string &key);
+    bool set_device_info(const DeviceInfo &device_info, const std::string &key) final override;
 
     ///
     /// @brief Query the current MultiSense status
     ///
-    virtual std::optional<MultiSenseStatus> get_system_status();
+    std::optional<MultiSenseStatus> get_system_status() final override;
 
 private:
 

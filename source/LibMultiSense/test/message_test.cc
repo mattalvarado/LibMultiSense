@@ -74,6 +74,24 @@ TEST(unwrap_sequence_id, rollover)
     EXPECT_EQ(full_sequence_id, 65536);
 }
 
+TEST(header_valid, invalid)
+{
+   std::vector<uint8_t> data(50, 0);
+
+   ASSERT_FALSE(header_valid(data));
+}
+
+TEST(header_valid, valid)
+{
+    using namespace crl::multisense::details;
+
+    wire::SysDeviceInfo info{};
+
+    auto serialized = serialize(info, 10, 9000);
+
+    ASSERT_TRUE(header_valid(serialized));
+}
+
 TEST(get_message_type, basic)
 {
     using namespace crl::multisense::details;
@@ -85,6 +103,29 @@ TEST(get_message_type, basic)
     const auto type = get_message_type(serialized);
 
     ASSERT_EQ(type, wire::SysDeviceInfo::ID);
+}
+
+TEST(get_full_message_size, invalid)
+{
+    const auto full_size = get_full_message_size({});
+
+    ASSERT_FALSE(static_cast<bool>(full_size));
+}
+
+TEST(get_full_message_size, valid)
+{
+    using namespace crl::multisense::details;
+
+    wire::SysDeviceInfo info{};
+
+    const auto serialized = serialize(info, 10, 9000);
+
+    const auto full_size = get_full_message_size(serialized);
+
+    ASSERT_TRUE(static_cast<bool>(full_size));
+
+    ASSERT_GT(full_size.value(), 20);
+    ASSERT_LT(full_size.value(), 200);
 }
 
 TEST(seralize_deseralize, roundtrip)

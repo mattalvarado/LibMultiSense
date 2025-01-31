@@ -133,13 +133,17 @@ int main(int argc, char** argv)
         {
             for (const auto &[source, image] : image_frame->images)
             {
-                write_image(image, std::to_string(image_frame->frame_id) + "_" + std::to_string(static_cast<int>(source)) + ".pgm");
+                std::cout << "frame " << image_frame->frame_id << " " << static_cast<int>(source) << std::endl;
+                //write_image(image, std::to_string(image_frame->frame_id) + "_" + std::to_string(static_cast<int>(source)) + ".pgm");
             }
         }
 
         if (const auto status = channel->get_system_status())
         {
-            std::cout << status->system_ok << " " << status->client_network.received_messages << std::endl;
+            std::cout << status->system_ok << " " <<
+                         status->client_network.received_messages << " " <<
+                         status->client_network.dropped_messages << " " <<
+                         status->client_network.invalid_packets << std::endl;
         }
     }
 

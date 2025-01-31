@@ -142,10 +142,13 @@ std::optional<OutputMessage> wait_for_data(MessageAssembler &assembler,
 
         if (auto ack = (wait_time ? ack_waiter->wait_for<wire::Ack>(wait_time.value()) : ack_waiter->wait<wire::Ack>()); ack)
         {
-            if (ack->status != wire::Ack::Status_Ok)
-            {
-                continue;
-            }
+            //
+            // TODO (malvarado): Uncomment this once the firmware issues are resolved
+            //
+            //if (ack->status != wire::Ack::Status_Ok)
+            //{
+            //    continue;
+            //}
 
             if (auto response = (wait_time ? response_waiter->wait_for<OutputMessage>(wait_time.value()) : response_waiter->wait<OutputMessage>()); response)
             {
@@ -216,10 +219,13 @@ std::optional<TimedResponse<OutputMessage>> wait_for_data_timed(MessageAssembler
         {
             const auto end = std::chrono::high_resolution_clock::now();
 
-            if (ack->status != wire::Ack::Status_Ok)
-            {
-                continue;
-            }
+            //
+            // TODO (malvarado): Uncomment this once the firmware issues are resolved
+            //
+            //if (ack->status != wire::Ack::Status_Ok)
+            //{
+            //    continue;
+            //}
 
             if (auto response = (wait_time ? response_waiter->wait_for<OutputMessage>(wait_time.value()) : response_waiter->wait<OutputMessage>()); response)
             {

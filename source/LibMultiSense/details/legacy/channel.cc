@@ -568,7 +568,8 @@ std::optional<MultiSenseStatus> LegacyChannel::get_system_status()
 
     const auto message_stats = m_message_assembler.get_message_statistics();
     MultiSenseStatus::ClientNetworkStatus client_stats{message_stats.received_messages,
-                                                       message_stats.dropped_messages};
+                                                       message_stats.dropped_messages,
+                                                       message_stats.invalid_packets};
 
     return MultiSenseStatus{system_ok(status->message),
                             (ptp_status ? std::make_optional(convert(ptp_status.value())) : std::nullopt),

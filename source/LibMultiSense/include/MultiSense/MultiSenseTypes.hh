@@ -846,6 +846,11 @@ struct MultiSenseStatus
         /// @brief The total number of dropped messages on the client side
         ///
         size_t dropped_messages = 0;
+
+        ///
+        /// @brief The total number of invalid packets received on the client side
+        ///
+        size_t invalid_packets = 0;
     };
 
     struct TimeStatus

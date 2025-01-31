@@ -34,7 +34,6 @@
  *   2025-01-08, malvarado@carnegierobotics.com, IRAD, Created file.
  **/
 
-#include <iostream>
 #include <limits>
 
 #include <utility/BufferStream.hh>
@@ -93,32 +92,9 @@ int64_t unwrap_sequence_id(uint16_t current_wire_id, int32_t previous_wire_id)
     return unwrapped_id;
 }
 
-crl::multisense::details::wire::IdType get_message_type(const std::vector<uint8_t>& raw_buffer)
+bool header_valid(const std::vector<uint8_t> &raw_data)
 {
     using namespace crl::multisense::details;
-
-    utility::BufferStreamReader stream(raw_buffer.data(), raw_buffer.size());
-    stream.seek(sizeof(wire::Header));
-    wire::IdType message_type;
-    stream & message_type;
-
-    return message_type;
-}
-
-MessageAssembler::MessageAssembler(std::shared_ptr<BufferPool> buffer_pool):
-    m_buffer_pool(buffer_pool)
-{
-}
-
-bool MessageAssembler::process_packet(const std::vector<uint8_t> &raw_data)
-{
-    using namespace crl::multisense::details;
-
-    if (!m_buffer_pool)
-    {
-        CRL_DEBUG("Buffer pool uninitialized. Cannot recieve images\n");
-        return false;
-    }
 
     if (raw_data.size() < static_cast<int>(sizeof(wire::Header)))
     {
@@ -144,117 +120,136 @@ bool MessageAssembler::process_packet(const std::vector<uint8_t> &raw_data)
         return false;
     }
 
+    return true;
+}
+
+crl::multisense::details::wire::IdType get_message_type(const std::vector<uint8_t>& raw_buffer)
+{
+    using namespace crl::multisense::details;
+
+    utility::BufferStreamReader stream(raw_buffer.data(), raw_buffer.size());
+    stream.seek(sizeof(wire::Header));
+    wire::IdType message_type;
+    stream & message_type;
+
+    return message_type;
+}
+
+std::optional<uint32_t> get_full_message_size(const std::vector<uint8_t> &raw_data)
+{
+    using namespace crl::multisense::details;
+
+    if (!header_valid(raw_data))
+    {
+        CRL_DEBUG("Cannot get message size\n");
+        return std::nullopt;
+    }
+
+    const auto message_type = get_message_type(raw_data);
+
+    const wire::Header& header = *(reinterpret_cast<const wire::Header*>(raw_data.data()));
+
+    //
+    // Handle the special case for disparity messages which are serialized on the wire using
+    // a number of bits per pixel which is less than how they are represented in the API. Computed
+    // the expanded size of the disparity message, and make sure our output buffer has enough space
+    // to store that data
+    //
+    const uint32_t final_message_size = (message_type == MSG_ID(wire::Disparity::ID)) ?
+                                        ((header.messageLength - wire::Disparity::META_LENGTH) /
+                                        wire::Disparity::WIRE_BITS_PER_PIXEL *
+                                        wire::Disparity::API_BITS_PER_PIXEL +
+                                        wire::Disparity::META_LENGTH) :
+                                        header.messageLength;
+
+    return final_message_size;
+}
+
+MessageAssembler::MessageAssembler(std::shared_ptr<BufferPool> buffer_pool):
+    m_buffer_pool(buffer_pool)
+{
+}
+
+bool MessageAssembler::process_packet(const std::vector<uint8_t> &raw_data)
+{
+    using namespace crl::multisense::details;
+
+    if (!m_buffer_pool)
+    {
+        CRL_DEBUG("Buffer pool uninitialized. Cannot recieve images\n");
+        return false;
+    }
+
+    if (!header_valid(raw_data))
+    {
+        ++m_invalid_packets;
+        return false;
+    }
+
+    const wire::Header& header = *(reinterpret_cast<const wire::Header*>(raw_data.data()));
+
     //
     // Create a unique sequence ID based on the wire ID
     //
     const int64_t full_sequence_id = unwrap_sequence_id(header.sequenceIdentifier, m_previous_wire_id);
     m_previous_wire_id = header.sequenceIdentifier;
 
-    auto active_message = std::end(m_active_messages);
+    auto active_message = m_active_messages.find(full_sequence_id);;
 
     const auto buffer_config = m_buffer_pool->get_config();
     const bool is_large_buffer = header.messageLength > buffer_config.small_buffer_size;
     auto& ordered_messages = (is_large_buffer ? m_large_ordered_messages : m_small_ordered_messages);
 
     //
-    // We are not currently tracking this message
+    // We are not currently tracking this message, attempt to create a new message for it. This
+    // will only happen once for each new message
     //
-    if (m_active_messages.count(full_sequence_id) == 0)
+    if (active_message == std::end(m_active_messages))
     {
-        if (!m_active_messages.empty())
+        if (header.byteOffset != 0)
         {
-            ++m_dropped_messages;
+            CRL_DEBUG("Missed first packet. Dropping entire message\n");
+            ++m_invalid_packets;
+            return true;
         }
 
-        const auto message_type = get_message_type(raw_data);
-
-        //
-        // Handle the special case for disparity messages which are serialized on the wire using
-        // a number of bits per pixel which is less than how they are represented in the API. Computed
-        // the expanded size of the disparity message, and make sure our output buffer has enough space
-        // to store that data
-        //
-        const uint32_t final_message_size = (message_type == MSG_ID(wire::Disparity::ID)) ?
-                                            ((header.messageLength - wire::Disparity::META_LENGTH) /
-                                            wire::Disparity::WIRE_BITS_PER_PIXEL *
-                                            wire::Disparity::API_BITS_PER_PIXEL +
-                                            wire::Disparity::META_LENGTH) :
-                                            header.messageLength;
-
-        if (final_message_size > buffer_config.large_buffer_size)
+        const auto message_size = get_full_message_size(raw_data);
+        if (!message_size)
         {
-            CRL_DEBUG("No buffers large enough to fit a message of %d bytes\n", final_message_size);
+            ++m_invalid_packets;
             return false;
         }
 
-        //
-        // Remove old messages until we can get a free buffer
-        //
-        auto buffer = m_buffer_pool->get_buffer(final_message_size);
-        while(buffer == nullptr && !ordered_messages.empty())
+        std::shared_ptr<std::vector<uint8_t>> buffer = nullptr;
+        std::tie(buffer, ordered_messages) = get_buffer(message_size.value(), ordered_messages);
+        if (!buffer)
         {
-            const auto old_sequence = ordered_messages.front();
-            ordered_messages.pop_front();
-            m_active_messages.erase(old_sequence);
-
-            if (buffer = m_buffer_pool->get_buffer(final_message_size); buffer != nullptr)
-            {
-                break;
-            }
-        }
-
-        if (buffer == nullptr)
-        {
-            CRL_DEBUG("No free buffers available\n");
             return false;
         }
 
         auto [inserted_iterator,_] = m_active_messages.emplace(full_sequence_id,
-                                                               InternalMessage{message_type, 0, std::move(buffer)});
+                                                               InternalMessage{get_message_type(raw_data),
+                                                                               0,
+                                                                               std::move(buffer)});
+
         active_message = inserted_iterator;
         ordered_messages.emplace_back(full_sequence_id);
+
+        ++m_received_messages;
     }
-
-
-    active_message = (active_message == std::end(m_active_messages)) ? m_active_messages.find(full_sequence_id) : active_message;
 
     if (active_message != std::end(m_active_messages))
     {
-        const size_t bytes_to_write = raw_data.size() - sizeof(wire::Header);
-
         auto& message = active_message->second;
 
-        if (bytes_to_write + message.bytes_written >  message.data->size())
+        if (!write_data(message, raw_data))
         {
-            CRL_EXCEPTION("Error. Buffer write will overrun internal buffer");
+            ++m_invalid_packets;
+            return false;
         }
-
-        //
-        // Handle the special case unpacking of disparity data from 12bit to 16bit images
-        //
-        if(message.type == MSG_ID(wire::Disparity::ID))
-        {
-            utility::BufferStreamWriter stream(message.data->data(),
-                                               message.data->size());
-
-            wire::Disparity::assembler(stream,
-                                       raw_data.data() + sizeof(wire::Header),
-                                       header.byteOffset,
-                                       bytes_to_write);
-        }
-        else
-        {
-            memcpy(message.data->data() + header.byteOffset,
-                   raw_data.data() + sizeof(wire::Header),
-                   bytes_to_write);
-        }
-
-        message.bytes_written += bytes_to_write;
 
         if (message.bytes_written == header.messageLength)
         {
-            ++m_received_messages;
-
             //
             // Handle the special case for Ack messages. To avoid collisions for all the Ack
             // registrations, we extract the command associated with the Ack, and dispatch
@@ -279,11 +274,9 @@ bool MessageAssembler::process_packet(const std::vector<uint8_t> &raw_data)
             {
                 ordered_messages.erase(it);
             }
+
+            ++m_dispatched_messages;
         }
-    }
-    else if (header.byteOffset != 0)
-    {
-        CRL_DEBUG("Missed first packet. Dropping entire message\n");
     }
 
     return true;
@@ -334,6 +327,80 @@ void MessageAssembler::remove_callback(const crl::multisense::details::wire::IdT
     {
         m_callbacks.erase(it);
     }
+}
+
+std::tuple<std::shared_ptr<std::vector<uint8_t>>, std::deque<int64_t>>
+MessageAssembler::get_buffer(uint32_t message_size, std::deque<int64_t> ordered_messages)
+{
+    const auto buffer_config = m_buffer_pool->get_config();
+
+    if (message_size > buffer_config.large_buffer_size)
+    {
+        CRL_DEBUG("No buffers large enough to fit a message of %d bytes\n", message_size);
+        return std::make_tuple(nullptr, std::move(ordered_messages));
+    }
+
+    //
+    // Remove old messages until we can get a free buffer
+    //
+    auto buffer = m_buffer_pool->get_buffer(message_size);
+    while(buffer == nullptr && !ordered_messages.empty())
+    {
+        const auto old_sequence = ordered_messages.front();
+        ordered_messages.pop_front();
+        m_active_messages.erase(old_sequence);
+
+        if (buffer = m_buffer_pool->get_buffer(message_size); buffer != nullptr)
+        {
+            break;
+        }
+    }
+
+    return std::make_tuple(buffer, std::move(ordered_messages));
+}
+
+bool MessageAssembler::write_data(InternalMessage &message, const std::vector<uint8_t> &raw_data)
+{
+    using namespace crl::multisense::details;
+
+    if (raw_data.size() < sizeof(wire::Header))
+    {
+        return false;
+    }
+
+    const wire::Header& header = *(reinterpret_cast<const wire::Header*>(raw_data.data()));
+
+    const size_t bytes_to_write = raw_data.size() - sizeof(wire::Header);
+
+    if (bytes_to_write + message.bytes_written >  message.data->size())
+    {
+        CRL_DEBUG("Error. Buffer write will overrun internal buffer\n");
+        return false;
+    }
+
+    //
+    // Handle the special case unpacking of disparity data from 12bit to 16bit images
+    //
+    if(message.type == MSG_ID(wire::Disparity::ID))
+    {
+        utility::BufferStreamWriter stream(message.data->data(),
+                                           message.data->size());
+
+        wire::Disparity::assembler(stream,
+                                   raw_data.data() + sizeof(wire::Header),
+                                   header.byteOffset,
+                                   bytes_to_write);
+    }
+    else
+    {
+        memcpy(message.data->data() + header.byteOffset,
+               raw_data.data() + sizeof(wire::Header),
+               bytes_to_write);
+    }
+
+    message.bytes_written += bytes_to_write;
+
+    return true;
 }
 
 void MessageAssembler::dispatch(const crl::multisense::details::wire::IdType& message_id,

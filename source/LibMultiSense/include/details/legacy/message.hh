@@ -80,10 +80,20 @@ T deserialize(const std::vector<uint8_t>& data)
 int64_t unwrap_sequence_id(uint16_t current_wire_id, int32_t previous_wire_id);
 
 ///
+/// @brief Validate the Multisense header
+///
+bool header_valid(const std::vector<uint8_t> &raw_data);
+
+///
 /// @brief Get the message type of the message from the buffer over the wire. Note this does account
 ///        for the wire::Header that is transmitted from the camera
 ///
 crl::multisense::details::wire::IdType get_message_type(const std::vector<uint8_t>& raw_buffer);
+
+///
+/// @brief Get the size of the full message in bytes from a raw data buffer
+///
+std::optional<uint32_t> get_full_message_size(const std::vector<uint8_t> &raw_data);
 
 ///
 /// @brief Serialize a MultiSense Wire message for transmission. This adds the wire header to the message
@@ -171,6 +181,11 @@ struct MessageStatistics
     /// @brief The number of dropped messages
     ///
     size_t dropped_messages = 0;
+
+    ///
+    /// @brief The number of invalid packets we received
+    ///
+    size_t invalid_packets = 0;
 };
 
 ///
@@ -211,7 +226,9 @@ public:
 
     MessageStatistics get_message_statistics() const
     {
-        return MessageStatistics{m_received_messages, m_dropped_messages};
+        return MessageStatistics{m_dispatched_messages,
+                                 m_received_messages - m_dispatched_messages,
+                                 m_invalid_packets};
     }
 
 private:
@@ -225,6 +242,19 @@ private:
         size_t bytes_written = 0;
         std::shared_ptr<std::vector<uint8_t>> data;
     };
+
+    ///
+    /// @brief Get a new buffer that can hold a message of a given size. If no buffers are available try
+    ///        destroying older buffers we may no longer be using. The id's of these buffers are stored
+    ///        in the input ordered_messages
+    ///
+    std::tuple<std::shared_ptr<std::vector<uint8_t>>, std::deque<int64_t>>
+        get_buffer(uint32_t message_size, std::deque<int64_t> ordered_messages);
+
+    ///
+    /// @brief Write raw data to an message
+    ///
+    bool write_data(InternalMessage &message, const std::vector<uint8_t> &raw_data);
 
     ///
     /// @brief Dispatch to both our registrations and callbacks
@@ -287,9 +317,14 @@ private:
     std::atomic_uint64_t m_received_messages = 0;
 
     ///
-    /// @brief A counter for the number of messages we have dropped
+    /// @brief A counter for the number of messages we dispatched
     ///
-    std::atomic_uint64_t m_dropped_messages = 0;
+    std::atomic_uint64_t m_dispatched_messages = 0;
+
+    ///
+    /// @brief A counter for the number of invalid packets we received
+    ///
+    std::atomic_uint64_t m_invalid_packets = 0;
 };
 
 }
