@@ -40,6 +40,41 @@
 
 using namespace multisense::legacy;
 
+TEST(get_version, basic)
+{
+    using namespace crl::multisense::details;
+
+    const wire::VersionType raw_version = 0x0520;
+
+    const auto version = get_version(raw_version);
+
+    ASSERT_EQ(version.major, 5);
+    ASSERT_EQ(version.minor, 32);
+}
+
+TEST(version, less_than)
+{
+    using namespace crl::multisense::details;
+
+    const wire::VersionType raw_version0 = 0x0520;
+    const auto version0 = get_version(raw_version0);
+
+    const wire::VersionType raw_version1 = 0x0521;
+    const auto version1 = get_version(raw_version1);
+
+    ASSERT_TRUE(version0 < version1);
+}
+
+TEST(get_disparities, basic)
+{
+    using namespace multisense;
+
+    ASSERT_EQ(get_disparities(64), multisense::MultiSenseConfiguration::MaxDisparities::D64);
+    ASSERT_EQ(get_disparities(128), multisense::MultiSenseConfiguration::MaxDisparities::D128);
+    ASSERT_EQ(get_disparities(256), multisense::MultiSenseConfiguration::MaxDisparities::D256);
+    EXPECT_THROW(get_disparities(1), std::exception);
+}
+
 TEST(convert_sources_from_wire, null)
 {
     ASSERT_TRUE(convert_sources(0).empty());

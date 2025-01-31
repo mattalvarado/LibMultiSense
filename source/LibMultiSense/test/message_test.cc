@@ -379,3 +379,83 @@ TEST(MessageAssembler, multi_large_packets)
         *sequence_id = i;
     }
 }
+
+TEST(MessageAssembler, stats_valid_message)
+{
+    using namespace crl::multisense::details;
+    using namespace std::chrono_literals;
+
+    wire::SysDeviceInfo info{};
+    info.name = "test_callback";
+    auto serialized = serialize(info, 10, 9000);
+
+    MessageAssembler assembler{std::make_shared<BufferPool>(BufferPoolConfig{2, 9000, 1, 100000})};
+
+    ASSERT_TRUE(assembler.process_packet(serialized));
+
+    const auto stats = assembler.get_message_statistics();
+
+    ASSERT_EQ(stats.received_messages, 1);
+    ASSERT_EQ(stats.dropped_messages, 0);
+    ASSERT_EQ(stats.invalid_packets, 0);
+}
+
+TEST(MessageAssembler, stats_invalid_message)
+{
+    using namespace crl::multisense::details;
+    using namespace std::chrono_literals;
+
+    wire::SysDeviceInfo info{};
+    info.name = "test_callback";
+    auto serialized = serialize(info, 10, 9000);
+
+    //
+    // Mess up our message
+    //
+    serialized[0] = 123;
+
+    MessageAssembler assembler{std::make_shared<BufferPool>(BufferPoolConfig{2, 9000, 1, 100000})};
+
+    //
+    // Processing should return false
+    //
+    ASSERT_FALSE(assembler.process_packet(serialized));
+    ASSERT_FALSE(assembler.process_packet(std::vector<uint8_t>{}));
+
+    const auto stats = assembler.get_message_statistics();
+
+    ASSERT_EQ(stats.received_messages, 0);
+    ASSERT_EQ(stats.dropped_messages, 0);
+    ASSERT_EQ(stats.invalid_packets, 2);
+}
+
+TEST(MessageAssembler, stats_dropped_valid_message)
+{
+    using namespace crl::multisense::details;
+    using namespace std::chrono_literals;
+
+    wire::SysDeviceInfo info{};
+    info.name = "test_callback";
+    auto serialized = serialize(info, 10, 9000);
+
+    MessageAssembler assembler{std::make_shared<BufferPool>(BufferPoolConfig{2, 9000, 1, 100000})};
+
+    //
+    // Send in 3 messages. One valid, one of a very large size, one valid
+    //
+    ASSERT_TRUE(assembler.process_packet(serialized));
+
+    serialized = serialize(info, 11, 9000);
+    wire::Header& header = *(reinterpret_cast<wire::Header*>(serialized.data()));
+    header.messageLength = 100000;
+    ASSERT_TRUE(assembler.process_packet(serialized));
+
+    serialized = serialize(info, 12, 9000);
+    ASSERT_TRUE(assembler.process_packet(serialized));
+
+    const auto stats = assembler.get_message_statistics();
+
+    ASSERT_EQ(stats.received_messages, 2);
+    ASSERT_EQ(stats.dropped_messages, 1);
+    ASSERT_EQ(stats.invalid_packets, 0);
+}
