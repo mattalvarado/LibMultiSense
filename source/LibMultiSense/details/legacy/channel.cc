@@ -545,17 +545,20 @@ std::optional<MultiSenseStatus> LegacyChannel::get_system_status()
         return std::nullopt;
     }
 
-    const auto ptp_status = wait_for_data<wire::PtpStatusResponse>(m_message_assembler,
-                                                                   m_socket,
-                                                                   wire::PtpStatusRequest(),
-                                                                   m_transmit_id++,
-                                                                   m_current_mtu,
-                                                                   m_config.receive_timeout);
-
-    if (m_multisense_config.time_config.ptp_enabled && !ptp_status)
+    std::optional<wire::PtpStatusResponse> ptp_status = std::nullopt;
+    if (m_multisense_config.time_config.ptp_enabled)
     {
-        CRL_DEBUG("Unable to query ptp status\n");
-        return std::nullopt;
+
+        if (ptp_status = wait_for_data<wire::PtpStatusResponse>(m_message_assembler,
+                                                                       m_socket,
+                                                                       wire::PtpStatusRequest(),
+                                                                       m_transmit_id++,
+                                                                       m_current_mtu,
+                                                                       m_config.receive_timeout); !ptp_status)
+        {
+            CRL_DEBUG("Unable to query ptp status\n");
+            return std::nullopt;
+        }
     }
 
     //

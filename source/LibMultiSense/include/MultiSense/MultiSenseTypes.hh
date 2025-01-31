@@ -457,7 +457,7 @@ struct ImageFrame
 };
 
 ///
-/// @brief Complete configuration object for configuring the MultiSense
+/// @brief Complete configuration object for configuring the MultiSense. Can be updated during camera operation
 ///
 struct MultiSenseConfiguration
 {
@@ -748,7 +748,8 @@ struct MultiSenseConfiguration
 };
 
 ///
-/// @brief Consolidated status information which can be queried on demand from the MultiSense
+/// @brief Consolidated status information which can be queried on demand from the MultiSense. Will change
+///        during camera operation
 ///
 struct MultiSenseStatus
 {
@@ -874,21 +875,89 @@ struct MultiSenseStatus
     };
 
     ///
-    /// @brief summary of the current MultiSense state. True if the MultiSense is operating properly
+    /// @brief Summary of the current MultiSense state. True if the MultiSense is operating properly
     ///
     bool system_ok = false;
 
+    ///
+    /// @brief The current ptp status. Only valid if ptp is enabled
+    ///
     std::optional<PtpStatus> ptp;
 
+    ///
+    /// @brief The current camera status
+    ///
     CameraStatus camera;
 
+    ///
+    /// @brief The current temperature status
+    ///
     TemperatureStatus temperature;
 
+    ///
+    /// @brief The current power status
+    ///
     PowerStatus power;
 
+    ///
+    /// @brief The current client network statistics
+    ///
     ClientNetworkStatus client_network;
 
+    ///
+    /// @brief The current timing status information
+    ///
     TimeStatus time;
+};
+
+///
+/// @brief Static status info for the MultiSense. Will not change during camera operation
+/// TODO (malvarado): Put device info in here
+///
+struct MultiSenseInfo
+{
+    struct Version
+    {
+        uint32_t major = 0;
+        uint32_t minor = 0;
+        uint32_t patch = 0;
+
+        ///
+        /// @brief Convenience operator for comparing versions
+        ///
+        bool operator<(const Version& other) const
+        {
+            return major < other.major ||
+                   (major == other.major && minor < other.minor) ||
+                   (major == other.major && minor == other.minor && patch < other.patch);
+        }
+    };
+
+    ///
+    /// @brief Version information for the MultiSense
+    ///
+    struct SensorVersion
+    {
+        std::string sensor_firmware_build_date{};
+        MultiSenseInfo::Version sensor_firmware_version{};
+
+        uint64_t sensor_hardware_version = 0;
+        uint64_t sensor_hardware_magic = 0;
+        uint64_t sensor_fpga_dna = 0;
+    };
+
+    struct SupportedOperatingMode
+    {
+        uint32_t width = 0;
+        uint32_t height = 0;
+        MaxDisparities disparities = MaxDisparities::D64;
+        std::vector<DataSource> supported_sources{};
+    };
+
+    SensorVersion version;
+
+    std::vector<SupportedOperatingMode> operating_modes;
+
 };
 
 }
