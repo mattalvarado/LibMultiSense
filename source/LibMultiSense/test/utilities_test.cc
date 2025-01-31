@@ -1,5 +1,5 @@
 /**
- * @file utilities_test.hh
+ * @file utilities_test.cc
  *
  * Copyright 2013-2025
  * Carnegie Robotics, LLC

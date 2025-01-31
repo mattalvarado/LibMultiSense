@@ -5,6 +5,7 @@ set(TEST_NAMES
     configuration_test
     device_info_tests
     message_test
+    status_test
     storage_test
     utilities_test)
 

@@ -1,5 +1,5 @@
 /**
- * @file configuration_test.hh
+ * @file configuration_test.cc
  *
  * Copyright 2013-2025
  * Carnegie Robotics, LLC

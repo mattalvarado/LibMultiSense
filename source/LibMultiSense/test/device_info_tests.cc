@@ -1,5 +1,5 @@
 /**
- * @file device_info_tests.hh
+ * @file device_info_tests.cc
  *
  * Copyright 2013-2025
  * Carnegie Robotics, LLC
