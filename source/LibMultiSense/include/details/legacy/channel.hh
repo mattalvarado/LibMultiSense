@@ -125,13 +125,13 @@ public:
     ///
     /// @brief Get the device info associated with the camera
     ///
-    DeviceInfo get_device_info() final override;
+    MultiSenseInfo get_info() final override;
 
     ///
     /// @brief Set the camera's device info. This setting is protected via a key since invalid values in the
     ///        device info can result in internal camera failures
     ///
-    bool set_device_info(const DeviceInfo &device_info, const std::string &key) final override;
+    bool set_device_info(const MultiSenseInfo::DeviceInfo &device_info, const std::string &key) final override;
 
     ///
     /// @brief Query the current MultiSense status
@@ -161,9 +161,14 @@ private:
     std::optional<StereoCalibration> query_calibration();
 
     ///
+    /// @brief Query the MultiSense Info
+    ///
+    std::optional<MultiSenseInfo> query_info();
+
+    ///
     /// @brief Query the device_info from the camera
     ///
-    std::optional<DeviceInfo> query_device_info();
+    std::optional<MultiSenseInfo::DeviceInfo> query_device_info();
 
     ///
     /// @brief Image meta callback used to internally receive images sent from the MultiSense
@@ -247,7 +252,7 @@ private:
     ///
     /// @brief The current cached device info stored here for convenience
     ///
-    DeviceInfo m_device_info;
+    MultiSenseInfo m_info;
 
     ///
     /// @brief The current cached MultiSense configuration stored for convenience

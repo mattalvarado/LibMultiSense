@@ -138,193 +138,6 @@ struct StereoCalibration
 };
 
 ///
-/// @brief The Device information associated with the MultiSense. The DeviceInfo is used to determine what features
-///        the MultiSense offers, and provides debug information to the Carnegie Robotics' team.
-///        The DeviceInfo can only be set at the factory
-///
-struct DeviceInfo
-{
-    ///
-    /// @brief Info for the PCBs contained in the unit
-    ///
-    struct PcbInfo
-    {
-        std::string name;
-        uint32_t revision;
-    };
-
-    ///
-    /// @brief MultiSense Hardware revisions
-    ///
-    enum class HardwareRevision
-    {
-        UNKNOWN,
-        S7,
-        S21,
-        ST21,
-        S27,
-        S30,
-        KS21,
-        MONOCAM,
-        KS21_SILVER,
-        ST25,
-        KS21i
-    };
-
-    ///
-    /// @brief Different imager types
-    ///
-    enum class ImagerType
-    {
-        UNKNOWN,
-        CMV2000_GREY,
-        CMV2000_COLOR,
-        CMV4000_GREY,
-        CMV4000_COLOR,
-        FLIR_TAU2,
-        AR0234_GREY,
-        AR0239_COLOR
-    };
-
-    ///
-    /// @brief MultiSense lighting types
-    ///
-    enum class LightingType
-    {
-        ///
-        /// @brief No lights
-        ///
-        NONE,
-        ///
-        /// @brief Lights driven internally
-        ///
-        INTERNAL,
-        ///
-        /// @brief Drive lights via an external output
-        ///
-        EXTERNAL,
-        ///
-        /// @brief A pattern projector
-        ///
-        PATTERN_PROJECTOR
-    };
-
-    //
-    // TODO(malvarado): Populate this with valid inputs
-    //
-    enum class LensType
-    {
-        UNKNOWN
-    };
-
-    ///
-    /// @brief The name of the MultiSense variant
-    ///
-    std::string camera_name;
-
-    ///
-    /// @brief The date the MultiSense was manufactured
-    ///
-    std::string build_date;
-
-    ///
-    /// @brief The unique serial number of the MultiSense
-    ///
-    std::string serial_number;
-
-    ///
-    /// @brief The hardware revision of the MultiSense
-    ///
-    HardwareRevision hardware_revision;
-
-    ///
-    /// @brief The number of valid pcb_info objects
-    ///
-    uint8_t number_of_pcbs;
-
-    ///
-    /// @brief Information about each PCB
-    ///
-    std::array<PcbInfo, 8>  pcb_info;
-
-    ///
-    /// @brief The name of the imager used by the primary camera. For stereo cameras this is the
-    ///        Left/Right stereo pair. For mono cameras this is the single imager
-    ///
-    std::string imager_name;
-
-    ///
-    /// @brief The type of the imager
-    ///
-    ImagerType  imager_type;
-
-    ///
-    /// @brief The native width of the primary imager
-    ///
-    uint32_t imager_width;
-
-    ///
-    /// @brief The native height of the primary imager
-    ///
-    uint32_t imager_height;
-
-    ///
-    /// @brief The name of the lens used for the primary camera For stereo cameras this is the
-    ///        Left/Right stereo pair. For mono cameras this is the single camera
-    ///
-    std::string lens_name;
-
-    ///
-    /// @brief The type of the primary imager
-    ///
-    LensType lens_type;
-
-    ///
-    /// @brief The nominal stereo baseline in meters
-    ///
-    float nominal_stereo_baseline;
-
-    ///
-    /// @brief The nominal focal length for the primary lens in meters
-    ///
-    float nominal_focal_length;
-
-    ///
-    /// @brief The nominal relative aperture for the primary camera modules in f-stop
-    ///
-    float nominal_relative_aperature;
-
-    ///
-    /// @brief The type of lighting used in the MultiSense
-    ///
-    LightingType lighting_type;
-
-    ///
-    /// @brief The number of lights the MultiSense controls
-    ///
-    uint32_t number_of_lights;
-
-    ///
-    /// @brief Determine if the MultiSense has a Aux color camera based on the DeviceInfo
-    ///
-    constexpr bool has_aux_camera() const
-    {
-        switch (hardware_revision)
-        {
-            case HardwareRevision::S27:
-            case HardwareRevision::S30:
-            case HardwareRevision::MONOCAM:
-            case HardwareRevision::KS21i:
-                return true;
-            default:
-                return false;
-        }
-
-        return false;
-    }
-};
-
-///
 /// @brief Represents a single image plus metadata
 ///
 struct Image
@@ -916,6 +729,196 @@ struct MultiSenseStatus
 ///
 struct MultiSenseInfo
 {
+    ///
+    /// @brief The Device information associated with the MultiSense. The DeviceInfo is used to determine what features
+    ///        the MultiSense offers, and provides debug information to the Carnegie Robotics' team.
+    ///        The DeviceInfo can only be set at the factory
+    ///
+    struct DeviceInfo
+    {
+        ///
+        /// @brief Info for the PCBs contained in the unit
+        ///
+        struct PcbInfo
+        {
+            std::string name;
+            uint32_t revision;
+        };
+
+        ///
+        /// @brief MultiSense Hardware revisions
+        ///
+        enum class HardwareRevision
+        {
+            UNKNOWN,
+            S7,
+            S21,
+            ST21,
+            S27,
+            S30,
+            KS21,
+            MONOCAM,
+            KS21_SILVER,
+            ST25,
+            KS21i
+        };
+
+        ///
+        /// @brief Different imager types
+        ///
+        enum class ImagerType
+        {
+            UNKNOWN,
+            CMV2000_GREY,
+            CMV2000_COLOR,
+            CMV4000_GREY,
+            CMV4000_COLOR,
+            FLIR_TAU2,
+            AR0234_GREY,
+            AR0239_COLOR
+        };
+
+        ///
+        /// @brief MultiSense lighting types
+        ///
+        enum class LightingType
+        {
+            ///
+            /// @brief No lights
+            ///
+            NONE,
+            ///
+            /// @brief Lights driven internally
+            ///
+            INTERNAL,
+            ///
+            /// @brief Drive lights via an external output
+            ///
+            EXTERNAL,
+            ///
+            /// @brief A pattern projector
+            ///
+            PATTERN_PROJECTOR
+        };
+
+        //
+        // TODO(malvarado): Populate this with valid inputs
+        //
+        enum class LensType
+        {
+            UNKNOWN
+        };
+
+        ///
+        /// @brief The name of the MultiSense variant
+        ///
+        std::string camera_name;
+
+        ///
+        /// @brief The date the MultiSense was manufactured
+        ///
+        std::string build_date;
+
+        ///
+        /// @brief The unique serial number of the MultiSense
+        ///
+        std::string serial_number;
+
+        ///
+        /// @brief The hardware revision of the MultiSense
+        ///
+        HardwareRevision hardware_revision;
+
+        ///
+        /// @brief The number of valid pcb_info objects
+        ///
+        uint8_t number_of_pcbs;
+
+        ///
+        /// @brief Information about each PCB
+        ///
+        std::array<PcbInfo, 8>  pcb_info;
+
+        ///
+        /// @brief The name of the imager used by the primary camera. For stereo cameras this is the
+        ///        Left/Right stereo pair. For mono cameras this is the single imager
+        ///
+        std::string imager_name;
+
+        ///
+        /// @brief The type of the imager
+        ///
+        ImagerType  imager_type;
+
+        ///
+        /// @brief The native width of the primary imager
+        ///
+        uint32_t imager_width;
+
+        ///
+        /// @brief The native height of the primary imager
+        ///
+        uint32_t imager_height;
+
+        ///
+        /// @brief The name of the lens used for the primary camera For stereo cameras this is the
+        ///        Left/Right stereo pair. For mono cameras this is the single camera
+        ///
+        std::string lens_name;
+
+        ///
+        /// @brief The type of the primary imager
+        ///
+        LensType lens_type;
+
+        ///
+        /// @brief The nominal stereo baseline in meters
+        ///
+        float nominal_stereo_baseline;
+
+        ///
+        /// @brief The nominal focal length for the primary lens in meters
+        ///
+        float nominal_focal_length;
+
+        ///
+        /// @brief The nominal relative aperture for the primary camera modules in f-stop
+        ///
+        float nominal_relative_aperature;
+
+        ///
+        /// @brief The type of lighting used in the MultiSense
+        ///
+        LightingType lighting_type;
+
+        ///
+        /// @brief The number of lights the MultiSense controls
+        ///
+        uint32_t number_of_lights;
+
+        ///
+        /// @brief Determine if the MultiSense has a Aux color camera based on the DeviceInfo
+        ///
+        constexpr bool has_aux_camera() const
+        {
+            switch (hardware_revision)
+            {
+                case HardwareRevision::S27:
+                case HardwareRevision::S30:
+                case HardwareRevision::MONOCAM:
+                case HardwareRevision::KS21i:
+                    return true;
+                default:
+                    return false;
+            }
+
+            return false;
+        }
+    };
+
+    ///
+    /// @brief Convenience wrapper for a version number
+    ///
     struct Version
     {
         uint32_t major = 0;
@@ -938,21 +941,23 @@ struct MultiSenseInfo
     ///
     struct SensorVersion
     {
-        std::string sensor_firmware_build_date{};
-        MultiSenseInfo::Version sensor_firmware_version{};
+        std::string firmware_build_date{};
+        MultiSenseInfo::Version firmware_version{};
 
-        uint64_t sensor_hardware_version = 0;
-        uint64_t sensor_hardware_magic = 0;
-        uint64_t sensor_fpga_dna = 0;
+        uint64_t hardware_version = 0;
+        uint64_t hardware_magic = 0;
+        uint64_t fpga_dna = 0;
     };
 
     struct SupportedOperatingMode
     {
         uint32_t width = 0;
         uint32_t height = 0;
-        MaxDisparities disparities = MaxDisparities::D64;
+        MultiSenseConfiguration::MaxDisparities disparities = MultiSenseConfiguration::MaxDisparities::D64;
         std::vector<DataSource> supported_sources{};
     };
+
+    DeviceInfo device;
 
     SensorVersion version;
 

@@ -59,15 +59,19 @@
 #include <wire/StreamControlMessage.hh>
 #include <wire/SysGetCameraCalibrationMessage.hh>
 #include <wire/SysGetDeviceInfoMessage.hh>
+#include <wire/SysGetDeviceModesMessage.hh>
 #include <wire/SysDeviceInfoMessage.hh>
+#include <wire/SysDeviceModesMessage.hh>
 #include <wire/SysMtuMessage.hh>
 #include <wire/SysTestMtuMessage.hh>
 #include <wire/SysTestMtuResponseMessage.hh>
+#include <wire/VersionRequestMessage.hh>
+#include <wire/VersionResponseMessage.hh>
 
 #include "details/legacy/channel.hh"
 #include "details/legacy/calibration.hh"
 #include "details/legacy/configuration.hh"
-#include "details/legacy/device_info.hh"
+#include "details/legacy/info.hh"
 #include "details/legacy/message.hh"
 #include "details/legacy/status.hh"
 #include "details/legacy/utilities.hh"
@@ -258,11 +262,11 @@ bool LegacyChannel::connect(const ChannelConfig &config)
     }
 
     //
-    // Update our cached device info
+    // Update our cached system info
     //
-    if (auto device_info = query_device_info(); device_info)
+    if (auto info = query_info(); info)
     {
-        m_device_info = std::move(device_info.value());
+        m_info = std::move(info.value());
     }
     else
     {
@@ -273,7 +277,7 @@ bool LegacyChannel::connect(const ChannelConfig &config)
     // Update our cached multisense configuration
     // TODO (malvarado): Query the PTP status from the camera
     //
-    if (auto config = query_configuration(m_device_info.has_aux_camera(), false); config)
+    if (auto config = query_configuration(m_info.device.has_aux_camera(), false); config)
     {
         m_multisense_config = std::move(config.value());
     }
@@ -398,7 +402,7 @@ bool LegacyChannel::set_configuration(const MultiSenseConfiguration &config)
     //
     // Set aux controls if they are valid
     //
-    if (config.aux_config && m_device_info.has_aux_camera())
+    if (config.aux_config && m_info.device.has_aux_camera())
     {
         //
         // Set the aux camera controls
@@ -440,7 +444,7 @@ bool LegacyChannel::set_configuration(const MultiSenseConfiguration &config)
     // Update our internal cached image config after we successfully set everything
     //
     const auto ptp_enabled = config.time_config.ptp_enabled;
-    if (const auto new_config = query_configuration(m_device_info.has_aux_camera(), ptp_enabled); new_config)
+    if (const auto new_config = query_configuration(m_info.device.has_aux_camera(), ptp_enabled); new_config)
     {
         m_multisense_config = new_config.value();
         return true;
@@ -487,14 +491,14 @@ bool LegacyChannel::set_calibration(const StereoCalibration &calibration)
     return false;
 }
 
-DeviceInfo LegacyChannel::get_device_info()
+MultiSenseInfo LegacyChannel::get_info()
 {
     std::lock_guard<std::mutex> lock(m_mutex);
 
-    return m_device_info;
+    return m_info;
 }
 
-bool LegacyChannel::set_device_info(const DeviceInfo &device_info, const std::string &key)
+bool LegacyChannel::set_device_info(const MultiSenseInfo::DeviceInfo &device_info, const std::string &key)
 {
     using namespace crl::multisense::details;
 
@@ -515,7 +519,7 @@ bool LegacyChannel::set_device_info(const DeviceInfo &device_info, const std::st
             if (const auto new_device_info = query_device_info(); new_device_info)
             {
                 std::lock_guard<std::mutex> lock(m_mutex);
-                m_device_info = new_device_info.value();
+                m_info.device = new_device_info.value();
                 return true;
             }
         }
@@ -685,7 +689,47 @@ std::optional<StereoCalibration> LegacyChannel::query_calibration()
     return std::nullopt;
 }
 
-std::optional<DeviceInfo> LegacyChannel::query_device_info()
+std::optional<MultiSenseInfo> LegacyChannel::query_info()
+{
+    using namespace crl::multisense::details;
+
+    const auto device_info = query_device_info();
+
+    if (!device_info)
+    {
+        CRL_DEBUG("Unable to query the device info\n");
+        return std::nullopt;
+    }
+
+    const auto version = wait_for_data<wire::VersionResponse>(m_message_assembler,
+                                                              m_socket,
+                                                              wire::VersionRequest(),
+                                                              m_transmit_id++,
+                                                              m_current_mtu,
+                                                              m_config.receive_timeout);
+    if (!version)
+    {
+        CRL_DEBUG("Unable to query the device info\n");
+        return std::nullopt;
+    }
+
+    const auto device_modes = wait_for_data<wire::SysDeviceModes>(m_message_assembler,
+                                                                  m_socket,
+                                                                  wire::SysGetDeviceModes(),
+                                                                  m_transmit_id++,
+                                                                  m_current_mtu,
+                                                                  m_config.receive_timeout);
+
+    if (!device_modes)
+    {
+        CRL_DEBUG("Unable to query the device info\n");
+        return std::nullopt;
+    }
+
+    return MultiSenseInfo{device_info.value(), convert(version.value()), convert(device_modes.value())};
+}
+
+std::optional<MultiSenseInfo::DeviceInfo> LegacyChannel::query_device_info()
 {
     using namespace crl::multisense::details;
 
@@ -749,11 +793,11 @@ void LegacyChannel::image_callback(std::shared_ptr<const std::vector<uint8_t>> d
     // Copy our calibration and device info locally to make this thread safe
     //
     StereoCalibration cal;
-    DeviceInfo info;
+    MultiSenseInfo::DeviceInfo info;
     {
         std::lock_guard<std::mutex> lock(m_mutex);
         cal = m_calibration;
-        info = m_device_info;
+        info = m_info.device;
     }
 
     const auto cal_x_scale = static_cast<double>(wire_image.width) / static_cast<double>(info.imager_width);
@@ -814,11 +858,11 @@ void LegacyChannel::disparity_callback(std::shared_ptr<const std::vector<uint8_t
     // Copy our calibration and device info locally to make this thread safe
     //
     StereoCalibration cal;
-    DeviceInfo info;
+    MultiSenseInfo::DeviceInfo info;
     {
         std::lock_guard<std::mutex> lock(m_mutex);
         cal = m_calibration;
-        info = m_device_info;
+        info = m_info.device;
     }
 
     const auto cal_x_scale = static_cast<double>(wire_image.width) / static_cast<double>(info.imager_width);

@@ -204,15 +204,15 @@ public:
     virtual bool set_calibration(const StereoCalibration &calibration) = 0;
 
     ///
-    /// @brief Get the device info associated with the camera
+    /// @brief Get the static information associated with the camera
     ///
-    virtual DeviceInfo get_device_info() = 0;
+    virtual MultiSenseInfo get_info() = 0;
 
     ///
     /// @brief Set the camera's device info. This setting is protected via a key since invalid values in the
     ///        device info can result in internal camera failures
     ///
-    virtual bool set_device_info(const DeviceInfo &device_info, const std::string &key) = 0;
+    virtual bool set_device_info(const MultiSenseInfo::DeviceInfo &device_info, const std::string &key) = 0;
 
     ///
     /// @brief Query the current system status

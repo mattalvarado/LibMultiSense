@@ -1,5 +1,5 @@
 /**
- * @file device_info.cc
+ * @file info.cc
  *
  * Copyright 2013-2025
  * Carnegie Robotics, LLC
@@ -34,16 +34,17 @@
  *   2025-01-17, malvarado@carnegierobotics.com, IRAD, Created file.
  **/
 
-#include "details/legacy/device_info.hh"
+#include "details/legacy/info.hh"
+#include "details/legacy/utilities.hh"
 
 namespace multisense {
 namespace legacy {
 
-DeviceInfo convert(const crl::multisense::details::wire::SysDeviceInfo &info)
+MultiSenseInfo::DeviceInfo convert(const crl::multisense::details::wire::SysDeviceInfo &info)
 {
     using namespace crl::multisense::details;
 
-    DeviceInfo output;
+    MultiSenseInfo::DeviceInfo output;
 
     output.camera_name = info.name;
     output.build_date = info.buildDate;
@@ -52,25 +53,25 @@ DeviceInfo convert(const crl::multisense::details::wire::SysDeviceInfo &info)
     switch (info.hardwareRevision)
     {
         case wire::SysDeviceInfo::HARDWARE_REV_MULTISENSE_S7:
-            {output.hardware_revision = DeviceInfo::HardwareRevision::S7; break;}
+            {output.hardware_revision = MultiSenseInfo::DeviceInfo::HardwareRevision::S7; break;}
         case wire::SysDeviceInfo::HARDWARE_REV_MULTISENSE_S21:
-            {output.hardware_revision = DeviceInfo::HardwareRevision::S21; break;}
+            {output.hardware_revision = MultiSenseInfo::DeviceInfo::HardwareRevision::S21; break;}
         case wire::SysDeviceInfo::HARDWARE_REV_MULTISENSE_ST21:
-            {output.hardware_revision = DeviceInfo::HardwareRevision::ST21; break;}
+            {output.hardware_revision = MultiSenseInfo::DeviceInfo::HardwareRevision::ST21; break;}
         case wire::SysDeviceInfo::HARDWARE_REV_MULTISENSE_C6S2_S27:
-            {output.hardware_revision = DeviceInfo::HardwareRevision::S27; break;}
+            {output.hardware_revision = MultiSenseInfo::DeviceInfo::HardwareRevision::S27; break;}
         case wire::SysDeviceInfo::HARDWARE_REV_MULTISENSE_S30:
-            {output.hardware_revision = DeviceInfo::HardwareRevision::S30; break;}
+            {output.hardware_revision = MultiSenseInfo::DeviceInfo::HardwareRevision::S30; break;}
         case wire::SysDeviceInfo::HARDWARE_REV_MULTISENSE_KS21:
-            {output.hardware_revision = DeviceInfo::HardwareRevision::KS21; break;}
+            {output.hardware_revision = MultiSenseInfo::DeviceInfo::HardwareRevision::KS21; break;}
         case wire::SysDeviceInfo::HARDWARE_REV_MULTISENSE_MONOCAM:
-            {output.hardware_revision = DeviceInfo::HardwareRevision::MONOCAM; break;}
+            {output.hardware_revision = MultiSenseInfo::DeviceInfo::HardwareRevision::MONOCAM; break;}
         case wire::SysDeviceInfo::HARDWARE_REV_MULTISENSE_KS21_SILVER:
-            {output.hardware_revision = DeviceInfo::HardwareRevision::KS21_SILVER; break;}
+            {output.hardware_revision = MultiSenseInfo::DeviceInfo::HardwareRevision::KS21_SILVER; break;}
         case wire::SysDeviceInfo::HARDWARE_REV_MULTISENSE_ST25:
-            {output.hardware_revision = DeviceInfo::HardwareRevision::ST25; break;}
+            {output.hardware_revision = MultiSenseInfo::DeviceInfo::HardwareRevision::ST25; break;}
         case wire::SysDeviceInfo::HARDWARE_REV_MULTISENSE_KS21i:
-            {output.hardware_revision = DeviceInfo::HardwareRevision::KS21i; break;}
+            {output.hardware_revision = MultiSenseInfo::DeviceInfo::HardwareRevision::KS21i; break;}
         default: {CRL_EXCEPTION("Unsupported hardware revision");}
     }
 
@@ -85,19 +86,19 @@ DeviceInfo convert(const crl::multisense::details::wire::SysDeviceInfo &info)
     switch (info.imagerType)
     {
         case wire::SysDeviceInfo::IMAGER_TYPE_CMV2000_GREY:
-            {output.imager_type = DeviceInfo::ImagerType::CMV2000_GREY; break;}
+            {output.imager_type = MultiSenseInfo::DeviceInfo::ImagerType::CMV2000_GREY; break;}
         case wire::SysDeviceInfo::IMAGER_TYPE_CMV2000_COLOR:
-            {output.imager_type = DeviceInfo::ImagerType::CMV2000_COLOR; break;}
+            {output.imager_type = MultiSenseInfo::DeviceInfo::ImagerType::CMV2000_COLOR; break;}
         case wire::SysDeviceInfo::IMAGER_TYPE_CMV4000_GREY:
-            {output.imager_type = DeviceInfo::ImagerType::CMV4000_GREY; break;}
+            {output.imager_type = MultiSenseInfo::DeviceInfo::ImagerType::CMV4000_GREY; break;}
         case wire::SysDeviceInfo::IMAGER_TYPE_CMV4000_COLOR:
-            {output.imager_type = DeviceInfo::ImagerType::CMV4000_COLOR; break;}
+            {output.imager_type = MultiSenseInfo::DeviceInfo::ImagerType::CMV4000_COLOR; break;}
         case wire::SysDeviceInfo::IMAGER_TYPE_FLIR_TAU2:
-            {output.imager_type = DeviceInfo::ImagerType::FLIR_TAU2; break;}
+            {output.imager_type = MultiSenseInfo::DeviceInfo::ImagerType::FLIR_TAU2; break;}
         case wire::SysDeviceInfo::IMAGER_TYPE_AR0234_GREY:
-            {output.imager_type = DeviceInfo::ImagerType::AR0234_GREY; break;}
+            {output.imager_type = MultiSenseInfo::DeviceInfo::ImagerType::AR0234_GREY; break;}
         case wire::SysDeviceInfo::IMAGER_TYPE_AR0239_COLOR:
-            {output.imager_type = DeviceInfo::ImagerType::AR0239_COLOR; break;}
+            {output.imager_type = MultiSenseInfo::DeviceInfo::ImagerType::AR0239_COLOR; break;}
         default: {CRL_EXCEPTION("Unsupported imager type");}
     }
 
@@ -113,13 +114,13 @@ DeviceInfo convert(const crl::multisense::details::wire::SysDeviceInfo &info)
     switch (info.lightingType)
     {
         case wire::SysDeviceInfo::LIGHTING_TYPE_NONE:
-            {output.lighting_type = DeviceInfo::LightingType::NONE; break;}
+            {output.lighting_type = MultiSenseInfo::DeviceInfo::LightingType::NONE; break;}
         case wire::SysDeviceInfo::LIGHTING_TYPE_SL_INTERNAL:
-            {output.lighting_type = DeviceInfo::LightingType::INTERNAL; break;}
+            {output.lighting_type = MultiSenseInfo::DeviceInfo::LightingType::INTERNAL; break;}
         case wire::SysDeviceInfo::LIGHTING_TYPE_S21_EXTERNAL:
-            {output.lighting_type = DeviceInfo::LightingType::EXTERNAL; break;}
+            {output.lighting_type = MultiSenseInfo::DeviceInfo::LightingType::EXTERNAL; break;}
         case wire::SysDeviceInfo::LIGHTING_TYPE_S21_PATTERN_PROJECTOR:
-            {output.lighting_type = DeviceInfo::LightingType::PATTERN_PROJECTOR; break;}
+            {output.lighting_type = MultiSenseInfo::DeviceInfo::LightingType::PATTERN_PROJECTOR; break;}
         default: {CRL_EXCEPTION("Unsupported lighting type");}
     }
 
@@ -128,7 +129,7 @@ DeviceInfo convert(const crl::multisense::details::wire::SysDeviceInfo &info)
     return output;
 }
 
-crl::multisense::details::wire::SysDeviceInfo convert(const DeviceInfo &info, const std::string &key)
+crl::multisense::details::wire::SysDeviceInfo convert(const MultiSenseInfo::DeviceInfo &info, const std::string &key)
 {
     using namespace crl::multisense::details;
 
@@ -141,25 +142,25 @@ crl::multisense::details::wire::SysDeviceInfo convert(const DeviceInfo &info, co
 
     switch (info.hardware_revision)
     {
-        case DeviceInfo::HardwareRevision::S7:
+        case MultiSenseInfo::DeviceInfo::HardwareRevision::S7:
             {output.hardwareRevision = wire::SysDeviceInfo::HARDWARE_REV_MULTISENSE_S7; break;}
-        case DeviceInfo::HardwareRevision::S21:
+        case MultiSenseInfo::DeviceInfo::HardwareRevision::S21:
             {output.hardwareRevision = wire::SysDeviceInfo::HARDWARE_REV_MULTISENSE_S21; break;}
-        case DeviceInfo::HardwareRevision::ST21:
+        case MultiSenseInfo::DeviceInfo::HardwareRevision::ST21:
             {output.hardwareRevision = wire::SysDeviceInfo::HARDWARE_REV_MULTISENSE_ST21; break;}
-        case DeviceInfo::HardwareRevision::S27:
+        case MultiSenseInfo::DeviceInfo::HardwareRevision::S27:
             {output.hardwareRevision = wire::SysDeviceInfo::HARDWARE_REV_MULTISENSE_C6S2_S27; break;}
-        case DeviceInfo::HardwareRevision::S30:
+        case MultiSenseInfo::DeviceInfo::HardwareRevision::S30:
             {output.hardwareRevision = wire::SysDeviceInfo::HARDWARE_REV_MULTISENSE_S30; break;}
-        case DeviceInfo::HardwareRevision::KS21:
+        case MultiSenseInfo::DeviceInfo::HardwareRevision::KS21:
             {output.hardwareRevision = wire::SysDeviceInfo::HARDWARE_REV_MULTISENSE_KS21; break;}
-        case DeviceInfo::HardwareRevision::MONOCAM:
+        case MultiSenseInfo::DeviceInfo::HardwareRevision::MONOCAM:
             {output.hardwareRevision = wire::SysDeviceInfo::HARDWARE_REV_MULTISENSE_MONOCAM; break;}
-        case DeviceInfo::HardwareRevision::KS21_SILVER:
+        case MultiSenseInfo::DeviceInfo::HardwareRevision::KS21_SILVER:
             {output.hardwareRevision = wire::SysDeviceInfo::HARDWARE_REV_MULTISENSE_KS21_SILVER; break;}
-        case DeviceInfo::HardwareRevision::ST25:
+        case MultiSenseInfo::DeviceInfo::HardwareRevision::ST25:
             {output.hardwareRevision = wire::SysDeviceInfo::HARDWARE_REV_MULTISENSE_ST25; break;}
-        case DeviceInfo::HardwareRevision::KS21i:
+        case MultiSenseInfo::DeviceInfo::HardwareRevision::KS21i:
             {output.hardwareRevision = wire::SysDeviceInfo::HARDWARE_REV_MULTISENSE_KS21i; break;}
         default: {CRL_EXCEPTION("Unsupported hardware revision");}
     }
@@ -174,19 +175,19 @@ crl::multisense::details::wire::SysDeviceInfo convert(const DeviceInfo &info, co
     output.imagerName = info.imager_name;
     switch (info.imager_type)
     {
-        case DeviceInfo::ImagerType::CMV2000_GREY:
+        case MultiSenseInfo::DeviceInfo::ImagerType::CMV2000_GREY:
             {output.imagerType = wire::SysDeviceInfo::IMAGER_TYPE_CMV2000_GREY; break;}
-        case DeviceInfo::ImagerType::CMV2000_COLOR:
+        case MultiSenseInfo::DeviceInfo::ImagerType::CMV2000_COLOR:
             {output.imagerType = wire::SysDeviceInfo::IMAGER_TYPE_CMV2000_COLOR; break;}
-        case DeviceInfo::ImagerType::CMV4000_GREY:
+        case MultiSenseInfo::DeviceInfo::ImagerType::CMV4000_GREY:
             {output.imagerType = wire::SysDeviceInfo::IMAGER_TYPE_CMV4000_GREY; break;}
-        case DeviceInfo::ImagerType::CMV4000_COLOR:
+        case MultiSenseInfo::DeviceInfo::ImagerType::CMV4000_COLOR:
             {output.imagerType = wire::SysDeviceInfo::IMAGER_TYPE_CMV4000_COLOR; break;}
-        case DeviceInfo::ImagerType::FLIR_TAU2:
+        case MultiSenseInfo::DeviceInfo::ImagerType::FLIR_TAU2:
             {output.imagerType = wire::SysDeviceInfo::IMAGER_TYPE_FLIR_TAU2; break;}
-        case DeviceInfo::ImagerType::AR0234_GREY:
+        case MultiSenseInfo::DeviceInfo::ImagerType::AR0234_GREY:
             {output.imagerType = wire::SysDeviceInfo::IMAGER_TYPE_AR0234_GREY; break;}
-        case DeviceInfo::ImagerType::AR0239_COLOR:
+        case MultiSenseInfo::DeviceInfo::ImagerType::AR0239_COLOR:
             {output.imagerType = wire::SysDeviceInfo::IMAGER_TYPE_AR0239_COLOR; break;}
         default: {CRL_EXCEPTION("Unsupported hardware revision");}
     }
@@ -202,18 +203,42 @@ crl::multisense::details::wire::SysDeviceInfo convert(const DeviceInfo &info, co
 
     switch (info.lighting_type)
     {
-        case DeviceInfo::LightingType::NONE:
+        case MultiSenseInfo::DeviceInfo::LightingType::NONE:
             {output.lightingType = wire::SysDeviceInfo::LIGHTING_TYPE_NONE; break;}
-        case DeviceInfo::LightingType::INTERNAL:
+        case MultiSenseInfo::DeviceInfo::LightingType::INTERNAL:
             {output.lightingType = wire::SysDeviceInfo::LIGHTING_TYPE_SL_INTERNAL; break;}
-        case DeviceInfo::LightingType::EXTERNAL:
+        case MultiSenseInfo::DeviceInfo::LightingType::EXTERNAL:
             {output.lightingType = wire::SysDeviceInfo::LIGHTING_TYPE_S21_EXTERNAL; break;}
-        case DeviceInfo::LightingType::PATTERN_PROJECTOR:
+        case MultiSenseInfo::DeviceInfo::LightingType::PATTERN_PROJECTOR:
             {output.lightingType = wire::SysDeviceInfo::LIGHTING_TYPE_S21_PATTERN_PROJECTOR; break;}
         default: {CRL_EXCEPTION("Unsupported lighting type");}
     }
 
     output.numberOfLights = info.number_of_lights;
+
+    return output;
+}
+
+MultiSenseInfo::SensorVersion convert(const crl::multisense::details::wire::VersionResponse &response)
+{
+    return MultiSenseInfo::SensorVersion{response.firmwareBuildDate,
+                                         get_version(response.firmwareVersion),
+                                         response.hardwareVersion,
+                                         response.hardwareMagic,
+                                         response.fpgaDna};
+}
+
+std::vector<MultiSenseInfo::SupportedOperatingMode> convert(const crl::multisense::details::wire::SysDeviceModes &modes)
+{
+    std::vector<MultiSenseInfo::SupportedOperatingMode> output;
+    for (const auto &mode : modes.modes)
+    {
+        const auto full_sources = (static_cast<uint64_t>(mode.extendedDataSources)) << 32 | mode.supportedDataSources;
+        output.emplace_back(MultiSenseInfo::SupportedOperatingMode{mode.width,
+                                                                   mode.height,
+                                                                   get_disparities(mode.disparities),
+                                                                   convert_sources(full_sources)});
+    }
 
     return output;
 }

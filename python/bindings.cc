@@ -92,70 +92,6 @@ PYBIND11_MODULE(libmultisense, m) {
         .def_readwrite("right", &multisense::StereoCalibration::right)
         .def_readwrite("aux", &multisense::StereoCalibration::aux);
 
-    // DeviceInfo::PcbInfo
-    py::class_<multisense::DeviceInfo::PcbInfo>(m, "PcbInfo")
-        .def(py::init<>())
-        .def_readwrite("name", &multisense::DeviceInfo::PcbInfo::name)
-        .def_readwrite("revision", &multisense::DeviceInfo::PcbInfo::revision);
-
-    // DeviceInfo::HardwareRevision
-    py::enum_<multisense::DeviceInfo::HardwareRevision>(m, "HardwareRevision")
-        .value("UNKNOWN", multisense::DeviceInfo::HardwareRevision::UNKNOWN)
-        .value("S7", multisense::DeviceInfo::HardwareRevision::S7)
-        .value("S21", multisense::DeviceInfo::HardwareRevision::S21)
-        .value("ST21", multisense::DeviceInfo::HardwareRevision::ST21)
-        .value("S27", multisense::DeviceInfo::HardwareRevision::S27)
-        .value("S30", multisense::DeviceInfo::HardwareRevision::S30)
-        .value("KS21", multisense::DeviceInfo::HardwareRevision::KS21)
-        .value("MONOCAM", multisense::DeviceInfo::HardwareRevision::MONOCAM)
-        .value("KS21_SILVER", multisense::DeviceInfo::HardwareRevision::KS21_SILVER)
-        .value("ST25", multisense::DeviceInfo::HardwareRevision::ST25)
-        .value("KS21i", multisense::DeviceInfo::HardwareRevision::KS21i);
-
-    // DeviceInfo::ImagerType
-    py::enum_<multisense::DeviceInfo::ImagerType>(m, "ImagerType")
-        .value("UNKNOWN", multisense::DeviceInfo::ImagerType::UNKNOWN)
-        .value("CMV2000_GREY", multisense::DeviceInfo::ImagerType::CMV2000_GREY)
-        .value("CMV2000_COLOR", multisense::DeviceInfo::ImagerType::CMV2000_COLOR)
-        .value("CMV4000_GREY", multisense::DeviceInfo::ImagerType::CMV4000_GREY)
-        .value("CMV4000_COLOR", multisense::DeviceInfo::ImagerType::CMV4000_COLOR)
-        .value("FLIR_TAU2", multisense::DeviceInfo::ImagerType::FLIR_TAU2)
-        .value("AR0234_GREY", multisense::DeviceInfo::ImagerType::AR0234_GREY)
-        .value("AR0239_COLOR", multisense::DeviceInfo::ImagerType::AR0239_COLOR);
-
-    // DeviceInfo::LightingType
-    py::enum_<multisense::DeviceInfo::LightingType>(m, "LightingType")
-        .value("NONE", multisense::DeviceInfo::LightingType::NONE)
-        .value("INTERNAL", multisense::DeviceInfo::LightingType::INTERNAL)
-        .value("EXTERNAL", multisense::DeviceInfo::LightingType::EXTERNAL)
-        .value("PATTERN_PROJECTOR", multisense::DeviceInfo::LightingType::PATTERN_PROJECTOR);
-
-    // DeviceInfo::LensType
-    py::enum_<multisense::DeviceInfo::LensType>(m, "LensType")
-        .value("UNKNOWN", multisense::DeviceInfo::LensType::UNKNOWN);
-
-    // DeviceInfo
-    py::class_<multisense::DeviceInfo>(m, "DeviceInfo")
-        .def(py::init<>())
-        .def_readwrite("camera_name", &multisense::DeviceInfo::camera_name)
-        .def_readwrite("build_date", &multisense::DeviceInfo::build_date)
-        .def_readwrite("serial_number", &multisense::DeviceInfo::serial_number)
-        .def_readwrite("hardware_revision", &multisense::DeviceInfo::hardware_revision)
-        .def_readwrite("number_of_pcbs", &multisense::DeviceInfo::number_of_pcbs)
-        .def_readwrite("pcb_info", &multisense::DeviceInfo::pcb_info)
-        .def_readwrite("imager_name", &multisense::DeviceInfo::imager_name)
-        .def_readwrite("imager_type", &multisense::DeviceInfo::imager_type)
-        .def_readwrite("imager_width", &multisense::DeviceInfo::imager_width)
-        .def_readwrite("imager_height", &multisense::DeviceInfo::imager_height)
-        .def_readwrite("lens_name", &multisense::DeviceInfo::lens_name)
-        .def_readwrite("lens_type", &multisense::DeviceInfo::lens_type)
-        .def_readwrite("nominal_stereo_baseline", &multisense::DeviceInfo::nominal_stereo_baseline)
-        .def_readwrite("nominal_focal_length", &multisense::DeviceInfo::nominal_focal_length)
-        .def_readwrite("nominal_relative_aperature", &multisense::DeviceInfo::nominal_relative_aperature)
-        .def_readwrite("lighting_type", &multisense::DeviceInfo::lighting_type)
-        .def_readwrite("number_of_lights", &multisense::DeviceInfo::number_of_lights)
-        .def("has_aux_camera", &multisense::DeviceInfo::has_aux_camera);
-
     // Image::PixelFormat
     py::enum_<multisense::Image::PixelFormat>(m, "PixelFormat")
         .value("UNKNOWN", multisense::Image::PixelFormat::UNKNOWN)
@@ -317,6 +253,157 @@ PYBIND11_MODULE(libmultisense, m) {
         .def_readwrite("aux_config", &multisense::MultiSenseConfiguration::aux_config)
         .def_readwrite("time_config", &multisense::MultiSenseConfiguration::time_config);
 
+    // MultiSenseStatus::PtpStatus
+    py::class_<multisense::MultiSenseStatus::PtpStatus>(m, "PtpStatus")
+        .def(py::init<>())
+        .def_readwrite("grandmaster_present", &multisense::MultiSenseStatus::PtpStatus::grandmaster_present)
+        .def_readwrite("grandmaster_id", &multisense::MultiSenseStatus::PtpStatus::grandmaster_id)
+        .def_readwrite("grandmaster_offset", &multisense::MultiSenseStatus::PtpStatus::grandmaster_offset)
+        .def_readwrite("path_delay", &multisense::MultiSenseStatus::PtpStatus::path_delay)
+        .def_readwrite("steps_from_local_to_grandmaster", &multisense::MultiSenseStatus::PtpStatus::steps_from_local_to_grandmaster);
+
+    // MultiSenseStatus::CameraStatus
+    py::class_<multisense::MultiSenseStatus::CameraStatus>(m, "CameraStatus")
+        .def(py::init<>())
+        .def_readwrite("cameras_ok", &multisense::MultiSenseStatus::CameraStatus::cameras_ok)
+        .def_readwrite("processing_pipeline_ok", &multisense::MultiSenseStatus::CameraStatus::processing_pipeline_ok);
+
+    // MultiSenseStatus::TemperatureStatus
+    py::class_<multisense::MultiSenseStatus::TemperatureStatus>(m, "TemperatureStatus")
+        .def(py::init<>())
+        .def_readwrite("fpga_temperature_C", &multisense::MultiSenseStatus::TemperatureStatus::fpga_temperature_C)
+        .def_readwrite("left_imager_temperature_C", &multisense::MultiSenseStatus::TemperatureStatus::left_imager_temperature_C)
+        .def_readwrite("right_imager_temperature_C", &multisense::MultiSenseStatus::TemperatureStatus::right_imager_temperature_C)
+        .def_readwrite("power_supply_temperature_C", &multisense::MultiSenseStatus::TemperatureStatus::power_supply_temperature_C);
+
+    // MultiSenseStatus::PowerStatus
+    py::class_<multisense::MultiSenseStatus::PowerStatus>(m, "PowerStatus")
+        .def(py::init<>())
+        .def_readwrite("input_voltage", &multisense::MultiSenseStatus::PowerStatus::input_voltage)
+        .def_readwrite("input_current", &multisense::MultiSenseStatus::PowerStatus::input_current)
+        .def_readwrite("fpga_power", &multisense::MultiSenseStatus::PowerStatus::fpga_power);
+
+    // MultiSenseStatus::ClientNetworkStatus
+    py::class_<multisense::MultiSenseStatus::ClientNetworkStatus>(m, "ClientNetworkStatus")
+        .def(py::init<>())
+        .def_readwrite("received_messages", &multisense::MultiSenseStatus::ClientNetworkStatus::received_messages)
+        .def_readwrite("dropped_messages", &multisense::MultiSenseStatus::ClientNetworkStatus::dropped_messages)
+        .def_readwrite("invalid_packets", &multisense::MultiSenseStatus::ClientNetworkStatus::invalid_packets);
+
+    // MultiSenseStatus::TimeStatus
+    py::class_<multisense::MultiSenseStatus::TimeStatus>(m, "TimeStatus")
+        .def(py::init<>())
+        .def_readwrite("camera_time", &multisense::MultiSenseStatus::TimeStatus::camera_time)
+        .def_readwrite("client_host_time", &multisense::MultiSenseStatus::TimeStatus::client_host_time)
+        .def_readwrite("network_delay", &multisense::MultiSenseStatus::TimeStatus::network_delay);
+
+    // MultiSenseStatus
+    py::class_<multisense::MultiSenseStatus>(m, "MultiSenseStatus")
+        .def(py::init<>())
+        .def_readwrite("system_ok", &multisense::MultiSenseStatus::system_ok)
+        .def_readwrite("ptp", &multisense::MultiSenseStatus::ptp)
+        .def_readwrite("camera", &multisense::MultiSenseStatus::camera)
+        .def_readwrite("temperature", &multisense::MultiSenseStatus::temperature)
+        .def_readwrite("power", &multisense::MultiSenseStatus::power)
+        .def_readwrite("client_network", &multisense::MultiSenseStatus::client_network)
+        .def_readwrite("time", &multisense::MultiSenseStatus::time);
+
+    // MultiSenseInfo::DeviceInfo::PcbInfo
+    py::class_<multisense::MultiSenseInfo::DeviceInfo::PcbInfo>(m, "PcbInfo")
+        .def(py::init<>())
+        .def_readwrite("name", &multisense::MultiSenseInfo::DeviceInfo::PcbInfo::name)
+        .def_readwrite("revision", &multisense::MultiSenseInfo::DeviceInfo::PcbInfo::revision);
+
+    // MultiSenseInfo::DeviceInfo::HardwareRevision
+    py::enum_<multisense::MultiSenseInfo::DeviceInfo::HardwareRevision>(m, "HardwareRevision")
+        .value("UNKNOWN", multisense::MultiSenseInfo::DeviceInfo::HardwareRevision::UNKNOWN)
+        .value("S7", multisense::MultiSenseInfo::DeviceInfo::HardwareRevision::S7)
+        .value("S21", multisense::MultiSenseInfo::DeviceInfo::HardwareRevision::S21)
+        .value("ST21", multisense::MultiSenseInfo::DeviceInfo::HardwareRevision::ST21)
+        .value("S27", multisense::MultiSenseInfo::DeviceInfo::HardwareRevision::S27)
+        .value("S30", multisense::MultiSenseInfo::DeviceInfo::HardwareRevision::S30)
+        .value("KS21", multisense::MultiSenseInfo::DeviceInfo::HardwareRevision::KS21)
+        .value("MONOCAM", multisense::MultiSenseInfo::DeviceInfo::HardwareRevision::MONOCAM)
+        .value("KS21_SILVER", multisense::MultiSenseInfo::DeviceInfo::HardwareRevision::KS21_SILVER)
+        .value("ST25", multisense::MultiSenseInfo::DeviceInfo::HardwareRevision::ST25)
+        .value("KS21i", multisense::MultiSenseInfo::DeviceInfo::HardwareRevision::KS21i);
+
+    // MultiSenseInfo::DeviceInfo::ImagerType
+    py::enum_<multisense::MultiSenseInfo::DeviceInfo::ImagerType>(m, "ImagerType")
+        .value("UNKNOWN", multisense::MultiSenseInfo::DeviceInfo::ImagerType::UNKNOWN)
+        .value("CMV2000_GREY", multisense::MultiSenseInfo::DeviceInfo::ImagerType::CMV2000_GREY)
+        .value("CMV2000_COLOR", multisense::MultiSenseInfo::DeviceInfo::ImagerType::CMV2000_COLOR)
+        .value("CMV4000_GREY", multisense::MultiSenseInfo::DeviceInfo::ImagerType::CMV4000_GREY)
+        .value("CMV4000_COLOR", multisense::MultiSenseInfo::DeviceInfo::ImagerType::CMV4000_COLOR)
+        .value("FLIR_TAU2", multisense::MultiSenseInfo::DeviceInfo::ImagerType::FLIR_TAU2)
+        .value("AR0234_GREY", multisense::MultiSenseInfo::DeviceInfo::ImagerType::AR0234_GREY)
+        .value("AR0239_COLOR", multisense::MultiSenseInfo::DeviceInfo::ImagerType::AR0239_COLOR);
+
+    // MultiSenseInfo::DeviceInfo::LightingType
+    py::enum_<multisense::MultiSenseInfo::DeviceInfo::LightingType>(m, "LightingType")
+        .value("NONE", multisense::MultiSenseInfo::DeviceInfo::LightingType::NONE)
+        .value("INTERNAL", multisense::MultiSenseInfo::DeviceInfo::LightingType::INTERNAL)
+        .value("EXTERNAL", multisense::MultiSenseInfo::DeviceInfo::LightingType::EXTERNAL)
+        .value("PATTERN_PROJECTOR", multisense::MultiSenseInfo::DeviceInfo::LightingType::PATTERN_PROJECTOR);
+
+    // MultiSenseInfo::DeviceInfo::LensType
+    py::enum_<multisense::MultiSenseInfo::DeviceInfo::LensType>(m, "LensType")
+        .value("UNKNOWN", multisense::MultiSenseInfo::DeviceInfo::LensType::UNKNOWN);
+
+    // MultiSenseInfo::DeviceInfo
+    py::class_<multisense::MultiSenseInfo::MultiSenseInfo::DeviceInfo>(m, "DeviceInfo")
+        .def(py::init<>())
+        .def_readwrite("camera_name", &multisense::MultiSenseInfo::DeviceInfo::camera_name)
+        .def_readwrite("build_date", &multisense::MultiSenseInfo::DeviceInfo::build_date)
+        .def_readwrite("serial_number", &multisense::MultiSenseInfo::DeviceInfo::serial_number)
+        .def_readwrite("hardware_revision", &multisense::MultiSenseInfo::DeviceInfo::hardware_revision)
+        .def_readwrite("number_of_pcbs", &multisense::MultiSenseInfo::DeviceInfo::number_of_pcbs)
+        .def_readwrite("pcb_info", &multisense::MultiSenseInfo::DeviceInfo::pcb_info)
+        .def_readwrite("imager_name", &multisense::MultiSenseInfo::DeviceInfo::imager_name)
+        .def_readwrite("imager_type", &multisense::MultiSenseInfo::DeviceInfo::imager_type)
+        .def_readwrite("imager_width", &multisense::MultiSenseInfo::DeviceInfo::imager_width)
+        .def_readwrite("imager_height", &multisense::MultiSenseInfo::DeviceInfo::imager_height)
+        .def_readwrite("lens_name", &multisense::MultiSenseInfo::DeviceInfo::lens_name)
+        .def_readwrite("lens_type", &multisense::MultiSenseInfo::DeviceInfo::lens_type)
+        .def_readwrite("nominal_stereo_baseline", &multisense::MultiSenseInfo::DeviceInfo::nominal_stereo_baseline)
+        .def_readwrite("nominal_focal_length", &multisense::MultiSenseInfo::DeviceInfo::nominal_focal_length)
+        .def_readwrite("nominal_relative_aperature", &multisense::MultiSenseInfo::DeviceInfo::nominal_relative_aperature)
+        .def_readwrite("lighting_type", &multisense::MultiSenseInfo::DeviceInfo::lighting_type)
+        .def_readwrite("number_of_lights", &multisense::MultiSenseInfo::DeviceInfo::number_of_lights)
+        .def("has_aux_camera", &multisense::MultiSenseInfo::DeviceInfo::has_aux_camera);
+
+    // MultiSenseInfo::Version
+    py::class_<multisense::MultiSenseInfo::Version>(m, "Version")
+        .def(py::init<>())
+        .def("__lt__", &multisense::MultiSenseInfo::Version::operator<)
+        .def_readwrite("major", &multisense::MultiSenseInfo::Version::major)
+        .def_readwrite("minor", &multisense::MultiSenseInfo::Version::minor)
+        .def_readwrite("patch", &multisense::MultiSenseInfo::Version::patch);
+
+    // MultiSenseInfo::SensorVersion
+    py::class_<multisense::MultiSenseInfo::SensorVersion>(m, "SensorVersion")
+        .def(py::init<>())
+        .def_readwrite("firmware_build_date", &multisense::MultiSenseInfo::SensorVersion::firmware_build_date)
+        .def_readwrite("firmware_version", &multisense::MultiSenseInfo::SensorVersion::firmware_build_date)
+        .def_readwrite("hardware_version", &multisense::MultiSenseInfo::SensorVersion::hardware_version)
+        .def_readwrite("hardware_magic", &multisense::MultiSenseInfo::SensorVersion::hardware_magic)
+        .def_readwrite("fpga_dna", &multisense::MultiSenseInfo::SensorVersion::fpga_dna);
+
+    // MultiSenseInfo::SupportedOperatingMode
+    py::class_<multisense::MultiSenseInfo::SupportedOperatingMode>(m, "SupportedOperatingMode")
+        .def(py::init<>())
+        .def_readwrite("width", &multisense::MultiSenseInfo::SupportedOperatingMode::width)
+        .def_readwrite("height", &multisense::MultiSenseInfo::SupportedOperatingMode::height)
+        .def_readwrite("disparities", &multisense::MultiSenseInfo::SupportedOperatingMode::disparities)
+        .def_readwrite("supported_sources", &multisense::MultiSenseInfo::SupportedOperatingMode::supported_sources);
+
+    // MultiSenseInfo
+    py::class_<multisense::MultiSenseInfo>(m, "MultiSenseInfo")
+        .def(py::init<>())
+        .def_readwrite("device", &multisense::MultiSenseInfo::device)
+        .def_readwrite("version", &multisense::MultiSenseInfo::version)
+        .def_readwrite("operating_modes", &multisense::MultiSenseInfo::operating_modes);
+
     // ChannelImplementation
     py::enum_<multisense::Channel::ChannelImplementation>(m, "ChannelImplementation")
         .value("LEGACY", multisense::Channel::ChannelImplementation::LEGACY);
@@ -352,8 +439,9 @@ PYBIND11_MODULE(libmultisense, m) {
         .def("set_configuration", &multisense::Channel::set_configuration)
         .def("get_calibration", &multisense::Channel::get_calibration)
         .def("set_calibration", &multisense::Channel::set_calibration)
-        .def("get_device_info", &multisense::Channel::get_device_info)
-        .def("set_device_info", &multisense::Channel::set_device_info);
+        .def("get_info", &multisense::Channel::get_info)
+        .def("set_device_info", &multisense::Channel::set_device_info)
+        .def("get_system_status", &multisense::Channel::get_system_status);
 
     // Utilities
     m.def("write_image", [](const multisense::Image &image, const std::string &path)

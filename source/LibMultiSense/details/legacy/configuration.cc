@@ -35,6 +35,7 @@
  **/
 
 #include "details/legacy/configuration.hh"
+#include "details/legacy/utilities.hh"
 
 namespace multisense {
 namespace legacy {
@@ -77,18 +78,9 @@ MultiSenseConfiguration convert(const crl::multisense::details::wire::CamConfig 
                                         std::move(manual_white_balance),
                                         std::move(auto_white_balance)};
 
-    auto disparities = ms_config::MaxDisparities::D256;
-    switch (config.disparities)
-    {
-        case 64: {disparities = ms_config::MaxDisparities::D64; break;}
-        case 128: {disparities = ms_config::MaxDisparities::D128; break;}
-        case 256: {disparities = ms_config::MaxDisparities::D256; break;}
-        default: {CRL_EXCEPTION("Unsupported disaprity value %d", config.disparities);}
-    }
-
     return MultiSenseConfiguration{config.width,
                                    config.height,
-                                   disparities,
+                                   get_disparities(config.disparities),
                                    config.framesPerSecond,
                                    std::move(stereo),
                                    std::move(image),

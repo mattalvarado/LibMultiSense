@@ -64,6 +64,13 @@ constexpr crl::multisense::details::wire::SourceType all_sources = {
     crl::multisense::details::wire::SOURCE_DISPARITY_COST
 };
 
+MultiSenseInfo::Version get_version(const crl::multisense::details::wire::VersionType &version);
+
+///
+/// @brief Convert a disparity integer to a fixed disparity setting
+///
+MultiSenseConfiguration::MaxDisparities get_disparities(size_t disparity);
+
 ///
 /// @brief Convert wire sources to a vector of DataSources
 ///

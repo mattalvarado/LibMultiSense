@@ -39,6 +39,25 @@
 namespace multisense{
 namespace legacy{
 
+MultiSenseInfo::Version get_version(const crl::multisense::details::wire::VersionType &version)
+{
+    return MultiSenseInfo::Version{static_cast<uint32_t>(version >> 8), static_cast<uint32_t>(version & 0xFF), 0};
+}
+
+MultiSenseConfiguration::MaxDisparities get_disparities(size_t disparity)
+{
+    auto disparities = MultiSenseConfiguration::MaxDisparities::D256;
+    switch (disparity)
+    {
+        case 64: {disparities = MultiSenseConfiguration::MaxDisparities::D64; break;}
+        case 128: {disparities = MultiSenseConfiguration::MaxDisparities::D128; break;}
+        case 256: {disparities = MultiSenseConfiguration::MaxDisparities::D256; break;}
+        default: {CRL_EXCEPTION("Unsupported disparity value %d", disparity);}
+    }
+
+    return disparities;
+}
+
 std::vector<DataSource> convert_sources(const crl::multisense::details::wire::SourceType &source)
 {
     using namespace crl::multisense::details;

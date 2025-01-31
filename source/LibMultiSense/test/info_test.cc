@@ -1,5 +1,5 @@
 /**
- * @file device_info_tests.cc
+ * @file info_test.cc
  *
  * Copyright 2013-2025
  * Carnegie Robotics, LLC
@@ -36,7 +36,7 @@
 
 #include <gtest/gtest.h>
 
-#include <details/legacy/device_info.hh>
+#include <details/legacy/info.hh>
 
 using namespace multisense::legacy;
 
@@ -71,31 +71,32 @@ crl::multisense::details::wire::SysDeviceInfo create_wire_info(const std::string
     return info;
 }
 
-multisense::DeviceInfo create_info(const std::string &name)
+multisense::MultiSenseInfo::DeviceInfo create_info(const std::string &name)
 {
     using namespace multisense;
-    DeviceInfo info;
+    MultiSenseInfo::DeviceInfo info;
     info.camera_name = name;
     info.build_date = "2024";
     info.serial_number = "4501";
-    info.hardware_revision = DeviceInfo::HardwareRevision::KS21;
+    info.hardware_revision = MultiSenseInfo::DeviceInfo::HardwareRevision::KS21;
     info.number_of_pcbs = 1;
-    info.pcb_info = {DeviceInfo::PcbInfo{name, 12345}};
+    info.pcb_info = {MultiSenseInfo::DeviceInfo::PcbInfo{name, 12345}};
     info.imager_name = name;
-    info.imager_type = DeviceInfo::ImagerType::AR0239_COLOR;
+    info.imager_type = MultiSenseInfo::DeviceInfo::ImagerType::AR0239_COLOR;
     info.imager_width = 1000;
     info.imager_height = 1001;
     info.lens_name = name;
     info.nominal_stereo_baseline = 0.21;
     info.nominal_focal_length = 0.024;
     info.nominal_relative_aperature = 0.1;
-    info.lighting_type = DeviceInfo::LightingType::EXTERNAL;
+    info.lighting_type = MultiSenseInfo::DeviceInfo::LightingType::EXTERNAL;
     info.number_of_lights = 1;
 
     return info;
 }
 
-void check_equal(const crl::multisense::details::wire::SysDeviceInfo &wire, const multisense::DeviceInfo &info,
+void check_equal(const crl::multisense::details::wire::SysDeviceInfo &wire,
+                 const multisense::MultiSenseInfo::DeviceInfo &info,
                  const std::string &key)
 {
     using namespace crl::multisense::details;
@@ -109,25 +110,25 @@ void check_equal(const crl::multisense::details::wire::SysDeviceInfo &wire, cons
     switch (wire.hardwareRevision)
     {
         case wire::SysDeviceInfo::HARDWARE_REV_MULTISENSE_S7:
-            ASSERT_EQ(info.hardware_revision, DeviceInfo::HardwareRevision::S7); break;
+            ASSERT_EQ(info.hardware_revision, MultiSenseInfo::DeviceInfo::HardwareRevision::S7); break;
         case wire::SysDeviceInfo::HARDWARE_REV_MULTISENSE_S21:
-            ASSERT_EQ(info.hardware_revision, DeviceInfo::HardwareRevision::S21); break;
+            ASSERT_EQ(info.hardware_revision, MultiSenseInfo::DeviceInfo::HardwareRevision::S21); break;
         case wire::SysDeviceInfo::HARDWARE_REV_MULTISENSE_ST21:
-            ASSERT_EQ(info.hardware_revision, DeviceInfo::HardwareRevision::ST21); break;
+            ASSERT_EQ(info.hardware_revision, MultiSenseInfo::DeviceInfo::HardwareRevision::ST21); break;
         case wire::SysDeviceInfo::HARDWARE_REV_MULTISENSE_C6S2_S27:
-            ASSERT_EQ(info.hardware_revision, DeviceInfo::HardwareRevision::S27); break;
+            ASSERT_EQ(info.hardware_revision, MultiSenseInfo::DeviceInfo::HardwareRevision::S27); break;
         case wire::SysDeviceInfo::HARDWARE_REV_MULTISENSE_S30:
-            ASSERT_EQ(info.hardware_revision, DeviceInfo::HardwareRevision::S30); break;
+            ASSERT_EQ(info.hardware_revision, MultiSenseInfo::DeviceInfo::HardwareRevision::S30); break;
         case wire::SysDeviceInfo::HARDWARE_REV_MULTISENSE_KS21:
-            ASSERT_EQ(info.hardware_revision, DeviceInfo::HardwareRevision::KS21); break;
+            ASSERT_EQ(info.hardware_revision, MultiSenseInfo::DeviceInfo::HardwareRevision::KS21); break;
         case wire::SysDeviceInfo::HARDWARE_REV_MULTISENSE_MONOCAM:
-            ASSERT_EQ(info.hardware_revision, DeviceInfo::HardwareRevision::MONOCAM); break;
+            ASSERT_EQ(info.hardware_revision, MultiSenseInfo::DeviceInfo::HardwareRevision::MONOCAM); break;
         case wire::SysDeviceInfo::HARDWARE_REV_MULTISENSE_KS21_SILVER:
-            ASSERT_EQ(info.hardware_revision, DeviceInfo::HardwareRevision::KS21_SILVER); break;
+            ASSERT_EQ(info.hardware_revision, MultiSenseInfo::DeviceInfo::HardwareRevision::KS21_SILVER); break;
         case wire::SysDeviceInfo::HARDWARE_REV_MULTISENSE_ST25:
-            ASSERT_EQ(info.hardware_revision, DeviceInfo::HardwareRevision::ST25); break;
+            ASSERT_EQ(info.hardware_revision, MultiSenseInfo::DeviceInfo::HardwareRevision::ST25); break;
         case wire::SysDeviceInfo::HARDWARE_REV_MULTISENSE_KS21i:
-            ASSERT_EQ(info.hardware_revision, DeviceInfo::HardwareRevision::KS21i); break;
+            ASSERT_EQ(info.hardware_revision, MultiSenseInfo::DeviceInfo::HardwareRevision::KS21i); break;
         default: {CRL_EXCEPTION("Unsupported hardware revision");}
     }
 
@@ -143,19 +144,19 @@ void check_equal(const crl::multisense::details::wire::SysDeviceInfo &wire, cons
     switch (wire.imagerType)
     {
         case wire::SysDeviceInfo::IMAGER_TYPE_CMV2000_GREY:
-            ASSERT_EQ(info.imager_type, DeviceInfo::ImagerType::CMV2000_GREY); break;
+            ASSERT_EQ(info.imager_type, MultiSenseInfo::DeviceInfo::ImagerType::CMV2000_GREY); break;
         case wire::SysDeviceInfo::IMAGER_TYPE_CMV2000_COLOR:
-            ASSERT_EQ(info.imager_type, DeviceInfo::ImagerType::CMV2000_COLOR); break;
+            ASSERT_EQ(info.imager_type, MultiSenseInfo::DeviceInfo::ImagerType::CMV2000_COLOR); break;
         case wire::SysDeviceInfo::IMAGER_TYPE_CMV4000_GREY:
-            ASSERT_EQ(info.imager_type, DeviceInfo::ImagerType::CMV4000_GREY); break;
+            ASSERT_EQ(info.imager_type, MultiSenseInfo::DeviceInfo::ImagerType::CMV4000_GREY); break;
         case wire::SysDeviceInfo::IMAGER_TYPE_CMV4000_COLOR:
-            ASSERT_EQ(info.imager_type, DeviceInfo::ImagerType::CMV4000_COLOR); break;
+            ASSERT_EQ(info.imager_type, MultiSenseInfo::DeviceInfo::ImagerType::CMV4000_COLOR); break;
         case wire::SysDeviceInfo::IMAGER_TYPE_FLIR_TAU2:
-            ASSERT_EQ(info.imager_type, DeviceInfo::ImagerType::FLIR_TAU2); break;
+            ASSERT_EQ(info.imager_type, MultiSenseInfo::DeviceInfo::ImagerType::FLIR_TAU2); break;
         case wire::SysDeviceInfo::IMAGER_TYPE_AR0234_GREY:
-            ASSERT_EQ(info.imager_type, DeviceInfo::ImagerType::AR0234_GREY); break;
+            ASSERT_EQ(info.imager_type, MultiSenseInfo::DeviceInfo::ImagerType::AR0234_GREY); break;
         case wire::SysDeviceInfo::IMAGER_TYPE_AR0239_COLOR:
-            ASSERT_EQ(info.imager_type, DeviceInfo::ImagerType::AR0239_COLOR); break;
+            ASSERT_EQ(info.imager_type, MultiSenseInfo::DeviceInfo::ImagerType::AR0239_COLOR); break;
         default: {CRL_EXCEPTION("Unsupported imager type");}
     }
     ASSERT_EQ(wire.imagerWidth, info.imager_width);
@@ -169,13 +170,13 @@ void check_equal(const crl::multisense::details::wire::SysDeviceInfo &wire, cons
     switch (wire.lightingType)
     {
         case wire::SysDeviceInfo::LIGHTING_TYPE_NONE:
-             ASSERT_EQ(info.lighting_type, DeviceInfo::LightingType::NONE); break;
+             ASSERT_EQ(info.lighting_type, MultiSenseInfo::DeviceInfo::LightingType::NONE); break;
         case wire::SysDeviceInfo::LIGHTING_TYPE_SL_INTERNAL:
-             ASSERT_EQ(info.lighting_type, DeviceInfo::LightingType::INTERNAL); break;
+             ASSERT_EQ(info.lighting_type, MultiSenseInfo::DeviceInfo::LightingType::INTERNAL); break;
         case wire::SysDeviceInfo::LIGHTING_TYPE_S21_EXTERNAL:
-            ASSERT_EQ(info.lighting_type, DeviceInfo::LightingType::EXTERNAL); break;
+            ASSERT_EQ(info.lighting_type, MultiSenseInfo::DeviceInfo::LightingType::EXTERNAL); break;
         case wire::SysDeviceInfo::LIGHTING_TYPE_S21_PATTERN_PROJECTOR:
-            ASSERT_EQ(info.lighting_type, DeviceInfo::LightingType::PATTERN_PROJECTOR); break;
+            ASSERT_EQ(info.lighting_type, MultiSenseInfo::DeviceInfo::LightingType::PATTERN_PROJECTOR); break;
         default: {CRL_EXCEPTION("Unsupported lighting type");}
     }
     ASSERT_EQ(wire.numberOfLights, info.number_of_lights);

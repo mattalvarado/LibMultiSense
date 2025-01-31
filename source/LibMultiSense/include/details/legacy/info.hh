@@ -1,5 +1,5 @@
 /**
- * @file device_info.hh
+ * @file info.hh
  *
  * Copyright 2013-2025
  * Carnegie Robotics, LLC
@@ -41,6 +41,8 @@
 #include <utility/BufferStream.hh>
 
 #include <wire/SysDeviceInfoMessage.hh>
+#include <wire/SysDeviceModesMessage.hh>
+#include <wire/VersionResponseMessage.hh>
 
 #include "MultiSense/MultiSenseTypes.hh"
 
@@ -48,14 +50,24 @@ namespace multisense {
 namespace legacy {
 
 ///
-/// @param Convert a wire DeviceInfo message to our API's DeviceInfo
+/// @brief Convert a wire DeviceInfo message to our API's DeviceInfo
 ///
-DeviceInfo convert(const crl::multisense::details::wire::SysDeviceInfo &info);
+MultiSenseInfo::DeviceInfo convert(const crl::multisense::details::wire::SysDeviceInfo &info);
 
 ///
-/// @param Convert our API's DeviceInfo to a wire DeviceInfo message
+/// @brief Convert our API's DeviceInfo to a wire DeviceInfo message
 ///
-crl::multisense::details::wire::SysDeviceInfo convert(const DeviceInfo &info, const std::string &key);
+crl::multisense::details::wire::SysDeviceInfo convert(const MultiSenseInfo::DeviceInfo &info, const std::string &key);
+
+///
+/// @brief Convert a wire VersionResponse to a API SensorVersion
+///
+MultiSenseInfo::SensorVersion convert(const crl::multisense::details::wire::VersionResponse &response);
+
+///
+/// @brief Convert a wire SysDeviceModes to a API SupportedOperatingMode
+///
+std::vector<MultiSenseInfo::SupportedOperatingMode> convert(const crl::multisense::details::wire::SysDeviceModes &modes);
 
 }
 }
