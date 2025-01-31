@@ -37,6 +37,7 @@
 #include <gtest/gtest.h>
 
 #include <details/legacy/info.hh>
+#include <details/legacy/utilities.hh>
 
 using namespace multisense::legacy;
 
@@ -69,6 +70,51 @@ crl::multisense::details::wire::SysDeviceInfo create_wire_info(const std::string
     info.numberOfLights = 1;
 
     return info;
+}
+
+crl::multisense::details::wire::VersionResponse create_version()
+{
+    using namespace crl::multisense::details;
+
+    wire::VersionResponse version;
+    version.firmwareBuildDate = "1234-01-23";
+    version.firmwareVersion = 0x0522;
+    version.hardwareVersion = 123;
+    version.hardwareMagic = 567;
+    version.fpgaDna = 8906;
+
+    return version;
+}
+
+crl::multisense::details::wire::SysDeviceModes create_device_modes(int64_t sources)
+{
+    using namespace crl::multisense::details;
+
+    wire::SysDeviceModes modes;
+
+    wire::DeviceMode mode0;
+    mode0.width = 100;
+    mode0.height = 101;
+    mode0.supportedDataSources = sources;
+    mode0.disparities = 64;
+
+    wire::DeviceMode mode1;
+    mode1.width = 1000;
+    mode1.height = 1001;
+    mode1.supportedDataSources = sources;
+    mode1.disparities = 128;
+
+    wire::DeviceMode mode2;
+    mode2.width = 2000;
+    mode2.height = 2001;
+    mode2.supportedDataSources = sources;
+    mode2.disparities = 256;
+
+    modes.modes.push_back(mode0);
+    modes.modes.push_back(mode1);
+    modes.modes.push_back(mode2);
+
+    return modes;
 }
 
 multisense::MultiSenseInfo::DeviceInfo create_info(const std::string &name)
@@ -192,4 +238,47 @@ TEST(convert, info_to_wire)
 {
     const auto info = create_info("test");
     check_equal(convert(info, "key"), info, "key");
+}
+
+TEST(convert, version)
+{
+    const auto version_wire = create_version();
+    const auto version = convert(version_wire);
+
+    const auto converted_version = get_version(version_wire.firmwareVersion);
+
+    ASSERT_EQ(version.firmware_build_date, version_wire.firmwareBuildDate);
+
+    //
+    // This must be equal
+    //
+    ASSERT_FALSE(version.firmware_version < converted_version);
+    ASSERT_FALSE(converted_version < version.firmware_version);
+
+    ASSERT_EQ(version.hardware_version, version_wire.hardwareVersion);
+    ASSERT_EQ(version.hardware_magic, version_wire.hardwareMagic);
+    ASSERT_EQ(version.fpga_dna, version_wire.fpgaDna);
+}
+
+TEST(convert, device_modes)
+{
+    using namespace crl::multisense::details;
+
+    const wire::IdType sources = wire::SOURCE_LUMA_LEFT | wire::SOURCE_LUMA_RECT_RIGHT | wire::SOURCE_DISPARITY;
+
+    const auto wire_modes = create_device_modes(sources);
+    const auto modes = convert(wire_modes);
+
+    ASSERT_EQ(modes.size(), wire_modes.modes.size());
+
+    for(size_t i = 0 ; i < modes.size() ; ++i)
+    {
+        ASSERT_EQ(modes[i].width, wire_modes.modes[i].width);
+        ASSERT_EQ(modes[i].height, wire_modes.modes[i].height);
+        ASSERT_EQ(modes[i].disparities, get_disparities(wire_modes.modes[i].disparities));
+
+        const auto full_sources = convert_sources(modes[i].supported_sources);
+        ASSERT_EQ(full_sources & 0x00000000FFFFFFFF, wire_modes.modes[i].supportedDataSources);
+        ASSERT_EQ(full_sources >> 32, wire_modes.modes[i].extendedDataSources);
+    }
 }

@@ -918,11 +918,23 @@ struct MultiSenseInfo
 
     ///
     /// @brief Convenience wrapper for a version number
+    ///        See https://semver.org/
     ///
     struct Version
     {
+        ///
+        /// @brief Major version number
+        ///
         uint32_t major = 0;
+
+        ///
+        /// @brief Minor version number
+        ///
         uint32_t minor = 0;
+
+        ///
+        /// @brief Patch version number
+        ///
         uint32_t patch = 0;
 
         ///
@@ -941,28 +953,69 @@ struct MultiSenseInfo
     ///
     struct SensorVersion
     {
+        ///
+        /// @brief The date the firmware running on the camera was built
+        ///
         std::string firmware_build_date{};
+
+        ///
+        /// @brief The version of the firmware running on the camera
+        ///
         MultiSenseInfo::Version firmware_version{};
 
+        ///
+        /// @brief ID for the version of hardware
+        ///
         uint64_t hardware_version = 0;
+
+        ///
+        /// @brief Unique ID for the hardware
+        ///
         uint64_t hardware_magic = 0;
+
+        ///
+        /// @brief Unique ID for the fpga
+        ///
         uint64_t fpga_dna = 0;
     };
 
     struct SupportedOperatingMode
     {
+        ///
+        /// @brief Supported operating resolution width
+        ///
         uint32_t width = 0;
+
+        ///
+        /// @brief Supported operating resolution height
+        ///
         uint32_t height = 0;
+
+        ///
+        /// @brief Supported operating disparity
+        ///
         MultiSenseConfiguration::MaxDisparities disparities = MultiSenseConfiguration::MaxDisparities::D64;
+
+        ///
+        /// @brief Data sources supported at that mode
+        ///
         std::vector<DataSource> supported_sources{};
     };
 
+    ///
+    /// @brief Device info
+    ///
     DeviceInfo device;
 
+    ///
+    /// @brief Sensor Version info
+    ///
     SensorVersion version;
 
+    ///
+    /// @brief Supported operating modes
+    ///
     std::vector<SupportedOperatingMode> operating_modes;
-
 };
 
 }
