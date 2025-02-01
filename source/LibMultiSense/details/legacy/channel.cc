@@ -52,6 +52,7 @@
 #include <wire/DisparityMessage.hh>
 #include <wire/ImageMessage.hh>
 #include <wire/ImageMetaMessage.hh>
+#include <wire/ImuDataMessage.hh>
 #include <wire/PtpStatusRequestMessage.hh>
 #include <wire/PtpStatusResponseMessage.hh>
 #include <wire/StatusRequestMessage.hh>
@@ -182,9 +183,16 @@ bool LegacyChannel::stop_streams(const std::vector<DataSource> &sources)
 
 void LegacyChannel::add_image_frame_callback(std::function<void(const ImageFrame&)> callback)
 {
-    std::lock_guard<std::mutex> lock(m_callback_mutex);
+    std::lock_guard<std::mutex> lock(m_image_callback_mutex);
 
     m_user_image_frame_callback = callback;
+}
+
+void LegacyChannel::add_imu_frame_callback(std::function<void(const ImuFrame&)> callback)
+{
+    std::lock_guard<std::mutex> lock(m_imu_callback_mutex);
+
+    m_user_imu_frame_callback = callback;
 }
 
 bool LegacyChannel::connect(const ChannelConfig &config)
@@ -229,6 +237,9 @@ bool LegacyChannel::connect(const ChannelConfig &config)
 
     m_message_assembler.register_callback(wire::Disparity::ID,
                                           std::bind(&LegacyChannel::disparity_callback, this, std::placeholders::_1));
+
+    m_message_assembler.register_callback(wire::ImuData::ID,
+                                          std::bind(&LegacyChannel::imu_callback, this, std::placeholders::_1));
 
     //
     // Main thread which services incoming data and dispatches to callbacks and conditions attached to the channel
@@ -303,11 +314,6 @@ void LegacyChannel::disconnect()
     std::lock_guard<std::mutex> lock(m_mutex);
 
     //
-    // Free anyone waiting on the next image frame
-    //
-    m_next_cv.notify_all();
-
-    //
     // Stop all our streams before disconnecting
     //
     stop_streams({DataSource::ALL});
@@ -326,28 +332,12 @@ void LegacyChannel::disconnect()
 
 std::optional<ImageFrame> LegacyChannel::get_next_image_frame()
 {
-    std::unique_lock<std::mutex> lock(m_next_mutex);
+    return m_image_frame_notifier.wait(m_config.receive_timeout);
+}
 
-    std::optional<ImageFrame> output_frame = std::nullopt;
-    if (m_config.receive_timeout)
-    {
-        if (std::cv_status::no_timeout == m_next_cv.wait_for(lock, m_config.receive_timeout.value()))
-        {
-            output_frame = std::move(m_next_frame);
-        }
-    }
-    else
-    {
-        m_next_cv.wait(lock);
-        output_frame = std::move(m_next_frame);
-    }
-
-    //
-    // Reset our next frame
-    //
-    m_next_frame = std::nullopt;
-
-    return output_frame;
+std::optional<ImuFrame> LegacyChannel::get_next_imu_frame()
+{
+    return std::nullopt;
 }
 
 MultiSenseConfiguration LegacyChannel::get_configuration()
@@ -886,6 +876,14 @@ void LegacyChannel::disparity_callback(std::shared_ptr<const std::vector<uint8_t
                         ptp_capture_time);
 }
 
+void LegacyChannel::imu_callback(std::shared_ptr<const std::vector<uint8_t>> data)
+{
+    using namespace crl::multisense::details;
+    const auto wire_imu = deserialize<wire::ImuData>(*data);
+
+    // TODO (malvarado): Combine ImuSamples into valid ImuFrames
+}
+
 void LegacyChannel::handle_and_dispatch(Image image,
                                         int64_t frame_id,
                                         const StereoCalibration &calibration,
@@ -925,15 +923,13 @@ void LegacyChannel::handle_and_dispatch(Image image,
         //
         // Notify anyone waiting on the next frame
         //
-        std::lock_guard<std::mutex> lock(m_next_mutex);
-        m_next_frame = frame;
-        m_next_cv.notify_all();
+        m_image_frame_notifier.set_and_notify(frame);
 
         //
         // Service the callback if it's valid
         //
         {
-            std::lock_guard<std::mutex> lock(m_callback_mutex);
+            std::lock_guard<std::mutex> lock(m_image_callback_mutex);
             if (m_user_image_frame_callback)
             {
                 m_user_image_frame_callback(frame);

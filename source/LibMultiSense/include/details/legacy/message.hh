@@ -134,23 +134,29 @@ std::vector<uint8_t> serialize(const T& message, uint16_t sequence_id, size_t mt
 ///
 /// @brief A condition object which can be used to wait on messages from the stream
 ///
-struct MessageCondition
+class MessageCondition
 {
-    std::mutex mutex;
-    std::condition_variable cv;
-    std::vector<uint8_t> data;
-    bool notified = false;
+public:
 
-    ///
-    /// @brief convenience function equivalent to std::condition_variable::wait that performs a type
-    ///        conversion to the target type
-    ///
-    template <typename T>
-    T wait()
+    MessageCondition() = default;
+
+    ~MessageCondition()
     {
-        std::unique_lock<std::mutex> lock(mutex);
-        cv.wait(lock, [this]{return this->notified;});
-        return deserialize<T>(data);
+        m_cv.notify_all();
+    }
+
+    void unset()
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        m_notified = false;
+    }
+
+    void set_and_notify(std::shared_ptr<std::vector<uint8_t>> data)
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        m_data = *data;
+        m_notified = true;
+        m_cv.notify_all();
     }
 
     ///
@@ -158,16 +164,40 @@ struct MessageCondition
     ///        conversion to the target type
     ///
     template <typename T, class Rep, class Period>
-    std::optional<T> wait_for(const std::chrono::duration<Rep, Period>& abs_time)
+    std::optional<T> wait(const std::optional<std::chrono::duration<Rep, Period>> &timeout)
     {
-        std::unique_lock<std::mutex> lock(mutex);
-        if (cv.wait_for(lock, abs_time, [this]{return this->notified;}))
+        std::unique_lock<std::mutex> lock(m_mutex);
+
+        if (timeout)
         {
-            return std::make_optional(deserialize<T>(data));
+            if (m_cv.wait_for(lock, timeout.value(), [this]{return this->m_notified;}))
+            {
+                return std::make_optional(deserialize<T>(m_data));
+            }
+        }
+        else
+        {
+            m_cv.wait(lock, [this]{return this->m_notified;});
+            return std::make_optional(deserialize<T>(m_data));
         }
 
         return std::nullopt;
     }
+
+    template <typename T>
+    std::optional<T> wait()
+    {
+        const std::optional<std::chrono::milliseconds> timeout = std::nullopt;
+        return wait<T>(timeout);
+    }
+
+private:
+
+    std::mutex m_mutex;
+    std::condition_variable m_cv;
+    std::vector<uint8_t> m_data;
+    bool m_notified = false;
+
 };
 
 struct MessageStatistics

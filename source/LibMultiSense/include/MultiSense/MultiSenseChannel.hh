@@ -157,9 +157,14 @@ public:
     virtual bool stop_streams(const std::vector<DataSource> &sources) = 0;
 
     ///
-    /// @brief Setup user callback that will be invoked whenever a new frame is received.
+    /// @brief Setup user callback that will be invoked whenever a new image frame is received.
     ///
     virtual void add_image_frame_callback(std::function<void(const ImageFrame&)> callback) = 0;
+
+    ///
+    /// @brief Setup user callback that will be invoked whenever a new imu frame is received.
+    ///
+    virtual void add_imu_frame_callback(std::function<void(const ImuFrame&)> callback) = 0;
 
     ///
     /// @brief Initialize the connection to the camera
@@ -180,6 +185,16 @@ public:
     /// @return The newly received ImageFrame, or std::nullopt if timed out (and you used a timeout).
     ///
     virtual std::optional<ImageFrame> get_next_image_frame() = 0;
+
+    ///
+    /// @brief A blocking call that waits for one imu frame from the camera.
+    ///
+    /// If you’ve set a receive timeout (via ChannelConfig), it will block until that timeout expires;
+    /// otherwise, it blocks indefinitely until data arrives.
+    ///
+    /// @return The newly received ImuFrame, or std::nullopt if timed out (and you used a timeout).
+    ///
+    virtual std::optional<ImuFrame> get_next_imu_frame() = 0;
 
     ///
     /// @brief Get the current MultiSense configuration

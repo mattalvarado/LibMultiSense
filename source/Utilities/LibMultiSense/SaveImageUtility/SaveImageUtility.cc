@@ -60,6 +60,11 @@ namespace
 
 volatile bool done = false;
 
+void image_callback(const lms::ImageFrame &frame)
+{
+    std::cout << "callback " << frame.frame_id << std::endl;
+}
+
 void usage(const char *name)
 {
     std::cerr << "USAGE: " << name << " [<options>]" << std::endl;
@@ -120,6 +125,8 @@ int main(int argc, char** argv)
         std::cerr << "Cannot set config" << std::endl;
         return 1;
     }
+
+    channel->add_image_frame_callback(image_callback);
 
     if (!channel->start_streams({lms::DataSource::LEFT_RECTIFIED_RAW, lms::DataSource::LEFT_DISPARITY_RAW}))
     {

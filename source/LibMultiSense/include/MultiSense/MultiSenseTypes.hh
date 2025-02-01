@@ -265,9 +265,57 @@ struct ImageFrame
     /// @brief The scaled calibration for the entire camera
     ///
     StereoCalibration calibration;
+
+    ///
+    /// @brief The MultiSeense timestamp associated with the frame
+    ///
     std::chrono::system_clock::time_point frame_time{};
+
+    ///
+    /// @brief The  MultiSeense ptp timestamp associated with the frame
+    ///
     std::chrono::system_clock::time_point ptp_frame_time{};
 };
+
+///
+/// @brief A single IMU sample from the camera
+///
+struct ImuSample
+{
+    ///
+    /// @brief A generic measurement for a 3-axis IMU
+    ///
+    struct Measurement
+    {
+        float x = 0.0;
+        float y = 0.0;
+        float z = 0.0;
+    };
+
+    std::optional<Measurement> acceleration{};
+    std::optional<Measurement> gyroscope{};
+    std::optional<Measurement> magnetometer{};
+
+    std::chrono::system_clock::time_point sample_time{};
+    std::chrono::system_clock::time_point ptp_sample_time{};
+};
+
+///
+/// @brief A collection of IMU samples from the camera
+///
+struct ImuFrame
+{
+    ///
+    /// @brief A monotonically increasing sequence ID
+    ///
+    uint32_t sequence_id = 0;
+
+    ///
+    /// @brief A batched collection of IMU samples
+    ///
+    std::vector<ImuSample> samples;
+};
+
 
 ///
 /// @brief Complete configuration object for configuring the MultiSense. Can be updated during camera operation
@@ -979,6 +1027,9 @@ struct MultiSenseInfo
         uint64_t fpga_dna = 0;
     };
 
+    ///
+    /// @brief A valid operating mode for the MultiSense
+    ///
     struct SupportedOperatingMode
     {
         ///

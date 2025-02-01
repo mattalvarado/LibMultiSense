@@ -52,6 +52,66 @@
 namespace multisense{
 namespace legacy{
 
+template <typename T>
+class FrameNotifier
+{
+public:
+
+    FrameNotifier() = default;
+
+    ~FrameNotifier()
+    {
+        m_cv.notify_all();
+    }
+
+    void set_and_notify(const T &in_frame)
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        m_frame = in_frame;
+        m_cv.notify_all();
+    }
+
+    template <class Rep, class Period>
+    std::optional<T> wait(const std::optional<std::chrono::duration<Rep, Period>>& timeout)
+    {
+        std::unique_lock<std::mutex> lock(m_mutex);
+
+        std::optional<T> output_frame = std::nullopt;
+        if (timeout)
+        {
+            if (std::cv_status::no_timeout == m_cv.wait_for(lock, timeout.value()))
+            {
+                output_frame = std::move(m_frame);
+            }
+        }
+        else
+        {
+            m_cv.wait(lock);
+            output_frame = std::move(m_frame);
+        }
+
+        //
+        // Reset the frame
+        //
+        m_frame = std::nullopt;
+
+        return output_frame;
+    }
+
+    std::optional<T> wait()
+    {
+        const std::optional<std::chrono::milliseconds> timeout = std::nullopt;
+        return wait(timeout);
+    }
+
+private:
+
+    std::mutex m_mutex;
+    std::condition_variable m_cv;
+    std::optional<T> m_frame;
+};
+
+
 class LegacyChannel : public Channel
 {
 public:
@@ -73,12 +133,20 @@ public:
     bool stop_streams(const std::vector<DataSource> &sources) final override;
 
     ///
-    /// @brief Add a frame callback to get serviced inline with the receipt of a new frame. Only
+    /// @brief Add a image frame callback to get serviced inline with the receipt of a new frame. Only
     ///        a single frame callback can be added to the channel
     ///        NOTE: Perform minimal work in this callback, and ideally copy the lightweight
     ///        ImageFrame object out to another processing thread
     ///
     void add_image_frame_callback(std::function<void(const ImageFrame&)> callback) final override;
+
+    ///
+    /// @brief Add a imu frame callback to get serviced inline with the receipt of a new frame. Only
+    ///        a single frame callback can be added to the channel
+    ///        NOTE: Perform minimal work in this callback, and ideally copy the lightweight
+    ///        ImuFrame object out to another processing thread
+    ///
+    void add_imu_frame_callback(std::function<void(const ImuFrame&)> callback) final override;
 
     ///
     /// @brief Initialize the connection to the camera
@@ -91,7 +159,7 @@ public:
     void disconnect() final override;
 
     ///
-    /// @brief A blocking call that waits for one frame from the camera.
+    /// @brief A blocking call that waits for one image frame from the camera.
     ///
     /// If you’ve set a receive timeout (via ChannelConfig), it will block until that timeout expires;
     /// otherwise, it blocks indefinitely until data arrives.
@@ -99,6 +167,16 @@ public:
     /// @return The newly received ImageFrame, or std::nullopt if timed out (and you used a timeout).
     ///
     std::optional<ImageFrame> get_next_image_frame() final override;
+
+    ///
+    /// @brief A blocking call that waits for one imu frame from the camera.
+    ///
+    /// If you’ve set a receive timeout (via ChannelConfig), it will block until that timeout expires;
+    /// otherwise, it blocks indefinitely until data arrives.
+    ///
+    /// @return The newly received ImuFrame, or std::nullopt if timed out (and you used a timeout).
+    ///
+    std::optional<ImuFrame> get_next_imu_frame() final override;
 
     ///
     /// @brief Get the current MultiSense configuration
@@ -186,6 +264,11 @@ private:
     void disparity_callback(std::shared_ptr<const std::vector<uint8_t>> data);
 
     ///
+    /// @brief Disparity callback used to internally receive images sent from the MultiSense
+    ///
+    void imu_callback(std::shared_ptr<const std::vector<uint8_t>> data);
+
+    ///
     /// @brief Handle internal process, and potentially dispatch a image
     ///
     void handle_and_dispatch(Image image,
@@ -200,9 +283,14 @@ private:
     std::mutex m_mutex;
 
     ///
-    /// @brief Internal mutex used to handle user callbacks
+    /// @brief Internal mutex used to handle user callbacks for image data
     ///
-    std::mutex m_callback_mutex;
+    std::mutex m_image_callback_mutex;
+
+    ///
+    /// @brief Internal mutex used to handle user callbacks imu data
+    ///
+    std::mutex m_imu_callback_mutex;
 
     ///
     /// @brief Atomic flag to determine if we are connected to an active camera
@@ -270,11 +358,19 @@ private:
     std::function<void(const ImageFrame&)> m_user_image_frame_callback;
 
     ///
-    /// @brief Mutex, condition_variable, and frame used to service the get_next_image_frame member function
+    /// @brief The currently active imu frame user callback
     ///
-    std::mutex m_next_mutex;
-    std::condition_variable m_next_cv;
-    std::optional<ImageFrame> m_next_frame;
+    std::function<void(const ImuFrame&)> m_user_imu_frame_callback;
+
+    ///
+    /// @brief Notifier used to service the get_next_image_frame member function
+    ///
+    FrameNotifier<ImageFrame> m_image_frame_notifier;
+
+    ///
+    /// @brief Notifier used to service the get_next_imu_frame member function
+    ///
+    FrameNotifier<ImuFrame> m_imu_frame_notifier;
 
     ///
     /// @brief A cache of image metadata associated with a specific frame id

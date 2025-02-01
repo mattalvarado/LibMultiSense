@@ -287,8 +287,7 @@ std::shared_ptr<MessageCondition> MessageAssembler::register_message(const crl::
     std::lock_guard<std::mutex> lock(m_condition_mutex);
     if (auto it = m_conditions.find(message_id); it != std::end(m_conditions))
     {
-        std::lock_guard<std::mutex> lock(it->second->mutex);
-        it->second->notified = false;
+        it->second->unset();
         return it->second;
     }
     else
@@ -411,10 +410,7 @@ void MessageAssembler::dispatch(const crl::multisense::details::wire::IdType& me
 
         if (auto condition = m_conditions.find(message_id); condition != std::end(m_conditions))
         {
-            std::lock_guard<std::mutex> lock(condition->second->mutex);
-            condition->second->data = *data;
-            condition->second->notified = true;
-            condition->second->cv.notify_all();
+            condition->second->set_and_notify(data);
 
             //
             // Remove our registration after we dispatch the message

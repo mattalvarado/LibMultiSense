@@ -165,7 +165,7 @@ TEST(MessageAssembler, process_notify_wait_for)
     auto registration = assembler.register_message(wire::SysDeviceInfo::ID);
     ASSERT_TRUE(assembler.process_packet(serialized));
 
-    const auto output = registration->wait_for<wire::SysDeviceInfo>(500ms);
+    const auto output = registration->wait<wire::SysDeviceInfo>(std::make_optional(500ms));
 
     ASSERT_TRUE(static_cast<bool>(output));
 
@@ -188,7 +188,9 @@ TEST(MessageAssembler, process_notify_wait)
 
     const auto output = registration->wait<wire::SysDeviceInfo>();
 
-    ASSERT_EQ(output.name, info.name);
+    ASSERT_TRUE(static_cast<bool>(output));
+
+    ASSERT_EQ(output->name, info.name);
 }
 
 TEST(MessageAssembler, process_notify_wait_for_multi_registrations)
@@ -205,8 +207,8 @@ TEST(MessageAssembler, process_notify_wait_for_multi_registrations)
     auto registration1 = assembler.register_message(wire::SysDeviceInfo::ID);
     ASSERT_TRUE(assembler.process_packet(serialized));
 
-    const auto output0 = registration0->wait_for<wire::SysDeviceInfo>(500ms);
-    const auto output1 = registration1->wait_for<wire::SysDeviceInfo>(500ms);
+    const auto output0 = registration0->wait<wire::SysDeviceInfo>(std::make_optional(500ms));
+    const auto output1 = registration1->wait<wire::SysDeviceInfo>(std::make_optional(500ms));
 
     ASSERT_TRUE(static_cast<bool>(output0));
     ASSERT_TRUE(static_cast<bool>(output1));
@@ -232,7 +234,7 @@ TEST(MessageAssembler, process_notify_remove_registration)
     //
     // Since we don't have an active registration we should not get a valid message
     //
-    const auto output = registration->wait_for<wire::SysDeviceInfo>(500ms);
+    const auto output = registration->wait<wire::SysDeviceInfo>(std::make_optional(500ms));
 
     ASSERT_FALSE(static_cast<bool>(output));
 }
@@ -337,7 +339,7 @@ TEST(MessageAssembler, only_large_buffers)
 
     ASSERT_TRUE(assembler.process_packet(serialized));
 
-    const auto output = registration->wait_for<wire::SysDeviceInfo>(500ms);
+    const auto output = registration->wait<wire::SysDeviceInfo>(std::make_optional(500ms));
 
     ASSERT_TRUE(static_cast<bool>(output));
 
@@ -372,7 +374,7 @@ TEST(MessageAssembler, multi_large_packets)
     {
         ASSERT_TRUE(assembler.process_packet(serialized));
         {
-            const auto output = registration->wait_for<wire::SysDeviceInfo>(1us);
+            const auto output = registration->wait<wire::SysDeviceInfo>(std::make_optional(1us));
             ASSERT_FALSE(static_cast<bool>(output));
         }
 

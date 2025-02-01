@@ -107,7 +107,7 @@ std::optional<crl::multisense::details::wire::Ack> wait_for_ack(MessageAssembler
             continue;
         }
 
-        if (auto ack = (wait_time ? ack_waiter->wait_for<wire::Ack>(wait_time.value()) : ack_waiter->wait<wire::Ack>()); ack)
+        if (auto ack = ack_waiter->wait<wire::Ack>(wait_time); ack)
         {
             output = std::move(ack);
             break;
@@ -147,7 +147,7 @@ std::optional<OutputMessage> wait_for_data(MessageAssembler &assembler,
             continue;
         }
 
-        if (auto ack = (wait_time ? ack_waiter->wait_for<wire::Ack>(wait_time.value()) : ack_waiter->wait<wire::Ack>()); ack)
+        if (auto ack = ack_waiter->wait<wire::Ack>(wait_time); ack)
         {
             //
             // TODO (malvarado): Uncomment this once the firmware issues are resolved
@@ -157,7 +157,7 @@ std::optional<OutputMessage> wait_for_data(MessageAssembler &assembler,
             //    continue;
             //}
 
-            if (auto response = (wait_time ? response_waiter->wait_for<OutputMessage>(wait_time.value()) : response_waiter->wait<OutputMessage>()); response)
+            if (auto response = response_waiter->wait<OutputMessage>(wait_time); response)
             {
                 output = std::move(response);
                 break;
@@ -222,7 +222,7 @@ std::optional<TimedResponse<OutputMessage>> wait_for_data_timed(MessageAssembler
             continue;
         }
 
-        if (auto ack = (wait_time ? ack_waiter->wait_for<wire::Ack>(wait_time.value()) : ack_waiter->wait<wire::Ack>()); ack)
+        if (auto ack = ack_waiter->wait<wire::Ack>(wait_time); ack)
         {
             const auto end = std::chrono::high_resolution_clock::now();
 
@@ -234,7 +234,7 @@ std::optional<TimedResponse<OutputMessage>> wait_for_data_timed(MessageAssembler
             //    continue;
             //}
 
-            if (auto response = (wait_time ? response_waiter->wait_for<OutputMessage>(wait_time.value()) : response_waiter->wait<OutputMessage>()); response)
+            if (auto response = response_waiter->wait<OutputMessage>(wait_time); response)
             {
                 output = TimedResponse<OutputMessage>{send, end - start, response.value()};
                 break;
