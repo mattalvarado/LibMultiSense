@@ -7,21 +7,15 @@
 # Make sure there is a reasonable version of CMAKE installed.
 #
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.12)
 
-set(CPACK_PACKAGE_VERSION "6.1.0")
+set(CPACK_PACKAGE_VERSION "7.0.0")
 
-if (${CMAKE_VERSION} VERSION_LESS "3.12")
-    project(LibMultiSense
-      LANGUAGES C CXX
-      VERSION ${CPACK_PACKAGE_VERSION})
-else()
-    project(LibMultiSense
-      LANGUAGES C CXX
-      HOMEPAGE_URL https://carnegierobotics.com
-      DESCRIPTION "The CRL Multisense Interface Library"
-      VERSION ${CPACK_PACKAGE_VERSION})
-endif ()
+project(LibMultiSense
+  LANGUAGES C CXX
+  HOMEPAGE_URL https://carnegierobotics.com
+  DESCRIPTION "The CRL Multisense Interface Library"
+  VERSION ${CPACK_PACKAGE_VERSION})
 
 include (CheckCXXSourceCompiles)
 

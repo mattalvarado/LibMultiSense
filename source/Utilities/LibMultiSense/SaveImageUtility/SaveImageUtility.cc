@@ -128,7 +128,9 @@ int main(int argc, char** argv)
 
     channel->add_imu_frame_callback(imu_callback);
 
-    if (!channel->start_streams({lms::DataSource::LEFT_RECTIFIED_RAW, lms::DataSource::LEFT_DISPARITY_RAW}))
+    if (!channel->start_streams({lms::DataSource::LEFT_RECTIFIED_RAW,
+                                 //lms::DataSource::LEFT_DISPARITY_RAW}))
+                                 lms::DataSource::IMU}))
     {
         std::cerr << "Cannot start streams" << std::endl;
         return 1;

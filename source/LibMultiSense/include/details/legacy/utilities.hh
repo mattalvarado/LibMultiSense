@@ -66,8 +66,14 @@ constexpr crl::multisense::details::wire::SourceType all_sources = {
     crl::multisense::details::wire::SOURCE_LUMA_RECT_AUX |
     crl::multisense::details::wire::SOURCE_CHROMA_AUX |
     crl::multisense::details::wire::SOURCE_CHROMA_RECT_AUX |
-    crl::multisense::details::wire::SOURCE_DISPARITY_COST
+    crl::multisense::details::wire::SOURCE_DISPARITY_COST |
+    crl::multisense::details::wire::SOURCE_IMU
 };
+
+///
+/// @brief Determine if a datasource is a image source
+///
+bool is_image_source(const DataSource &source);
 
 MultiSenseInfo::Version get_version(const crl::multisense::details::wire::VersionType &version);
 

@@ -39,6 +39,35 @@
 namespace multisense{
 namespace legacy{
 
+bool is_image_source(const DataSource &source)
+{
+    switch (source)
+    {
+        case DataSource::LEFT_MONO_RAW:
+        case DataSource::RIGHT_MONO_RAW:
+        case DataSource::LEFT_MONO_COMPRESSED:
+        case DataSource::RIGHT_MONO_COMPRESSED:
+        case DataSource::LEFT_RECTIFIED_RAW:
+        case DataSource::RIGHT_RECTIFIED_RAW:
+        case DataSource::LEFT_RECTIFIED_COMPRESSED:
+        case DataSource::RIGHT_RECTIFIED_COMPRESSED:
+        case DataSource::LEFT_DISPARITY_RAW:
+        case DataSource::LEFT_DISPARITY_COMPRESSED:
+        case DataSource::AUX_COMPRESSED:
+        case DataSource::AUX_RECTIFIED_COMPRESSED:
+        case DataSource::AUX_LUMA_RAW:
+        case DataSource::AUX_LUMA_RECTIFIED_RAW:
+        case DataSource::AUX_CHROMA_RAW:
+        case DataSource::AUX_CHROMA_RECTIFIED_RAW:
+        case DataSource::COST_RAW:
+            return true;
+        default:
+            return false;
+    }
+
+    return false;
+}
+
 MultiSenseInfo::Version get_version(const crl::multisense::details::wire::VersionType &version)
 {
     return MultiSenseInfo::Version{static_cast<uint32_t>(version >> 8), static_cast<uint32_t>(version & 0xFF), 0};
@@ -77,6 +106,7 @@ std::vector<DataSource> convert_sources(const crl::multisense::details::wire::So
     if (source & wire::SOURCE_CHROMA_AUX) {sources.push_back(DataSource::AUX_CHROMA_RAW);}
     if (source & wire::SOURCE_CHROMA_RECT_AUX) {sources.push_back(DataSource::AUX_CHROMA_RECTIFIED_RAW);}
     if (source & wire::SOURCE_DISPARITY_COST) {sources.push_back(DataSource::COST_RAW);}
+    if (source & wire::SOURCE_IMU) {sources.push_back(DataSource::IMU);}
 
     return sources;
 }
@@ -106,6 +136,7 @@ crl::multisense::details::wire::SourceType convert_sources(const std::vector<Dat
             case DataSource::AUX_CHROMA_RAW: {mask |= wire::SOURCE_CHROMA_AUX; break;}
             case DataSource::AUX_CHROMA_RECTIFIED_RAW: {mask |= wire::SOURCE_CHROMA_RECT_AUX; break;}
             case DataSource::COST_RAW: {mask |= wire::SOURCE_DISPARITY_COST; break;}
+            case DataSource::IMU: {mask |= wire::SOURCE_IMU; break;}
             case DataSource::ALL: {mask |= all_sources; break;}
             default: {CRL_DEBUG("Unsupported source %d", static_cast<int32_t>(source));}
         }

@@ -136,6 +136,9 @@ bool LegacyChannel::start_streams(const std::vector<DataSource> &sources)
             return false;
         }
 
+        ///
+        /// TODO (malvarado): Handle DataSource::ALL here
+        ///
         m_active_streams.insert(std::begin(sources), std::end(sources));
         return true;
     }
@@ -953,7 +956,7 @@ void LegacyChannel::handle_and_dispatch(Image image,
     if (const auto &frame = m_frame_buffer[frame_id];
             std::all_of(std::begin(m_active_streams),
                         std::end(m_active_streams),
-                        [&frame](const auto &e){return frame.has_image(e);}))
+                        [&frame](const auto &e){return is_image_source(e) ? frame.has_image(e) : true;}))
     {
         //
         // Notify anyone waiting on the next frame
