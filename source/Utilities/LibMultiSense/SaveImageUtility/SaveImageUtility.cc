@@ -60,9 +60,9 @@ namespace
 
 volatile bool done = false;
 
-void image_callback(const lms::ImageFrame &frame)
+void imu_callback(const lms::ImuFrame &frame)
 {
-    std::cout << "callback " << frame.frame_id << std::endl;
+    std::cout << "imu callback " << frame.samples.size() << std::endl;
 }
 
 void usage(const char *name)
@@ -126,7 +126,7 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    channel->add_image_frame_callback(image_callback);
+    channel->add_imu_frame_callback(imu_callback);
 
     if (!channel->start_streams({lms::DataSource::LEFT_RECTIFIED_RAW, lms::DataSource::LEFT_DISPARITY_RAW}))
     {

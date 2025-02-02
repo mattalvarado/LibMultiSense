@@ -114,5 +114,37 @@ crl::multisense::details::wire::SourceType convert_sources(const std::vector<Dat
     return mask;
 }
 
+ImuSample add_wire_sample(ImuSample sample, const crl::multisense::details::wire::ImuSample &wire)
+{
+    using namespace crl::multisense::details;
+
+    ImuSample::Measurement measurement{wire.x, wire.y, wire.z};
+
+    switch(wire.type)
+    {
+        case wire::ImuSample::TYPE_ACCEL:
+        {
+            sample.accelerometer = std::move(measurement);
+            break;
+        }
+        case wire::ImuSample::TYPE_GYRO:
+        {
+            sample.gyroscope = std::move(measurement);
+            break;
+        }
+        case wire::ImuSample::TYPE_MAG:
+        {
+            sample.magnetometer = std::move(measurement);
+            break;
+        }
+        default:
+        {
+            CRL_EXCEPTION("Unknown IMU sample type");
+        }
+    }
+
+    return sample;
+}
+
 }
 }

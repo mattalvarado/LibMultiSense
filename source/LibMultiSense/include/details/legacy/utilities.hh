@@ -36,6 +36,11 @@
 
 #pragma once
 
+#include <utility/Exception.hh>
+#include <wire/Protocol.hh>
+#include <utility/BufferStream.hh>
+#include <wire/ImuDataMessage.hh>
+
 #include "details/legacy/message.hh"
 #include "details/legacy/udp.hh"
 
@@ -80,6 +85,11 @@ std::vector<DataSource> convert_sources(const crl::multisense::details::wire::So
 /// @brief Convert a vector of DataSources to a wire source
 ///
 crl::multisense::details::wire::SourceType convert_sources(const std::vector<DataSource> &sources);
+
+///
+/// @brief Add a wire sample to a ImuSample
+///
+ImuSample add_wire_sample(ImuSample sample, const crl::multisense::details::wire::ImuSample &wire);
 
 ///
 /// @brief Helper to wait for ack from the camera from a given query command. Once a query

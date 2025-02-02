@@ -287,16 +287,47 @@ struct ImuSample
     ///
     struct Measurement
     {
+        ///
+        /// @brief Measurement on the x-axis of the sensor
+        ///
         float x = 0.0;
+
+        ///
+        /// @brief Measurement on the y-axis of the sensor
+        ///
         float y = 0.0;
+
+        ///
+        /// @brief Measurement on the z-axis of the sensor
+        ///
         float z = 0.0;
     };
 
-    std::optional<Measurement> acceleration{};
+    ///
+    /// @brief The acceleration in G's. Depending on the IMU configuration of the sensor,
+    ///        this may be invalid (i.e. the MultiSense has separate accelerometer and gyroscope chips)
+    ///
+    std::optional<Measurement> accelerometer{};
+    ///
+    /// @brief The rotational velocity in degrees/s. Depending on the IMU configuration of the sensor,
+    ///        this may be invalid (i.e. the MultiSense has separate accelerometer and gyroscope chips)
+    ///
     std::optional<Measurement> gyroscope{};
+    ///
+    /// @brief The measured magnetic field in milligaus. Depending on the IMU configuration of the sensor,
+    ///        this may be invalid (i.e. the MultiSense has a separate magnetometer chip)
+    /// TODO (malvarado: verify units
+    ///
     std::optional<Measurement> magnetometer{};
 
+    ///
+    /// @brief The MultiSeense timestamp associated with the frame
+    ///
     std::chrono::system_clock::time_point sample_time{};
+
+    ///
+    /// @brief The  MultiSeense ptp timestamp associated with the frame
+    ///
     std::chrono::system_clock::time_point ptp_sample_time{};
 };
 
@@ -305,11 +336,6 @@ struct ImuSample
 ///
 struct ImuFrame
 {
-    ///
-    /// @brief A monotonically increasing sequence ID
-    ///
-    uint32_t sequence_id = 0;
-
     ///
     /// @brief A batched collection of IMU samples
     ///

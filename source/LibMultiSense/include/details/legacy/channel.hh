@@ -64,6 +64,9 @@ public:
         m_cv.notify_all();
     }
 
+    ///
+    /// @brief Copy a frame into the local storage, and notify all waiters that the frame is valid
+    ///
     void set_and_notify(const T &in_frame)
     {
         std::lock_guard<std::mutex> lock(m_mutex);
@@ -71,6 +74,9 @@ public:
         m_cv.notify_all();
     }
 
+    ///
+    /// @brief Wait for the notifier to be valid. If the timeout is invalid, will wait forever
+    ///
     template <class Rep, class Period>
     std::optional<T> wait(const std::optional<std::chrono::duration<Rep, Period>>& timeout)
     {
@@ -381,6 +387,12 @@ private:
     /// @brief A cache of image frames associated with a specific frame id
     ///
     std::map<int64_t, ImageFrame> m_frame_buffer;
+
+    ///
+    /// @brief A cache of IMU samples which will be internally filled until it reaches the
+    ///        sample threshold for dispatch
+    ///
+    ImuFrame m_current_imu_frame;
 };
 
 }

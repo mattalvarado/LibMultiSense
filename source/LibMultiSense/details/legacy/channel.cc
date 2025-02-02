@@ -337,7 +337,7 @@ std::optional<ImageFrame> LegacyChannel::get_next_image_frame()
 
 std::optional<ImuFrame> LegacyChannel::get_next_imu_frame()
 {
-    return std::nullopt;
+    return m_imu_frame_notifier.wait(m_config.receive_timeout);
 }
 
 MultiSenseConfiguration LegacyChannel::get_configuration()
@@ -879,9 +879,44 @@ void LegacyChannel::disparity_callback(std::shared_ptr<const std::vector<uint8_t
 void LegacyChannel::imu_callback(std::shared_ptr<const std::vector<uint8_t>> data)
 {
     using namespace crl::multisense::details;
+
     const auto wire_imu = deserialize<wire::ImuData>(*data);
 
-    // TODO (malvarado): Combine ImuSamples into valid ImuFrames
+    for (const auto &wire_sample : wire_imu.samples)
+    {
+        using TimeT = std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds>;
+        const TimeT camera_time{std::chrono::nanoseconds{wire_sample.timeNanoSeconds}};
+        const TimeT ptp_time{std::chrono::nanoseconds{wire_sample.ptpNanoSeconds}};
+
+        if (!m_current_imu_frame.samples.empty() && m_current_imu_frame.samples.back().sample_time == camera_time &&
+            m_current_imu_frame.samples.back().ptp_sample_time == ptp_time)
+        {
+            const size_t i = m_current_imu_frame.samples.size() - 1;
+            m_current_imu_frame.samples[i] = add_wire_sample(std::move(m_current_imu_frame.samples[i]), wire_sample);
+        }
+        else
+        {
+            ///
+            /// We have enough valid samples to notify the listener and call our user callback
+            ///
+            if (m_current_imu_frame.samples.size() >= 300)
+            {
+                m_imu_frame_notifier.set_and_notify(m_current_imu_frame);
+
+                std::lock_guard<std::mutex> lock(m_imu_callback_mutex);
+                if (m_user_imu_frame_callback)
+                {
+                    m_user_imu_frame_callback(m_current_imu_frame);
+                }
+
+                m_current_imu_frame.samples.clear();
+            }
+
+            ImuSample sample{std::nullopt, std::nullopt, std::nullopt, camera_time, ptp_time};
+            sample = add_wire_sample(std::move(sample), wire_sample);
+            m_current_imu_frame.samples.push_back(std::move(sample));
+        }
+    }
 }
 
 void LegacyChannel::handle_and_dispatch(Image image,
