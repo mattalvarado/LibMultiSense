@@ -47,6 +47,7 @@
 #include <wire/CamControlMessage.hh>
 #include <wire/CamGetConfigMessage.hh>
 #include <wire/CamSetResolutionMessage.hh>
+#include <wire/ImuConfigMessage.hh>
 #include <wire/SysSetPtpMessage.hh>
 
 #include "MultiSense/MultiSenseTypes.hh"
@@ -60,10 +61,11 @@ namespace legacy {
 MultiSenseConfiguration::AuxConfiguration convert(const crl::multisense::details::wire::AuxCamConfig &aux_config);
 
 ///
-/// @brief Convert wire Cam and Aux config object to our MultiSenseConfiguration
+/// @brief Convert wire objects to our MultiSenseConfiguration
 ///
 MultiSenseConfiguration convert(const crl::multisense::details::wire::CamConfig &config,
                                 const std::optional<crl::multisense::details::wire::AuxCamConfig> &aux_config,
+                                const std::optional<crl::multisense::details::wire::ImuConfig> &imu_config,
                                 bool ptp_enabled);
 
 ///
@@ -81,5 +83,17 @@ crl::multisense::details::wire::AuxCamControl convert(const MultiSenseConfigurat
 /// @brief Convert a TimeConfiguration object to a wire message
 ///
 crl::multisense::details::wire::SysSetPtp convert(const MultiSenseConfiguration::TimeConfiguration &config);
+
+///
+/// @brief Convert a ImuConfig object to a wire ImuConfiguration message
+///
+MultiSenseConfiguration::ImuConfiguration convert(const crl::multisense::details::wire::ImuConfig &imu);
+
+///
+/// @brief Convert a ImuConfiguration object to a wire message
+///
+crl::multisense::details::wire::ImuConfig convert(const MultiSenseConfiguration::ImuConfiguration &imu,
+                                                  uint32_t max_samples_per_message);
+
 }
 }

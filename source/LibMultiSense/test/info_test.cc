@@ -117,6 +117,50 @@ crl::multisense::details::wire::SysDeviceModes create_device_modes(int64_t sourc
     return modes;
 }
 
+crl::multisense::details::wire::ImuInfo create_imu_info()
+{
+    using namespace crl::multisense::details;
+
+    wire::ImuInfo output;
+
+    output.maxSamplesPerMessage = 100;
+
+    wire::imu::RateType rate0;
+    rate0.sampleRate = 101.0f;
+    rate0.bandwidthCutoff = 201.0f;
+
+    wire::imu::RateType rate1;
+    rate1.sampleRate = 101.1f;
+    rate1.bandwidthCutoff = 202.0f;
+
+    wire::imu::RangeType range0;
+    range0.range = 10.2f;
+    range0.resolution = 0.2f;
+
+    wire::imu::Details detail0;
+    detail0.name = "test0";
+    detail0.device = "device0";
+    detail0.units = "units0";
+
+    detail0.rates.push_back(rate0);
+    detail0.rates.push_back(rate1);
+    detail0.ranges.push_back(range0);
+
+    wire::imu::Details detail1;
+    detail1.name = "test1";
+    detail1.device = "device1";
+    detail1.units = "units1";
+
+    detail1.rates.push_back(rate0);
+    detail1.rates.push_back(rate1);
+    detail1.ranges.push_back(range0);
+
+    output.details.push_back(detail0);
+    output.details.push_back(detail1);
+
+    return output;
+}
+
 multisense::MultiSenseInfo::DeviceInfo create_info(const std::string &name)
 {
     using namespace multisense;
@@ -228,6 +272,28 @@ void check_equal(const crl::multisense::details::wire::SysDeviceInfo &wire,
     ASSERT_EQ(wire.numberOfLights, info.number_of_lights);
 }
 
+void check_equal(const crl::multisense::details::wire::imu::Details &wire,
+                 const multisense::MultiSenseInfo::ImuSource &info)
+{
+    ASSERT_EQ(wire.name, info.name);
+    ASSERT_EQ(wire.device, info.device);
+    ASSERT_EQ(wire.units, info.units);
+
+    ASSERT_EQ(wire.rates.size(), info.rates.size());
+    for (size_t i = 0 ; i < info.rates.size() ; ++i)
+    {
+        ASSERT_FLOAT_EQ(wire.rates[i].sampleRate, info.rates[i].sample_rate);
+        ASSERT_FLOAT_EQ(wire.rates[i].bandwidthCutoff, info.rates[i].bandwith_cutoff);
+    }
+
+    ASSERT_EQ(wire.ranges.size(), info.ranges.size());
+    for (size_t i = 0 ; i < info.ranges.size() ; ++i)
+    {
+        ASSERT_FLOAT_EQ(wire.ranges[i].range, info.ranges[i].range);
+        ASSERT_FLOAT_EQ(wire.ranges[i].resolution, info.ranges[i].resolution);
+    }
+}
+
 TEST(convert, wire_to_info)
 {
     const auto info = create_wire_info("test", "key");
@@ -280,5 +346,20 @@ TEST(convert, device_modes)
         const auto full_sources = convert_sources(modes[i].supported_sources);
         ASSERT_EQ(full_sources & 0x00000000FFFFFFFF, wire_modes.modes[i].supportedDataSources);
         ASSERT_EQ(full_sources >> 32, wire_modes.modes[i].extendedDataSources);
+    }
+}
+
+TEST(convert, imu_source)
+{
+    using namespace crl::multisense::details;
+
+    const auto wire_info = create_imu_info();
+    const auto info = convert(wire_info);
+
+    ASSERT_EQ(wire_info.details.size(), info.size());
+
+    for (size_t i = 0 ; i < info.size() ; ++i)
+    {
+        check_equal(wire_info.details[i], info[i]);
     }
 }

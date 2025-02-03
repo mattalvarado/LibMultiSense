@@ -237,7 +237,7 @@ private:
     ///
     /// @brief Query the full configuration
     ///
-    std::optional<MultiSenseConfiguration> query_configuration(bool has_aux_camera, bool ptp_enabled);
+    std::optional<MultiSenseConfiguration> query_configuration(bool has_aux_camera, bool has_imu, bool ptp_enabled);
 
     ///
     /// @brief Query the calibration from the camera
@@ -387,6 +387,11 @@ private:
     /// @brief A cache of image frames associated with a specific frame id
     ///
     std::map<int64_t, ImageFrame> m_frame_buffer;
+
+    ///
+    /// @brief The max number of IMU messages which can be batched over the wire
+    ///
+    std::atomic_uint32_t m_max_batched_imu_messages = 0;
 
     ///
     /// @brief A cache of IMU samples which will be internally filled until it reaches the

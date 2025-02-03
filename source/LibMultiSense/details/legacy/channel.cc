@@ -52,7 +52,11 @@
 #include <wire/DisparityMessage.hh>
 #include <wire/ImageMessage.hh>
 #include <wire/ImageMetaMessage.hh>
+#include <wire/ImuConfigMessage.hh>
 #include <wire/ImuDataMessage.hh>
+#include <wire/ImuGetConfigMessage.hh>
+#include <wire/ImuGetInfoMessage.hh>
+#include <wire/ImuInfoMessage.hh>
 #include <wire/PtpStatusRequestMessage.hh>
 #include <wire/PtpStatusResponseMessage.hh>
 #include <wire/StatusRequestMessage.hh>
@@ -291,7 +295,7 @@ bool LegacyChannel::connect(const ChannelConfig &config)
     // Update our cached multisense configuration
     // TODO (malvarado): Query the PTP status from the camera
     //
-    if (auto config = query_configuration(m_info.device.has_aux_camera(), false); config)
+    if (auto config = query_configuration(m_info.device.has_aux_camera(), m_info.imu.has_value(), false); config)
     {
         m_multisense_config = std::move(config.value());
     }
@@ -437,7 +441,9 @@ bool LegacyChannel::set_configuration(const MultiSenseConfiguration &config)
     // Update our internal cached image config after we successfully set everything
     //
     const auto ptp_enabled = config.time_config.ptp_enabled;
-    if (const auto new_config = query_configuration(m_info.device.has_aux_camera(), ptp_enabled); new_config)
+    if (const auto new_config = query_configuration(m_info.device.has_aux_camera(),
+                                                    m_info.imu.has_value(),
+                                                    ptp_enabled); new_config)
     {
         m_multisense_config = new_config.value();
         return true;
@@ -640,7 +646,9 @@ bool LegacyChannel::set_mtu(const std::optional<uint16_t> &mtu)
     return false;
 }
 
-std::optional<MultiSenseConfiguration> LegacyChannel::query_configuration(bool has_aux_camera, bool ptp_enabled)
+std::optional<MultiSenseConfiguration> LegacyChannel::query_configuration(bool has_aux_camera,
+                                                                          bool has_imu,
+                                                                          bool ptp_enabled)
 {
     using namespace crl::multisense::details;
 
@@ -657,9 +665,16 @@ std::optional<MultiSenseConfiguration> LegacyChannel::query_configuration(bool h
                                                                                m_transmit_id++,
                                                                                m_current_mtu,
                                                                                m_config.receive_timeout): std::nullopt;
+
+    const auto imu_config = has_imu ? wait_for_data<wire::ImuConfig>(m_message_assembler,
+                                                                     m_socket,
+                                                                     wire::ImuGetConfig(),
+                                                                     m_transmit_id++,
+                                                                     m_current_mtu,
+                                                                     m_config.receive_timeout): std::nullopt;
     if (camera_config)
     {
-        return convert(camera_config.value(), aux_config, ptp_enabled);
+        return convert(camera_config.value(), aux_config, imu_config, ptp_enabled);
     }
 
     return std::nullopt;
@@ -719,7 +734,22 @@ std::optional<MultiSenseInfo> LegacyChannel::query_info()
         return std::nullopt;
     }
 
-    return MultiSenseInfo{device_info.value(), convert(version.value()), convert(device_modes.value())};
+    const auto imu_info = wait_for_data<wire::ImuInfo>(m_message_assembler,
+                                                       m_socket,
+                                                       wire::ImuGetInfo(),
+                                                       m_transmit_id++,
+                                                       m_current_mtu,
+                                                       m_config.receive_timeout);
+
+    if (imu_info)
+    {
+        m_max_batched_imu_messages = imu_info->maxSamplesPerMessage;
+    }
+
+    return MultiSenseInfo{device_info.value(),
+                          convert(version.value()),
+                          convert(device_modes.value()),
+                          imu_info ? std::make_optional(convert(imu_info.value())) : std::nullopt};
 }
 
 std::optional<MultiSenseInfo::DeviceInfo> LegacyChannel::query_device_info()
@@ -883,6 +913,12 @@ void LegacyChannel::imu_callback(std::shared_ptr<const std::vector<uint8_t>> dat
 {
     using namespace crl::multisense::details;
 
+    if (!m_multisense_config.imu_config)
+    {
+        CRL_EXCEPTION("Invalid IMU config\n");
+        return;
+    }
+
     const auto wire_imu = deserialize<wire::ImuData>(*data);
 
     for (const auto &wire_sample : wire_imu.samples)
@@ -902,7 +938,7 @@ void LegacyChannel::imu_callback(std::shared_ptr<const std::vector<uint8_t>> dat
             ///
             /// We have enough valid samples to notify the listener and call our user callback
             ///
-            if (m_current_imu_frame.samples.size() >= 300)
+            if (m_current_imu_frame.samples.size() >= m_multisense_config.imu_config->samples_per_frame)
             {
                 m_imu_frame_notifier.set_and_notify(m_current_imu_frame);
 

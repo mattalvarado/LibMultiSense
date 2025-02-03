@@ -241,6 +241,20 @@ PYBIND11_MODULE(libmultisense, m) {
         .def(py::init<>())
         .def_readwrite("ptp_enabled", &multisense::MultiSenseConfiguration::TimeConfiguration::ptp_enabled);
 
+    // MultiSenseConfiguration::ImuConfiguration::OperatingMode
+    py::class_<multisense::MultiSenseConfiguration::ImuConfiguration::OperatingMode>(m, "ImuOperatingMode")
+        .def(py::init<>())
+        .def_readwrite("name", &multisense::MultiSenseConfiguration::ImuConfiguration::OperatingMode::name)
+        .def_readwrite("enabled", &multisense::MultiSenseConfiguration::ImuConfiguration::OperatingMode::enabled)
+        .def_readwrite("rate_index", &multisense::MultiSenseConfiguration::ImuConfiguration::OperatingMode::rate_index)
+        .def_readwrite("range_index", &multisense::MultiSenseConfiguration::ImuConfiguration::OperatingMode::range_index);
+
+    // MultiSenseConfiguration::ImuConfiguration
+    py::class_<multisense::MultiSenseConfiguration::ImuConfiguration>(m, "ImuConfiguration")
+        .def(py::init<>())
+        .def_readwrite("samples_per_frame", &multisense::MultiSenseConfiguration::ImuConfiguration::samples_per_frame)
+        .def_readwrite("modes", &multisense::MultiSenseConfiguration::ImuConfiguration::modes);
+
     // MultiSenseConfiguration
     py::class_<multisense::MultiSenseConfiguration>(m, "MultiSenseConfiguration")
         .def(py::init<>())
@@ -251,7 +265,8 @@ PYBIND11_MODULE(libmultisense, m) {
         .def_readwrite("stereo_config", &multisense::MultiSenseConfiguration::stereo_config)
         .def_readwrite("image_config", &multisense::MultiSenseConfiguration::image_config)
         .def_readwrite("aux_config", &multisense::MultiSenseConfiguration::aux_config)
-        .def_readwrite("time_config", &multisense::MultiSenseConfiguration::time_config);
+        .def_readwrite("time_config", &multisense::MultiSenseConfiguration::time_config)
+        .def_readwrite("imu_config", &multisense::MultiSenseConfiguration::imu_config);
 
     // MultiSenseStatus::PtpStatus
     py::class_<multisense::MultiSenseStatus::PtpStatus>(m, "PtpStatus")
@@ -397,12 +412,34 @@ PYBIND11_MODULE(libmultisense, m) {
         .def_readwrite("disparities", &multisense::MultiSenseInfo::SupportedOperatingMode::disparities)
         .def_readwrite("supported_sources", &multisense::MultiSenseInfo::SupportedOperatingMode::supported_sources);
 
+    // MultiSenseInfo::ImuSource::Rate
+    py::class_<multisense::MultiSenseInfo::ImuSource::Rate>(m, "ImuRate")
+        .def(py::init<>())
+        .def_readwrite("sample_rate", &multisense::MultiSenseInfo::ImuSource::Rate::sample_rate)
+        .def_readwrite("bandwith_cutoff", &multisense::MultiSenseInfo::ImuSource::Rate::bandwith_cutoff);
+
+    // MultiSenseInfo::ImuSource::Range
+    py::class_<multisense::MultiSenseInfo::ImuSource::Range>(m, "ImuRange")
+        .def(py::init<>())
+        .def_readwrite("range", &multisense::MultiSenseInfo::ImuSource::Range::range)
+        .def_readwrite("resolution", &multisense::MultiSenseInfo::ImuSource::Range::resolution);
+
+    // MultiSenseInfo::ImuSource
+    py::class_<multisense::MultiSenseInfo::ImuSource>(m, "ImuSource")
+        .def(py::init<>())
+        .def_readwrite("name", &multisense::MultiSenseInfo::ImuSource::name)
+        .def_readwrite("device", &multisense::MultiSenseInfo::ImuSource::device)
+        .def_readwrite("units", &multisense::MultiSenseInfo::ImuSource::units)
+        .def_readwrite("rates", &multisense::MultiSenseInfo::ImuSource::rates)
+        .def_readwrite("ranges", &multisense::MultiSenseInfo::ImuSource::ranges);
+
     // MultiSenseInfo
     py::class_<multisense::MultiSenseInfo>(m, "MultiSenseInfo")
         .def(py::init<>())
         .def_readwrite("device", &multisense::MultiSenseInfo::device)
         .def_readwrite("version", &multisense::MultiSenseInfo::version)
-        .def_readwrite("operating_modes", &multisense::MultiSenseInfo::operating_modes);
+        .def_readwrite("operating_modes", &multisense::MultiSenseInfo::operating_modes)
+        .def_readwrite("imu", &multisense::MultiSenseInfo::imu);
 
     // ChannelImplementation
     py::enum_<multisense::Channel::ChannelImplementation>(m, "ChannelImplementation")

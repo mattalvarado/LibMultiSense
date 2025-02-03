@@ -80,7 +80,8 @@ multisense::MultiSenseConfiguration create_valid_config()
                                    stereo_config,
                                    image_config,
                                    aux_config,
-                                   time};
+                                   time,
+                                   std::nullopt};
 }
 
 crl::multisense::details::wire::CamConfig create_valid_wire_config()
@@ -146,6 +147,30 @@ crl::multisense::details::wire::AuxCamConfig create_valid_wire_aux_config()
     config.sharpeningEnable = true;
     config.sharpeningPercentage = 10.0;
     config.sharpeningLimit = 80;
+
+    return config;
+}
+
+crl::multisense::details::wire::ImuConfig create_valid_imu_wire_config()
+{
+    using namespace crl::multisense::details;
+
+    wire::ImuConfig config;
+
+    config.storeSettingsInFlash = false;
+    config.samplesPerMessage = 300;
+
+    config.configs.resize(2);
+
+    config.configs[0].name = "test0";
+    config.configs[0].flags = 0;
+    config.configs[0].rateTableIndex = 5;
+    config.configs[0].rangeTableIndex = 2;
+
+    config.configs[1].name = "test1";
+    config.configs[1].flags = 1;
+    config.configs[1].rateTableIndex = 6;
+    config.configs[1].rangeTableIndex = 3;
 
     return config;
 }
@@ -253,6 +278,23 @@ void check_equal(const multisense::MultiSenseConfiguration::AuxConfiguration &co
     ASSERT_FLOAT_EQ(config.sharpening_limit, wire_config.sharpeningLimit);
 }
 
+void check_equal(const multisense::MultiSenseConfiguration::ImuConfiguration &config,
+                 const crl::multisense::details::wire::ImuConfig &wire_config)
+{
+    using namespace crl::multisense::details;
+
+    ASSERT_EQ(config.samples_per_frame, wire_config.samplesPerMessage);
+    ASSERT_EQ(config.modes.size(), wire_config.configs.size());
+
+    for (size_t i = 0 ; i < config.modes.size() ; ++i)
+    {
+        ASSERT_EQ(config.modes[i].name, wire_config.configs[i].name);
+        ASSERT_EQ(config.modes[i].enabled, static_cast<bool>(wire_config.configs[i].flags & wire::imu::Config::FLAGS_ENABLED));
+        ASSERT_EQ(config.modes[i].rate_index, wire_config.configs[i].rateTableIndex);
+        ASSERT_EQ(config.modes[i].range_index, wire_config.configs[i].rangeTableIndex);
+    }
+}
+
 TEST(convert, cam_resolution)
 {
     using namespace crl::multisense::details;
@@ -294,7 +336,7 @@ TEST(convert, cam_config)
     const auto wire_config = create_valid_wire_config();
     const auto wire_aux_config = create_valid_wire_aux_config();
 
-    const auto config = convert(wire_config, wire_aux_config, false);
+    const auto config = convert(wire_config, wire_aux_config, std::nullopt, false);
 
     ASSERT_TRUE(static_cast<bool>(config.aux_config));
 
@@ -306,9 +348,30 @@ TEST(convert, cam_config_invalid_aux)
 {
     const auto wire_config = create_valid_wire_config();
 
-    const auto config = convert(wire_config, std::nullopt, false);
+    const auto config = convert(wire_config, std::nullopt, std::nullopt, false);
 
     ASSERT_FALSE(static_cast<bool>(config.aux_config));
 
     check_equal(config, wire_config);
+}
+
+TEST(convert, imu_config_round_trip)
+{
+    const auto wire_config = create_valid_imu_wire_config();
+
+    const auto round_trip = convert(convert(convert(wire_config), 10000));
+
+    check_equal(round_trip, wire_config);
+}
+
+TEST(convert, imu_config_limit_messages)
+{
+    const auto wire_config = create_valid_imu_wire_config();
+
+    //
+    // Limit the number of samples to one less than our initialized value
+    //
+    const auto round_trip = convert(convert(wire_config), wire_config.samplesPerMessage - 1);
+
+    ASSERT_EQ(round_trip.samplesPerMessage, wire_config.samplesPerMessage - 1);
 }

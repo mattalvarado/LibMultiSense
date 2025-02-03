@@ -305,17 +305,17 @@ struct ImuSample
     };
 
     ///
-    /// @brief The acceleration in G's. Depending on the IMU configuration of the sensor,
+    /// @brief The acceleration in configured units. Depending on the IMU configuration of the sensor,
     ///        this may be invalid (i.e. the MultiSense has separate accelerometer and gyroscope chips)
     ///
     std::optional<Measurement> accelerometer{};
     ///
-    /// @brief The rotational velocity in degrees/s. Depending on the IMU configuration of the sensor,
+    /// @brief The rotational velocity in configured units. Depending on the IMU configuration of the sensor,
     ///        this may be invalid (i.e. the MultiSense has separate accelerometer and gyroscope chips)
     ///
     std::optional<Measurement> gyroscope{};
     ///
-    /// @brief The measured magnetic field in milligaus. Depending on the IMU configuration of the sensor,
+    /// @brief The measured magnetic field in configured units. Depending on the IMU configuration of the sensor,
     ///        this may be invalid (i.e. the MultiSense has a separate magnetometer chip)
     /// TODO (malvarado: verify units
     ///
@@ -595,6 +595,51 @@ struct MultiSenseConfiguration
     };
 
     ///
+    /// @brief Configuration for the IMU sensor
+    ///
+    struct ImuConfiguration
+    {
+        ///
+        /// @brief Configuration for a specific IMU operating mode. There are separate modes for each of the
+        ///        IMU sensors (i.e. accelerometer, gyroscope, magnetometer)
+        ///
+        struct OperatingMode
+        {
+            ///
+            /// @brief The name of the specific IMU source corresponding to the ImuSource
+            ///
+            std::string name{};
+
+            ///
+            /// @brief Enable the current source
+            ///
+            bool enabled = false;
+
+            ///
+            /// @brief The index of the specific IMU rate configuration specified in ImuSource rate
+            ///        table
+            ///
+            uint32_t rate_index = 0;
+
+            ///
+            /// @brief The index of the specific IMU range configuration specified in ImuSource range
+            ///        table
+            ///
+            uint32_t range_index = 0;
+        };
+
+        ///
+        /// @brief The number of IMU samples which should be included in a IMU frame
+        ///
+        uint32_t samples_per_frame = 0;
+
+        ///
+        /// @brief The current IMU modes
+        ///
+        std::vector<OperatingMode> modes{};
+    };
+
+    ///
     /// @brief The MultiSense operating width
     ///
     uint32_t width = 960;
@@ -633,6 +678,11 @@ struct MultiSenseConfiguration
     /// @brief Configuration for the MultiSense time-sync options
     ///
     TimeConfiguration time_config;
+
+    ///
+    /// @brief The imu configuration to use for the camera. Will be invalid if sensor does not contain an IMU
+    ///
+    std::optional<ImuConfiguration> imu_config;
 };
 
 ///
@@ -1081,6 +1131,69 @@ struct MultiSenseInfo
     };
 
     ///
+    /// @brief Info about the available IMu configurations
+    ///
+    struct ImuSource
+    {
+        ///
+        /// @brief A sample rate, and what impact it has on bandwidth
+        ///
+        struct Rate
+        {
+            ///
+            /// @brief The sample rate for the sensor in Hz
+            ///
+            float sample_rate = 0.0f;
+
+            ///
+            /// @brief The bandwith cutoff for a given IMU mode in Hz
+            ///
+            float bandwith_cutoff = 0.0f;
+        };
+
+        ///
+        /// @brief The range for each sensor along with the corresponding sampling resolution
+        ///
+        struct Range
+        {
+            ///
+            /// @brief The max value the sensor can return. This value is +/- units for the given source
+            ///
+            float range = 0.0f;
+
+            ///
+            /// @brief The min resolution the sensor can return. In units per LSB
+            ///
+            float resolution = 0.0f;
+        };
+
+        ///
+        /// @brief The name of the IMU source
+        ///
+        std::string name{};
+
+        ///
+        /// @brief The name of the IMU device for the source
+        ///
+        std::string device{};
+
+        ///
+        /// @brief The name of the units type it broadcasts
+        ///
+        std::string units{};
+
+        ///
+        /// @brief The available rates supported by this operating mode
+        ///
+        std::vector<Rate> rates;
+
+        ///
+        /// @brief The available ranges supported by this operating mode
+        ///
+        std::vector<Range> ranges;
+    };
+
+    ///
     /// @brief Device info
     ///
     DeviceInfo device;
@@ -1094,6 +1207,12 @@ struct MultiSenseInfo
     /// @brief Supported operating modes
     ///
     std::vector<SupportedOperatingMode> operating_modes;
+
+    ///
+    /// @brief Supported operating modes for the IMU sensors (accelerometer, gyroscope, magnetometer). Will
+    ///        be invalid if an IMU is not present
+    ///
+    std::optional<std::vector<ImuSource>> imu;
 };
 
 }

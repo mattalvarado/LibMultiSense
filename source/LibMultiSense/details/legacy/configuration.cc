@@ -42,6 +42,7 @@ namespace legacy {
 
 MultiSenseConfiguration convert(const crl::multisense::details::wire::CamConfig &config,
                                 const std::optional<crl::multisense::details::wire::AuxCamConfig> &aux_config,
+                                const std::optional<crl::multisense::details::wire::ImuConfig> &imu_config,
                                 bool ptp_enabled)
 {
     using namespace crl::multisense::details;
@@ -85,7 +86,8 @@ MultiSenseConfiguration convert(const crl::multisense::details::wire::CamConfig 
                                    std::move(stereo),
                                    std::move(image),
                                    (aux_config ? std::make_optional(convert(aux_config.value())) : std::nullopt),
-                                   ms_config::TimeConfiguration{ptp_enabled}};
+                                   ms_config::TimeConfiguration{ptp_enabled},
+                                   imu_config ? std::make_optional(convert(imu_config.value())) : std::nullopt};
 }
 
 MultiSenseConfiguration::AuxConfiguration convert(const crl::multisense::details::wire::AuxCamConfig &config)
@@ -219,7 +221,7 @@ crl::multisense::details::wire::AuxCamControl convert(const MultiSenseConfigurat
     output.sharpeningLimit = config.sharpening_limit;
 
     //
-    // Unsupported values
+    // Currently unsupported values
     //
     output.cameraProfile = 0;
 
@@ -232,6 +234,50 @@ crl::multisense::details::wire::SysSetPtp convert(const MultiSenseConfiguration:
 
     wire::SysSetPtp output;
     output.enable = config.ptp_enabled ? 1 : 0;
+
+    return output;
+}
+
+MultiSenseConfiguration::ImuConfiguration convert(const crl::multisense::details::wire::ImuConfig &imu)
+{
+    using namespace crl::multisense::details;
+    using ImuConfiguration = MultiSenseConfiguration::ImuConfiguration;
+
+    std::vector<ImuConfiguration::OperatingMode> modes;
+    for (const auto &element : imu.configs)
+    {
+        modes.emplace_back(ImuConfiguration::OperatingMode{element.name,
+                                                           static_cast<bool>(element.flags & wire::imu::Config::FLAGS_ENABLED),
+                                                           element.rateTableIndex,
+                                                           element.rangeTableIndex});
+    }
+
+    return ImuConfiguration{imu.samplesPerMessage, std::move(modes)};
+}
+
+crl::multisense::details::wire::ImuConfig convert(const MultiSenseConfiguration::ImuConfiguration &imu,
+                                                  uint32_t max_samples_per_message)
+{
+    using namespace crl::multisense::details;
+
+    wire::ImuConfig output;
+
+    output.samplesPerMessage = std::min(max_samples_per_message, imu.samples_per_frame);
+
+    std::vector<wire::imu::Config> configs;
+    for (const auto &mode : imu.modes)
+    {
+        wire::imu::Config config;
+        config.name = mode.name;
+        config.flags = mode.enabled ? wire::imu::Config::FLAGS_ENABLED : 0;
+        config.rateTableIndex = mode.rate_index;
+        config.rangeTableIndex = mode.range_index;
+
+        configs.emplace_back(std::move(config));
+    }
+
+    output.storeSettingsInFlash = false;
+    output.configs= std::move(configs);
 
     return output;
 }

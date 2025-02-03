@@ -243,5 +243,37 @@ std::vector<MultiSenseInfo::SupportedOperatingMode> convert(const crl::multisens
     return output;
 }
 
+MultiSenseInfo::ImuSource convert(const crl::multisense::details::wire::imu::Details &details)
+{
+    std::vector<MultiSenseInfo::ImuSource::Rate> rates;
+    for (const auto &rate : details.rates)
+    {
+        rates.emplace_back(MultiSenseInfo::ImuSource::Rate{rate.sampleRate, rate.bandwidthCutoff});
+    }
+
+    std::vector<MultiSenseInfo::ImuSource::Range> ranges;
+    for (const auto &range : details.ranges)
+    {
+        ranges.emplace_back(MultiSenseInfo::ImuSource::Range{range.range, range.resolution});
+    }
+
+    return MultiSenseInfo::ImuSource{details.name,
+                                                     details.device,
+                                                     details.units,
+                                                     std::move(rates),
+                                                     std::move(ranges)};
+}
+
+std::vector<MultiSenseInfo::ImuSource> convert(const crl::multisense::details::wire::ImuInfo &modes)
+{
+    std::vector<MultiSenseInfo::ImuSource> output;
+    for (const auto &mode : modes.details)
+    {
+        output.emplace_back(convert(mode));
+    }
+
+    return output;
+}
+
 }
 }

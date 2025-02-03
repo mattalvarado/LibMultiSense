@@ -40,6 +40,7 @@
 #include <wire/Protocol.hh>
 #include <utility/BufferStream.hh>
 
+#include <wire/ImuInfoMessage.hh>
 #include <wire/SysDeviceInfoMessage.hh>
 #include <wire/SysDeviceModesMessage.hh>
 #include <wire/VersionResponseMessage.hh>
@@ -68,6 +69,16 @@ MultiSenseInfo::SensorVersion convert(const crl::multisense::details::wire::Vers
 /// @brief Convert a wire SysDeviceModes to a API SupportedOperatingMode
 ///
 std::vector<MultiSenseInfo::SupportedOperatingMode> convert(const crl::multisense::details::wire::SysDeviceModes &modes);
+
+///
+/// @brief Convert details for a specific imu operating mode to a API ImuSource
+///
+MultiSenseInfo::ImuSource convert(const crl::multisense::details::wire::imu::Details &details);
+
+///
+/// @brief Convert a wire ImuInfo to a vector of API ImuSource
+///
+std::vector<MultiSenseInfo::ImuSource> convert(const crl::multisense::details::wire::ImuInfo &modes);
 
 }
 }
