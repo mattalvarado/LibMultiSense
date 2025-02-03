@@ -218,6 +218,11 @@ crl::multisense::details::wire::AuxCamControl convert(const MultiSenseConfigurat
     output.sharpeningPercentage = config.sharpening_percentage;
     output.sharpeningLimit = config.sharpening_limit;
 
+    //
+    // Unsupported values
+    //
+    output.cameraProfile = 0;
+
     return output;
 }
 
