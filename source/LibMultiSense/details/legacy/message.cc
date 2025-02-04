@@ -194,7 +194,7 @@ bool MessageAssembler::process_packet(const std::vector<uint8_t> &raw_data)
     const int64_t full_sequence_id = unwrap_sequence_id(header.sequenceIdentifier, m_previous_wire_id);
     m_previous_wire_id = header.sequenceIdentifier;
 
-    auto active_message = m_active_messages.find(full_sequence_id);;
+    auto active_message = m_active_messages.find(full_sequence_id);
 
     const auto buffer_config = m_buffer_pool->get_config();
     const bool is_large_buffer = header.messageLength > buffer_config.small_buffer_size;
@@ -208,7 +208,6 @@ bool MessageAssembler::process_packet(const std::vector<uint8_t> &raw_data)
     {
         if (header.byteOffset != 0)
         {
-            CRL_DEBUG("Missed first packet. Dropping entire message\n");
             ++m_invalid_packets;
             return true;
         }
