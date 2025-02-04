@@ -887,6 +887,27 @@ struct MultiSenseStatus
 struct MultiSenseInfo
 {
     ///
+    /// @brief The network configuration for the MultiSense
+    ///
+    struct NetworkInfo
+    {
+        ///
+        /// @brief The IPv4 address of the camera (i.e. X.X.X.X)
+        ///
+        std::string ipv4_address = "10.66.171.21";
+
+        ///
+        /// @brief The gateway of the camera (i.e. X.X.X.X)
+        ///
+        std::string ipv4_gateway = "10.66.171.1";
+
+        ///
+        /// @brief The netmask of the camera (i.e. X.X.X.X)
+        ///
+        std::string ipv4_netmask = "255.255.255.0";
+    };
+
+    ///
     /// @brief The Device information associated with the MultiSense. The DeviceInfo is used to determine what features
     ///        the MultiSense offers, and provides debug information to the Carnegie Robotics' team.
     ///        The DeviceInfo can only be set at the factory
@@ -1245,6 +1266,11 @@ struct MultiSenseInfo
     ///        be invalid if an IMU is not present
     ///
     std::optional<std::vector<ImuSource>> imu;
+
+    ///
+    /// @brief The network configuration of the MultiSense
+    ///
+    NetworkInfo network;
 };
 
 }

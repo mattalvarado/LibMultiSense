@@ -43,6 +43,7 @@
 #include <wire/ImuInfoMessage.hh>
 #include <wire/SysDeviceInfoMessage.hh>
 #include <wire/SysDeviceModesMessage.hh>
+#include <wire/SysNetworkMessage.hh>
 #include <wire/VersionResponseMessage.hh>
 
 #include "MultiSense/MultiSenseTypes.hh"
@@ -79,6 +80,16 @@ MultiSenseInfo::ImuSource convert(const crl::multisense::details::wire::imu::Det
 /// @brief Convert a wire ImuInfo to a vector of API ImuSource
 ///
 std::vector<MultiSenseInfo::ImuSource> convert(const crl::multisense::details::wire::ImuInfo &modes);
+
+///
+/// @brief Convert a wire message into a API NetworkInfo
+///
+MultiSenseInfo::NetworkInfo convert(const crl::multisense::details::wire::SysNetwork &wire);
+
+///
+/// @brief Convert a API NetworkInfo into a wire message
+///
+crl::multisense::details::wire::SysNetwork convert(const MultiSenseInfo::NetworkInfo &info);
 
 }
 }

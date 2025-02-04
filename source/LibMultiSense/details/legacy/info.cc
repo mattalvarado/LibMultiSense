@@ -275,5 +275,16 @@ std::vector<MultiSenseInfo::ImuSource> convert(const crl::multisense::details::w
     return output;
 }
 
+MultiSenseInfo::NetworkInfo convert(const crl::multisense::details::wire::SysNetwork &wire)
+{
+    return MultiSenseInfo::NetworkInfo{wire.address, wire.gateway, wire.netmask};
+}
+
+crl::multisense::details::wire::SysNetwork convert(const MultiSenseInfo::NetworkInfo &info)
+{
+    using namespace crl::multisense::details;
+    return wire::SysNetwork{info.ipv4_address, info.ipv4_gateway, info.ipv4_netmask};
+}
+
 }
 }

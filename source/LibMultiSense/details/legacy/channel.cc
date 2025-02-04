@@ -71,6 +71,8 @@
 #include <wire/SysDeviceInfoMessage.hh>
 #include <wire/SysDeviceModesMessage.hh>
 #include <wire/SysMtuMessage.hh>
+#include <wire/SysGetNetworkMessage.hh>
+#include <wire/SysNetworkMessage.hh>
 #include <wire/SysTestMtuMessage.hh>
 #include <wire/SysTestMtuResponseMessage.hh>
 #include <wire/VersionRequestMessage.hh>
@@ -635,6 +637,26 @@ std::optional<MultiSenseStatus> LegacyChannel::get_system_status()
                             std::move(time_status)};
 }
 
+bool LegacyChannel::set_network_configuration(const MultiSenseInfo::NetworkInfo &config)
+{
+    using namespace crl::multisense::details;
+
+    if (const auto ack = wait_for_ack(m_message_assembler,
+                                      m_socket,
+                                      convert(config),
+                                      m_transmit_id++,
+                                      m_current_mtu,
+                                      m_config.receive_timeout); ack)
+    {
+        if (ack->status == wire::Ack::Status_Ok)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 bool LegacyChannel::set_mtu(uint16_t mtu)
 {
     using namespace crl::multisense::details;
@@ -805,10 +827,24 @@ std::optional<MultiSenseInfo> LegacyChannel::query_info()
         m_max_batched_imu_messages = imu_info->maxSamplesPerMessage;
     }
 
+    const auto network_info = wait_for_data<wire::SysNetwork>(m_message_assembler,
+                                                              m_socket,
+                                                              wire::SysGetNetwork(),
+                                                              m_transmit_id++,
+                                                              m_current_mtu,
+                                                              m_config.receive_timeout);
+
+    if (!network_info)
+    {
+        CRL_DEBUG("Unable to query the network info\n");
+        return std::nullopt;
+    }
+
     return MultiSenseInfo{device_info.value(),
                           convert(version.value()),
                           convert(device_modes.value()),
-                          imu_info ? std::make_optional(convert(imu_info.value())) : std::nullopt};
+                          imu_info ? std::make_optional(convert(imu_info.value())) : std::nullopt,
+                          convert(network_info.value())};
 }
 
 std::optional<MultiSenseInfo::DeviceInfo> LegacyChannel::query_device_info()

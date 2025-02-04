@@ -222,6 +222,12 @@ public:
     ///
     std::optional<MultiSenseStatus> get_system_status() final override;
 
+    ///
+    /// @brief Update the network configuration of the MultiSense. This will require a hardware reboot of the
+    ///        MultiSense after it's been succeffully applied
+    ///
+    bool set_network_configuration(const MultiSenseInfo::NetworkInfo &config) final override;
+
 private:
 
     ///

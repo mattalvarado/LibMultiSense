@@ -185,6 +185,11 @@ multisense::MultiSenseInfo::DeviceInfo create_info(const std::string &name)
     return info;
 }
 
+multisense::MultiSenseInfo::NetworkInfo create_network_info(const std::string &ip_address)
+{
+    return multisense::MultiSenseInfo::NetworkInfo{ip_address, "test", "bar"};
+}
+
 void check_equal(const crl::multisense::details::wire::SysDeviceInfo &wire,
                  const multisense::MultiSenseInfo::DeviceInfo &info,
                  const std::string &key)
@@ -294,6 +299,14 @@ void check_equal(const crl::multisense::details::wire::imu::Details &wire,
     }
 }
 
+void check_equal(const multisense::MultiSenseInfo::NetworkInfo &info0,
+                 const multisense::MultiSenseInfo::NetworkInfo &info1)
+{
+    ASSERT_EQ(info0.ipv4_address, info1.ipv4_address);
+    ASSERT_EQ(info0.ipv4_gateway, info1.ipv4_gateway);
+    ASSERT_EQ(info0.ipv4_netmask, info1.ipv4_netmask);
+}
+
 TEST(convert, wire_to_info)
 {
     const auto info = create_wire_info("test", "key");
@@ -362,4 +375,13 @@ TEST(convert, imu_source)
     {
         check_equal(wire_info.details[i], info[i]);
     }
+}
+
+TEST(convert, network_info_round_trip)
+{
+    const auto network_info = create_network_info("1.2.3.4");
+
+    const auto round_trip = convert(convert(network_info));
+
+    check_equal(network_info, round_trip);
 }

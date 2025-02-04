@@ -233,6 +233,12 @@ public:
     /// @brief Query the current system status
     ///
     virtual std::optional<MultiSenseStatus> get_system_status() = 0;
+
+    ///
+    /// @brief Update the network configuration of the MultiSense. This will require a hardware reboot of the
+    ///        MultiSense after it's been succeffully applied
+    ///
+    virtual bool set_network_configuration(const MultiSenseInfo::NetworkInfo &config) = 0;
 };
 
 }
