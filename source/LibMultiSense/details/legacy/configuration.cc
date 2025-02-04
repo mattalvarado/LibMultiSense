@@ -44,6 +44,8 @@ MultiSenseConfiguration convert(const crl::multisense::details::wire::CamConfig 
                                 const std::optional<crl::multisense::details::wire::AuxCamConfig> &aux_config,
                                 const std::optional<crl::multisense::details::wire::ImuConfig> &imu_config,
                                 const std::optional<crl::multisense::details::wire::LedStatus> &led_config,
+                                const crl::multisense::details::wire::SysPacketDelay &packet_delay,
+                                const crl::multisense::details::wire::SysTransmitDelay &transmit_delay,
                                 bool ptp_enabled)
 {
     using namespace crl::multisense::details;
@@ -88,6 +90,7 @@ MultiSenseConfiguration convert(const crl::multisense::details::wire::CamConfig 
                                    std::move(image),
                                    (aux_config ? std::make_optional(convert(aux_config.value())) : std::nullopt),
                                    ms_config::TimeConfiguration{ptp_enabled},
+                                   convert(packet_delay, transmit_delay),
                                    imu_config ? std::make_optional(convert(imu_config.value())) : std::nullopt,
                                    (led_config && led_config->available != 0) ? std::make_optional(convert(led_config.value())) : std::nullopt};
 }
@@ -349,6 +352,38 @@ crl::multisense::details::wire::LedSet convert (const MultiSenseConfiguration::L
     output.led_delay_us = 0;
 
     return output;
+}
+
+MultiSenseConfiguration::NetworkTransmissionConfiguration
+    convert(const crl::multisense::details::wire::SysPacketDelay &packet,
+            const crl::multisense::details::wire::SysTransmitDelay &transmit)
+{
+    return MultiSenseConfiguration::NetworkTransmissionConfiguration{std::chrono::milliseconds{transmit.delay},
+                                                                     packet.enable};
+}
+
+template <>
+crl::multisense::details::wire::SysPacketDelay convert(const MultiSenseConfiguration::NetworkTransmissionConfiguration &config)
+{
+    using namespace crl::multisense::details;
+
+    wire::SysPacketDelay delay;
+
+    delay.enable = config.packet_delay_enabled;
+
+    return delay;
+}
+
+template <>
+crl::multisense::details::wire::SysTransmitDelay convert(const MultiSenseConfiguration::NetworkTransmissionConfiguration &config)
+{
+    using namespace crl::multisense::details;
+
+    wire::SysTransmitDelay delay;
+
+    delay.delay = config.transmit_delay.count();
+
+    return delay;
 }
 
 }

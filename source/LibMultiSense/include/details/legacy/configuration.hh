@@ -50,6 +50,8 @@
 #include <wire/ImuConfigMessage.hh>
 #include <wire/LedStatusMessage.hh>
 #include <wire/LedSetMessage.hh>
+#include <wire/SysPacketDelayMessage.hh>
+#include <wire/SysTransmitDelayMessage.hh>
 #include <wire/SysSetPtpMessage.hh>
 
 #include "MultiSense/MultiSenseTypes.hh"
@@ -69,10 +71,12 @@ MultiSenseConfiguration convert(const crl::multisense::details::wire::CamConfig 
                                 const std::optional<crl::multisense::details::wire::AuxCamConfig> &aux_config,
                                 const std::optional<crl::multisense::details::wire::ImuConfig> &imu_config,
                                 const std::optional<crl::multisense::details::wire::LedStatus> &led_config,
+                                const crl::multisense::details::wire::SysPacketDelay &packet_delay,
+                                const crl::multisense::details::wire::SysTransmitDelay &transmit_delay,
                                 bool ptp_enabled);
 
 ///
-/// @brief generic conversions between the MultiSenseConfiguration config object an MultiSense wire types
+/// @brief Generic conversions between the MultiSenseConfiguration config object an MultiSense wire types
 ///
 template <typename T>
 T convert(const MultiSenseConfiguration &config);
@@ -107,6 +111,20 @@ MultiSenseConfiguration::LightingConfiguration convert(const crl::multisense::de
 /// @brief Convert a API lighting config to a wire lighting config
 ///
 crl::multisense::details::wire::LedSet convert (const MultiSenseConfiguration::LightingConfiguration &led);
+
+///
+/// @brief Create a API transmission config object from wire types
+///
+MultiSenseConfiguration::NetworkTransmissionConfiguration
+    convert(const crl::multisense::details::wire::SysPacketDelay &packet,
+            const crl::multisense::details::wire::SysTransmitDelay &transmit);
+
+///
+/// @brief Generic conversions between the MultiSenseConfiguration::NetworkTransmissionConfiguration config
+///        object an MultiSense wire types
+///
+template <typename T>
+T convert(const MultiSenseConfiguration::NetworkTransmissionConfiguration &config);
 
 }
 }

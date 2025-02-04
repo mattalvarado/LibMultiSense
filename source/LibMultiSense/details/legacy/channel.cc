@@ -68,6 +68,8 @@
 #include <wire/SysGetCameraCalibrationMessage.hh>
 #include <wire/SysGetDeviceInfoMessage.hh>
 #include <wire/SysGetDeviceModesMessage.hh>
+#include <wire/SysGetTransmitDelayMessage.hh>
+#include <wire/SysGetPacketDelayMessage.hh>
 #include <wire/SysDeviceInfoMessage.hh>
 #include <wire/SysDeviceModesMessage.hh>
 #include <wire/SysMtuMessage.hh>
@@ -489,6 +491,36 @@ bool LegacyChannel::set_configuration(const MultiSenseConfiguration &config)
     }
 
     //
+    // Set our packet delay
+    //
+    const auto packet_ack = wait_for_ack(m_message_assembler,
+                                         m_socket,
+                                         convert<wire::SysPacketDelay>(config.network_config),
+                                         m_transmit_id++,
+                                         m_current_mtu,
+                                         m_config.receive_timeout);
+
+    if (!packet_ack || packet_ack->status != wire::Ack::Status_Ok)
+    {
+        return false;
+    }
+
+    //
+    // Set our transmit delay
+    //
+    const auto transmit_ack = wait_for_ack(m_message_assembler,
+                                           m_socket,
+                                           convert<wire::SysTransmitDelay>(config.network_config),
+                                           m_transmit_id++,
+                                           m_current_mtu,
+                                           m_config.receive_timeout);
+
+    if (!transmit_ack || transmit_ack->status != wire::Ack::Status_Ok)
+    {
+        return false;
+    }
+
+    //
     // Update our internal cached image config after we successfully set everything
     //
     const auto ptp_enabled = config.time_config.ptp_enabled;
@@ -752,10 +784,29 @@ std::optional<MultiSenseConfiguration> LegacyChannel::query_configuration(bool h
                                                            m_current_mtu,
                                                            m_config.receive_timeout);
 
+    const auto packet_delay = wait_for_data<wire::SysPacketDelay>(m_message_assembler,
+                                                                  m_socket,
+                                                                  wire::SysGetPacketDelay(),
+                                                                  m_transmit_id++,
+                                                                  m_current_mtu,
+                                                                  m_config.receive_timeout);
 
-    if (camera_config)
+    const auto transmit_delay = wait_for_data<wire::SysTransmitDelay>(m_message_assembler,
+                                                                      m_socket,
+                                                                      wire::SysGetTransmitDelay(),
+                                                                      m_transmit_id++,
+                                                                      m_current_mtu,
+                                                                      m_config.receive_timeout);
+
+    if (camera_config && packet_delay && transmit_delay)
     {
-        return convert(camera_config.value(), aux_config, imu_config, led_config, ptp_enabled);
+        return convert(camera_config.value(),
+                       aux_config,
+                       imu_config,
+                       led_config,
+                       packet_delay.value(),
+                       transmit_delay.value(),
+                       ptp_enabled);
     }
 
     return std::nullopt;

@@ -73,6 +73,8 @@ multisense::MultiSenseConfiguration create_valid_config()
 
     MultiSenseConfiguration::TimeConfiguration time{true};
 
+    MultiSenseConfiguration::NetworkTransmissionConfiguration network{std::chrono::milliseconds{10}, true};
+
     return MultiSenseConfiguration{1920,
                                    1200,
                                    MultiSenseConfiguration::MaxDisparities::D256,
@@ -81,6 +83,7 @@ multisense::MultiSenseConfiguration create_valid_config()
                                    image_config,
                                    aux_config,
                                    time,
+                                   network,
                                    std::nullopt,
                                    std::nullopt};
 }
@@ -150,6 +153,26 @@ crl::multisense::details::wire::AuxCamConfig create_valid_wire_aux_config()
     config.sharpeningLimit = 80;
 
     return config;
+}
+
+crl::multisense::details::wire::SysPacketDelay create_wire_packet_delay()
+{
+    using namespace crl::multisense::details;
+
+    wire::SysPacketDelay delay;
+    delay.enable = true;
+
+    return delay;
+}
+
+crl::multisense::details::wire::SysTransmitDelay create_wire_transmit_delay()
+{
+    using namespace crl::multisense::details;
+
+    wire::SysTransmitDelay delay;
+    delay.delay = 10;
+
+    return delay;
 }
 
 crl::multisense::details::wire::ImuConfig create_valid_imu_wire_config()
@@ -399,6 +422,14 @@ void check_equal(const multisense::MultiSenseConfiguration::LightingConfiguratio
     }
 }
 
+void check_equal(const multisense::MultiSenseConfiguration::NetworkTransmissionConfiguration &config,
+                 const crl::multisense::details::wire::SysPacketDelay &packet_delay,
+                 const crl::multisense::details::wire::SysTransmitDelay &transmit_delay)
+{
+    ASSERT_EQ(config.transmit_delay.count(), transmit_delay.delay);
+    ASSERT_EQ(config.packet_delay_enabled, packet_delay.enable);
+}
+
 TEST(convert, cam_resolution)
 {
     using namespace crl::multisense::details;
@@ -439,8 +470,16 @@ TEST(convert, cam_config)
 {
     const auto wire_config = create_valid_wire_config();
     const auto wire_aux_config = create_valid_wire_aux_config();
+    const auto packet_config = create_wire_packet_delay();
+    const auto transmit_config = create_wire_transmit_delay();
 
-    const auto config = convert(wire_config, wire_aux_config, std::nullopt, std::nullopt, false);
+    const auto config = convert(wire_config,
+                                wire_aux_config,
+                                std::nullopt,
+                                std::nullopt,
+                                packet_config,
+                                transmit_config,
+                                false);
 
     ASSERT_TRUE(static_cast<bool>(config.aux_config));
 
@@ -451,8 +490,16 @@ TEST(convert, cam_config)
 TEST(convert, cam_config_invalid_aux)
 {
     const auto wire_config = create_valid_wire_config();
+    const auto packet_config = create_wire_packet_delay();
+    const auto transmit_config = create_wire_transmit_delay();
 
-    const auto config = convert(wire_config, std::nullopt, std::nullopt, std::nullopt, false);
+    const auto config = convert(wire_config,
+                                std::nullopt,
+                                std::nullopt,
+                                std::nullopt,
+                                packet_config,
+                                transmit_config,
+                                false);
 
     ASSERT_FALSE(static_cast<bool>(config.aux_config));
 
@@ -462,23 +509,41 @@ TEST(convert, cam_config_invalid_aux)
 TEST(convert, cam_config_invalid_imu)
 {
     const auto wire_config = create_valid_wire_config();
+    const auto packet_config = create_wire_packet_delay();
+    const auto transmit_config = create_wire_transmit_delay();
 
-    const auto config = convert(wire_config, std::nullopt, std::nullopt, std::nullopt, false);
+    const auto config = convert(wire_config,
+                                std::nullopt,
+                                std::nullopt,
+                                std::nullopt,
+                                packet_config,
+                                transmit_config,
+                                false);
 
     ASSERT_FALSE(static_cast<bool>(config.imu_config));
 
     check_equal(config, wire_config);
+    check_equal(config.network_config, packet_config, transmit_config);
 }
 
 TEST(convert, cam_config_invalid_led)
 {
     const auto wire_config = create_valid_wire_config();
+    const auto packet_config = create_wire_packet_delay();
+    const auto transmit_config = create_wire_transmit_delay();
 
-    const auto config = convert(wire_config, std::nullopt, std::nullopt, std::nullopt, false);
+    const auto config = convert(wire_config,
+                                std::nullopt,
+                                std::nullopt,
+                                std::nullopt,
+                                packet_config,
+                                transmit_config,
+                                false);
 
     ASSERT_FALSE(static_cast<bool>(config.lighting_config));
 
     check_equal(config, wire_config);
+    check_equal(config.network_config, packet_config, transmit_config);
 }
 
 TEST(convert, cam_config_valid_led_but_no_ligths)
@@ -488,11 +553,21 @@ TEST(convert, cam_config_valid_led_but_no_ligths)
     auto lighting_config = create_valid_lighting_wire_config();
     lighting_config.available = 0;
 
-    const auto config = convert(wire_config, std::nullopt, std::nullopt, std::make_optional(lighting_config), false);
+    const auto packet_config = create_wire_packet_delay();
+    const auto transmit_config = create_wire_transmit_delay();
+
+    const auto config = convert(wire_config,
+                                std::nullopt,
+                                std::nullopt,
+                                std::make_optional(lighting_config),
+                                packet_config,
+                                transmit_config,
+                                false);
 
     ASSERT_FALSE(static_cast<bool>(config.lighting_config));
 
     check_equal(config, wire_config);
+    check_equal(config.network_config, packet_config, transmit_config);
 }
 
 TEST(convert, imu_config_round_trip)
@@ -524,4 +599,26 @@ TEST(convert, lighting_config_round_trip)
 
     check_equal(config, wire_config);
     check_equal(config, convert(config));
+}
+
+TEST(convert, network_config)
+{
+    using namespace crl::multisense::details;
+
+    const auto wire_config = create_valid_wire_config();
+    const auto packet_config = create_wire_packet_delay();
+    const auto transmit_config = create_wire_transmit_delay();
+
+    const auto config = convert(wire_config,
+                                std::nullopt,
+                                std::nullopt,
+                                std::nullopt,
+                                packet_config,
+                                transmit_config,
+                                false);
+
+    check_equal(config.network_config,
+                convert<wire::SysPacketDelay>(config.network_config),
+                convert<wire::SysTransmitDelay>(config.network_config));
+
 }

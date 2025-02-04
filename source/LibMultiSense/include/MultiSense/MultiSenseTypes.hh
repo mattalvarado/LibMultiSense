@@ -595,6 +595,26 @@ struct MultiSenseConfiguration
     };
 
     ///
+    /// @brief Configuration for transmitting packets from the MultiSense to the host
+    ///
+    struct NetworkTransmissionConfiguration
+    {
+        ///
+        /// @brief The transmit delay between when a packet is ready to be sent from the MultiSense
+        ///        and when it's sent over the network. This can be used to avoid collisions between
+        ///        multiple MultiSense cameras connected to the same network. Note this will only work if
+        ///        the MultiSense's clocks are both synchronized with PTP
+        ///
+        std::chrono::milliseconds transmit_delay{0};
+
+        ///
+        /// @brief Add a small delay between the transmission of each packet to hopefully interact
+        ///        better with slower client machines, or more fragile networks
+        ///
+        bool packet_delay_enabled = false;
+    };
+
+    ///
     /// @brief Configuration for the IMU sensor
     ///
     struct ImuConfiguration
@@ -704,6 +724,11 @@ struct MultiSenseConfiguration
     /// @brief Configuration for the MultiSense time-sync options
     ///
     TimeConfiguration time_config;
+
+    ///
+    /// @brief Configuration to control network transmission settings
+    ///
+    NetworkTransmissionConfiguration network_config;
 
     ///
     /// @brief The imu configuration to use for the camera. Will be invalid if sensor does not contain an IMU

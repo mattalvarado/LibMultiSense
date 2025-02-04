@@ -241,6 +241,12 @@ PYBIND11_MODULE(libmultisense, m) {
         .def(py::init<>())
         .def_readwrite("ptp_enabled", &multisense::MultiSenseConfiguration::TimeConfiguration::ptp_enabled);
 
+    // MultiSenseConfiguration::NetworkTransmissionConfiguration
+    py::class_<multisense::MultiSenseConfiguration::NetworkTransmissionConfiguration>(m, "NetworkTransmissionConfiguration")
+        .def(py::init<>())
+        .def_readwrite("transmit_delay", &multisense::MultiSenseConfiguration::NetworkTransmissionConfiguration::transmit_delay)
+        .def_readwrite("packet_delay_enabled", &multisense::MultiSenseConfiguration::NetworkTransmissionConfiguration::packet_delay_enabled);
+
     // MultiSenseConfiguration::ImuConfiguration::OperatingMode
     py::class_<multisense::MultiSenseConfiguration::ImuConfiguration::OperatingMode>(m, "ImuOperatingMode")
         .def(py::init<>())
@@ -278,6 +284,7 @@ PYBIND11_MODULE(libmultisense, m) {
         .def_readwrite("image_config", &multisense::MultiSenseConfiguration::image_config)
         .def_readwrite("aux_config", &multisense::MultiSenseConfiguration::aux_config)
         .def_readwrite("time_config", &multisense::MultiSenseConfiguration::time_config)
+        .def_readwrite("network_config", &multisense::MultiSenseConfiguration::network_config)
         .def_readwrite("imu_config", &multisense::MultiSenseConfiguration::imu_config)
         .def_readwrite("lighting_config", &multisense::MultiSenseConfiguration::lighting_config);
 
@@ -378,6 +385,14 @@ PYBIND11_MODULE(libmultisense, m) {
     py::enum_<multisense::MultiSenseInfo::DeviceInfo::LensType>(m, "LensType")
         .value("UNKNOWN", multisense::MultiSenseInfo::DeviceInfo::LensType::UNKNOWN);
 
+    // MultiSenseInfo::NetworkInfo
+    py::class_<multisense::MultiSenseInfo::NetworkInfo>(m, "NetworkInfo")
+        .def(py::init<>())
+        .def_readwrite("ipv4_address", &multisense::MultiSenseInfo::NetworkInfo::ipv4_address)
+        .def_readwrite("ipv4_gateway", &multisense::MultiSenseInfo::NetworkInfo::ipv4_gateway)
+        .def_readwrite("ipv4_netmask", &multisense::MultiSenseInfo::NetworkInfo::ipv4_netmask);
+
+
     // MultiSenseInfo::DeviceInfo
     py::class_<multisense::MultiSenseInfo::MultiSenseInfo::DeviceInfo>(m, "DeviceInfo")
         .def(py::init<>())
@@ -452,7 +467,8 @@ PYBIND11_MODULE(libmultisense, m) {
         .def_readwrite("device", &multisense::MultiSenseInfo::device)
         .def_readwrite("version", &multisense::MultiSenseInfo::version)
         .def_readwrite("operating_modes", &multisense::MultiSenseInfo::operating_modes)
-        .def_readwrite("imu", &multisense::MultiSenseInfo::imu);
+        .def_readwrite("imu", &multisense::MultiSenseInfo::imu)
+        .def_readwrite("network", &multisense::MultiSenseInfo::network);
 
     // ChannelImplementation
     py::enum_<multisense::Channel::ChannelImplementation>(m, "ChannelImplementation")
