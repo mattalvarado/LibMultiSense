@@ -81,6 +81,7 @@ multisense::MultiSenseConfiguration create_valid_config()
                                    image_config,
                                    aux_config,
                                    time,
+                                   std::nullopt,
                                    std::nullopt};
 }
 
@@ -171,6 +172,27 @@ crl::multisense::details::wire::ImuConfig create_valid_imu_wire_config()
     config.configs[1].flags = 1;
     config.configs[1].rateTableIndex = 6;
     config.configs[1].rangeTableIndex = 3;
+
+    return config;
+}
+
+crl::multisense::details::wire::LedStatus create_valid_lighting_wire_config()
+{
+    using namespace crl::multisense::details;
+
+    wire::LedStatus config;
+
+    config.available = 1 | 1<<1 | 1<<2;
+
+    config.intensity[0] = 255;
+    config.intensity[1] = 128;
+    config.intensity[2] = 1;
+
+    config.flash = 1;
+    config.led_delay_us = 0;
+    config.number_of_pulses = 1;
+    config.invert_pulse = 0;
+    config.rolling_shutter_led = 1;
 
     return config;
 }
@@ -295,6 +317,88 @@ void check_equal(const multisense::MultiSenseConfiguration::ImuConfiguration &co
     }
 }
 
+void check_equal(const multisense::MultiSenseConfiguration::LightingConfiguration &config,
+                 const crl::multisense::details::wire::LedStatus &wire)
+{
+    using namespace multisense;
+
+    ASSERT_FLOAT_EQ(config.intensity, wire.intensity[0] / 255.0f * 100.0f);
+
+    ASSERT_EQ(wire.led_delay_us, 0);
+
+    switch (config.flash)
+    {
+        case MultiSenseConfiguration::LightingConfiguration::FlashMode::NONE:
+        {
+            ASSERT_EQ(wire.flash, 0);
+            ASSERT_EQ(wire.number_of_pulses, 0);
+            ASSERT_EQ(wire.invert_pulse, 0);
+            ASSERT_EQ(wire.rolling_shutter_led, 0);
+            break;
+        }
+        case MultiSenseConfiguration::LightingConfiguration::FlashMode::SYNC_WITH_MAIN_STEREO:
+        {
+            ASSERT_EQ(wire.flash, 1);
+            ASSERT_EQ(wire.number_of_pulses, 1);
+            ASSERT_EQ(wire.invert_pulse, 0);
+            ASSERT_EQ(wire.rolling_shutter_led, 0);
+            break;
+        }
+        case MultiSenseConfiguration::LightingConfiguration::FlashMode::SYNC_WITH_AUX:
+        {
+            ASSERT_EQ(wire.flash, 1);
+            ASSERT_EQ(wire.number_of_pulses, 1);
+            ASSERT_EQ(wire.invert_pulse, 0);
+            ASSERT_EQ(wire.rolling_shutter_led, 1);
+            break;
+        }
+    }
+}
+
+void check_equal(const multisense::MultiSenseConfiguration::LightingConfiguration &config,
+                 const crl::multisense::details::wire::LedSet &wire)
+{
+    using namespace crl::multisense::details;
+    using namespace multisense;
+
+    for (size_t i = 0 ; i < wire::MAX_LIGHTS ; ++i)
+    {
+        ASSERT_FLOAT_EQ(config.intensity, wire.intensity[i] / 255.0f * 100.0f);
+        ASSERT_EQ(wire.mask & 1<<i, 1<<i);
+    }
+
+
+    ASSERT_EQ(wire.led_delay_us, 0);
+
+    switch (config.flash)
+    {
+        case MultiSenseConfiguration::LightingConfiguration::FlashMode::NONE:
+        {
+            ASSERT_EQ(wire.flash, 0);
+            ASSERT_EQ(wire.number_of_pulses, 0);
+            ASSERT_EQ(wire.invert_pulse, 0);
+            ASSERT_EQ(wire.rolling_shutter_led, 0);
+            break;
+        }
+        case MultiSenseConfiguration::LightingConfiguration::FlashMode::SYNC_WITH_MAIN_STEREO:
+        {
+            ASSERT_EQ(wire.flash, 1);
+            ASSERT_EQ(wire.number_of_pulses, 1);
+            ASSERT_EQ(wire.invert_pulse, 0);
+            ASSERT_EQ(wire.rolling_shutter_led, 0);
+            break;
+        }
+        case MultiSenseConfiguration::LightingConfiguration::FlashMode::SYNC_WITH_AUX:
+        {
+            ASSERT_EQ(wire.flash, 1);
+            ASSERT_EQ(wire.number_of_pulses, 1);
+            ASSERT_EQ(wire.invert_pulse, 0);
+            ASSERT_EQ(wire.rolling_shutter_led, 1);
+            break;
+        }
+    }
+}
+
 TEST(convert, cam_resolution)
 {
     using namespace crl::multisense::details;
@@ -336,7 +440,7 @@ TEST(convert, cam_config)
     const auto wire_config = create_valid_wire_config();
     const auto wire_aux_config = create_valid_wire_aux_config();
 
-    const auto config = convert(wire_config, wire_aux_config, std::nullopt, false);
+    const auto config = convert(wire_config, wire_aux_config, std::nullopt, std::nullopt, false);
 
     ASSERT_TRUE(static_cast<bool>(config.aux_config));
 
@@ -348,9 +452,45 @@ TEST(convert, cam_config_invalid_aux)
 {
     const auto wire_config = create_valid_wire_config();
 
-    const auto config = convert(wire_config, std::nullopt, std::nullopt, false);
+    const auto config = convert(wire_config, std::nullopt, std::nullopt, std::nullopt, false);
 
     ASSERT_FALSE(static_cast<bool>(config.aux_config));
+
+    check_equal(config, wire_config);
+}
+
+TEST(convert, cam_config_invalid_imu)
+{
+    const auto wire_config = create_valid_wire_config();
+
+    const auto config = convert(wire_config, std::nullopt, std::nullopt, std::nullopt, false);
+
+    ASSERT_FALSE(static_cast<bool>(config.imu_config));
+
+    check_equal(config, wire_config);
+}
+
+TEST(convert, cam_config_invalid_led)
+{
+    const auto wire_config = create_valid_wire_config();
+
+    const auto config = convert(wire_config, std::nullopt, std::nullopt, std::nullopt, false);
+
+    ASSERT_FALSE(static_cast<bool>(config.lighting_config));
+
+    check_equal(config, wire_config);
+}
+
+TEST(convert, cam_config_valid_led_but_no_ligths)
+{
+    const auto wire_config = create_valid_wire_config();
+
+    auto lighting_config = create_valid_lighting_wire_config();
+    lighting_config.available = 0;
+
+    const auto config = convert(wire_config, std::nullopt, std::nullopt, std::make_optional(lighting_config), false);
+
+    ASSERT_FALSE(static_cast<bool>(config.lighting_config));
 
     check_equal(config, wire_config);
 }
@@ -374,4 +514,14 @@ TEST(convert, imu_config_limit_messages)
     const auto round_trip = convert(convert(wire_config), wire_config.samplesPerMessage - 1);
 
     ASSERT_EQ(round_trip.samplesPerMessage, wire_config.samplesPerMessage - 1);
+}
+
+TEST(convert, lighting_config_round_trip)
+{
+    const auto wire_config = create_valid_lighting_wire_config();
+
+    const auto config = convert(wire_config);
+
+    check_equal(config, wire_config);
+    check_equal(config, convert(config));
 }

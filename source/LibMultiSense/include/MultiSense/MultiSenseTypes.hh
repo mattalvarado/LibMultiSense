@@ -640,6 +640,32 @@ struct MultiSenseConfiguration
     };
 
     ///
+    /// @brief Lighting configuraton for the camera
+    ///
+    struct LightingConfiguration
+    {
+        ///
+        /// @brief Different flash modes for the camera
+        ///
+        enum class FlashMode
+        {
+            NONE,
+            SYNC_WITH_MAIN_STEREO,
+            SYNC_WITH_AUX
+        };
+
+        ///
+        /// @brief Lighting brightness ranging from 0 to 100.0. A value of 0 will turn off the LEDs
+        ///
+        float intensity = 0.0f;
+
+        ///
+        /// @brief Configure flash mode
+        ///
+        FlashMode flash = FlashMode::NONE;
+    };
+
+    ///
     /// @brief The MultiSense operating width
     ///
     uint32_t width = 960;
@@ -682,7 +708,13 @@ struct MultiSenseConfiguration
     ///
     /// @brief The imu configuration to use for the camera. Will be invalid if sensor does not contain an IMU
     ///
-    std::optional<ImuConfiguration> imu_config;
+    std::optional<ImuConfiguration> imu_config = std::nullopt;
+
+    ///
+    /// @brief The lighting configuration for the camera. If invalid, the camera does not support lighting
+    ///        configuration
+    ///
+    std::optional<LightingConfiguration> lighting_config = std::nullopt;
 };
 
 ///

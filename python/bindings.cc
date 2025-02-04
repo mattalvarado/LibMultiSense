@@ -255,6 +255,18 @@ PYBIND11_MODULE(libmultisense, m) {
         .def_readwrite("samples_per_frame", &multisense::MultiSenseConfiguration::ImuConfiguration::samples_per_frame)
         .def_readwrite("modes", &multisense::MultiSenseConfiguration::ImuConfiguration::modes);
 
+    // MultiSenseConfiguration::LightingConfiguration::FlashMode
+    py::enum_<multisense::MultiSenseConfiguration::LightingConfiguration::FlashMode>(m, "FlashMode")
+        .value("NONE", multisense::MultiSenseConfiguration::LightingConfiguration::FlashMode::NONE)
+        .value("SYNC_WITH_MAIN_STEREO", multisense::MultiSenseConfiguration::LightingConfiguration::FlashMode::SYNC_WITH_MAIN_STEREO)
+        .value("SYNC_WITH_AUX", multisense::MultiSenseConfiguration::LightingConfiguration::FlashMode::SYNC_WITH_AUX);
+
+    // MultiSenseConfiguration::LightingConfiguration
+    py::class_<multisense::MultiSenseConfiguration::LightingConfiguration>(m, "LightingConfiguration")
+        .def(py::init<>())
+        .def_readwrite("intensity", &multisense::MultiSenseConfiguration::LightingConfiguration::intensity)
+        .def_readwrite("flash", &multisense::MultiSenseConfiguration::LightingConfiguration::flash);
+
     // MultiSenseConfiguration
     py::class_<multisense::MultiSenseConfiguration>(m, "MultiSenseConfiguration")
         .def(py::init<>())
@@ -266,7 +278,8 @@ PYBIND11_MODULE(libmultisense, m) {
         .def_readwrite("image_config", &multisense::MultiSenseConfiguration::image_config)
         .def_readwrite("aux_config", &multisense::MultiSenseConfiguration::aux_config)
         .def_readwrite("time_config", &multisense::MultiSenseConfiguration::time_config)
-        .def_readwrite("imu_config", &multisense::MultiSenseConfiguration::imu_config);
+        .def_readwrite("imu_config", &multisense::MultiSenseConfiguration::imu_config)
+        .def_readwrite("lighting_config", &multisense::MultiSenseConfiguration::lighting_config);
 
     // MultiSenseStatus::PtpStatus
     py::class_<multisense::MultiSenseStatus::PtpStatus>(m, "PtpStatus")

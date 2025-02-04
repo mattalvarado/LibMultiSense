@@ -57,6 +57,9 @@
 #include <wire/ImuGetConfigMessage.hh>
 #include <wire/ImuGetInfoMessage.hh>
 #include <wire/ImuInfoMessage.hh>
+#include <wire/LedGetStatusMessage.hh>
+#include <wire/LedSetMessage.hh>
+#include <wire/LedStatusMessage.hh>
 #include <wire/PtpStatusRequestMessage.hh>
 #include <wire/PtpStatusResponseMessage.hh>
 #include <wire/StatusRequestMessage.hh>
@@ -420,6 +423,52 @@ bool LegacyChannel::set_configuration(const MultiSenseConfiguration &config)
     }
 
     //
+    // Set imu controls if they are valid
+    //
+    if (config.imu_config)
+    {
+        //
+        // Set the imu controls
+        //
+        const auto imu_ack = wait_for_ack(m_message_assembler,
+                                          m_socket,
+                                          convert(config.imu_config.value(), m_max_batched_imu_messages),
+                                          m_transmit_id++,
+                                          m_current_mtu,
+                                          m_config.receive_timeout);
+        //
+        // Bail early if we failed to set the imu controls
+        //
+        if (!imu_ack || imu_ack->status != wire::Ack::Status_Ok)
+        {
+            return false;
+        }
+    }
+
+    //
+    // Set lighting controls if they are valid
+    //
+    if (config.lighting_config)
+    {
+        //
+        // Set the lighting controls
+        //
+        const auto lighting_ack = wait_for_ack(m_message_assembler,
+                                               m_socket,
+                                               convert(config.lighting_config.value()),
+                                               m_transmit_id++,
+                                               m_current_mtu,
+                                               m_config.receive_timeout);
+        //
+        // Bail early if we failed to set the lighting controls
+        //
+        if (!lighting_ack || lighting_ack->status != wire::Ack::Status_Ok)
+        {
+            return false;
+        }
+    }
+
+    //
     // Enable/disable ptp
     //
     const auto ptp_ack = wait_for_ack(m_message_assembler,
@@ -672,9 +721,19 @@ std::optional<MultiSenseConfiguration> LegacyChannel::query_configuration(bool h
                                                                      m_transmit_id++,
                                                                      m_current_mtu,
                                                                      m_config.receive_timeout): std::nullopt;
+
+
+    const auto led_config = wait_for_data<wire::LedStatus>(m_message_assembler,
+                                                           m_socket,
+                                                           wire::LedGetStatus(),
+                                                           m_transmit_id++,
+                                                           m_current_mtu,
+                                                           m_config.receive_timeout);
+
+
     if (camera_config)
     {
-        return convert(camera_config.value(), aux_config, imu_config, ptp_enabled);
+        return convert(camera_config.value(), aux_config, imu_config, led_config, ptp_enabled);
     }
 
     return std::nullopt;

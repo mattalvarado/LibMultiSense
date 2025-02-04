@@ -48,6 +48,8 @@
 #include <wire/CamGetConfigMessage.hh>
 #include <wire/CamSetResolutionMessage.hh>
 #include <wire/ImuConfigMessage.hh>
+#include <wire/LedStatusMessage.hh>
+#include <wire/LedSetMessage.hh>
 #include <wire/SysSetPtpMessage.hh>
 
 #include "MultiSense/MultiSenseTypes.hh"
@@ -66,6 +68,7 @@ MultiSenseConfiguration::AuxConfiguration convert(const crl::multisense::details
 MultiSenseConfiguration convert(const crl::multisense::details::wire::CamConfig &config,
                                 const std::optional<crl::multisense::details::wire::AuxCamConfig> &aux_config,
                                 const std::optional<crl::multisense::details::wire::ImuConfig> &imu_config,
+                                const std::optional<crl::multisense::details::wire::LedStatus> &led_config,
                                 bool ptp_enabled);
 
 ///
@@ -94,6 +97,16 @@ MultiSenseConfiguration::ImuConfiguration convert(const crl::multisense::details
 ///
 crl::multisense::details::wire::ImuConfig convert(const MultiSenseConfiguration::ImuConfiguration &imu,
                                                   uint32_t max_samples_per_message);
+
+///
+/// @brief Convert a wire lighting config to a API lighting config
+///
+MultiSenseConfiguration::LightingConfiguration convert(const crl::multisense::details::wire::LedStatus &led);
+
+///
+/// @brief Convert a API lighting config to a wire lighting config
+///
+crl::multisense::details::wire::LedSet convert (const MultiSenseConfiguration::LightingConfiguration &led);
 
 }
 }
