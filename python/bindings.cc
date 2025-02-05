@@ -48,6 +48,17 @@ namespace py = pybind11;
 PYBIND11_MODULE(libmultisense, m) {
     m.doc() = "Pybind11 bindings for the LibMultiSense C++ Library";
 
+    // Status
+    py::enum_<multisense::Status>(m, "Status")
+        .value("OK", multisense::Status::OK)
+        .value("TIMEOUT", multisense::Status::TIMEOUT)
+        .value("ERROR", multisense::Status::ERROR)
+        .value("FAILED", multisense::Status::FAILED)
+        .value("UNSUPPORTED", multisense::Status::UNSUPPORTED)
+        .value("UNKNOWN", multisense::Status::UNKNOWN)
+        .value("EXCEPTION", multisense::Status::EXCEPTION)
+        .value("UNINITIALIZED", multisense::Status::UNINITIALIZED);
+
     // DataSource
     py::enum_<multisense::DataSource>(m, "DataSource")
         .value("UNKNOWN", multisense::DataSource::UNKNOWN)

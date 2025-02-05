@@ -131,12 +131,12 @@ public:
     ///        call and a disparity stream in a second call, both streams would be active until stop_streams
     ///        is called for either
     ///
-    bool start_streams(const std::vector<DataSource> &sources) final override;
+    Status start_streams(const std::vector<DataSource> &sources) final override;
 
     ///
     /// @brief Stop a collection of streams
     ///
-    bool stop_streams(const std::vector<DataSource> &sources) final override;
+    Status stop_streams(const std::vector<DataSource> &sources) final override;
 
     ///
     /// @brief Add a image frame callback to get serviced inline with the receipt of a new frame. Only
@@ -157,7 +157,7 @@ public:
     ///
     /// @brief Initialize the connection to the camera
     ///
-    bool connect(const ChannelConfig &config) final override;
+    Status connect(const ChannelConfig &config) final override;
 
     ///
     /// @brief Disconnect from the camera
@@ -192,7 +192,7 @@ public:
     ///
     /// @brief Get set the current MultiSense configuration
     ///
-    bool set_configuration(const MultiSenseConfiguration &config) final override;
+    Status set_configuration(const MultiSenseConfiguration &config) final override;
 
     ///
     /// @brief Get the current stereo calibration. The output calibration will correspond to the full-resolution
@@ -204,7 +204,7 @@ public:
     /// @brief Set the current stereo calibration. The calibration is expected to be or the full-resolution
     ///        operating mode of the camera
     ///
-    bool set_calibration(const StereoCalibration &calibration) final override;
+    Status set_calibration(const StereoCalibration &calibration) final override;
 
     ///
     /// @brief Get the device info associated with the camera
@@ -215,7 +215,7 @@ public:
     /// @brief Set the camera's device info. This setting is protected via a key since invalid values in the
     ///        device info can result in internal camera failures
     ///
-    bool set_device_info(const MultiSenseInfo::DeviceInfo &device_info, const std::string &key) final override;
+    Status set_device_info(const MultiSenseInfo::DeviceInfo &device_info, const std::string &key) final override;
 
     ///
     /// @brief Query the current MultiSense status
@@ -226,19 +226,19 @@ public:
     /// @brief Update the network configuration of the MultiSense. This will require a hardware reboot of the
     ///        MultiSense after it's been succeffully applied
     ///
-    bool set_network_configuration(const MultiSenseInfo::NetworkInfo &config) final override;
+    Status set_network_configuration(const MultiSenseInfo::NetworkInfo &config) final override;
 
 private:
 
     ///
     /// @brief Try and set the MTU
     ///
-    bool set_mtu(uint16_t mtu);
+    Status set_mtu(uint16_t mtu);
 
     ///
     /// @brief Set the MTU. If the MTU is invalid, try and find the best MTU via a basic search
     ///
-    bool set_mtu(const std::optional<uint16_t> &mtu);
+    Status set_mtu(const std::optional<uint16_t> &mtu);
 
     ///
     /// @brief Query the full configuration

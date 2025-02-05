@@ -94,3 +94,18 @@ TEST(convert_sources_round_trip, all)
 {
     ASSERT_EQ(convert_sources(convert_sources(all_sources)), all_sources);
 }
+
+TEST(get_status, status)
+{
+    using namespace crl::multisense::details::wire;
+    using namespace multisense;
+
+    ASSERT_EQ(Status::OK, get_status(Ack::Status_Ok));
+    ASSERT_EQ(Status::TIMEOUT, get_status(Ack::Status_TimedOut));
+    ASSERT_EQ(Status::ERROR, get_status(Ack::Status_Error));
+    ASSERT_EQ(Status::FAILED, get_status(Ack::Status_Failed));
+    ASSERT_EQ(Status::UNSUPPORTED, get_status(Ack::Status_Unsupported));
+    ASSERT_EQ(Status::UNKNOWN, get_status(Ack::Status_Unknown));
+    ASSERT_EQ(Status::EXCEPTION, get_status(Ack::Status_Exception));
+    ASSERT_EQ(Status::UNKNOWN, get_status(100));
+}

@@ -120,7 +120,7 @@ int main(int argc, char** argv)
 
     auto config = channel->get_configuration();
     config.frames_per_second = 30.0;
-    if (!channel->set_configuration(config))
+    if (const auto status = channel->set_configuration(config); status != lms::Status::OK)
     {
         std::cerr << "Cannot set config" << std::endl;
         return 1;
@@ -128,11 +128,11 @@ int main(int argc, char** argv)
 
     channel->add_imu_frame_callback(imu_callback);
 
-    if (!channel->start_streams({lms::DataSource::LEFT_RECTIFIED_RAW,
-                                 //lms::DataSource::LEFT_DISPARITY_RAW}))
-                                 lms::DataSource::IMU}))
+    if (const auto status = channel->start_streams({lms::DataSource::LEFT_RECTIFIED_RAW,
+                                                    //lms::DataSource::LEFT_DISPARITY_RAW}))
+                                                    lms::DataSource::IMU}); status != lms::Status::OK)
     {
-        std::cerr << "Cannot start streams" << std::endl;
+        std::cerr << "Cannot start streams: " << lms::to_string(status) << std::endl;
         return 1;
     }
 

@@ -46,11 +46,8 @@
 
 #include "MultiSense/MultiSenseUtilities.hh"
 
-namespace multisense
-{
-
-namespace
-{
+namespace multisense {
+namespace {
 
 #ifndef HAVE_OPENCV
 bool write_binary_image(const Image &image, const std::filesystem::path &path)
@@ -118,6 +115,25 @@ bool write_binary_image(const Image &image, const std::filesystem::path &path)
 #endif
 
 }
+
+std::string to_string(const Status &status)
+{
+    switch(status)
+    {
+        case Status::OK: {return "OK";}
+        case Status::TIMEOUT: {return "TIMEOUT";}
+        case Status::ERROR: {return "ERROR";}
+        case Status::FAILED: {return "FAILED";}
+        case Status::UNSUPPORTED: {return "UNSUPPORTED";}
+        case Status::UNKNOWN: {return "UNKNOWN";}
+        case Status::EXCEPTION: {return "EXCEPTION";}
+        case Status::UNINITIALIZED: {return "UNINITIALIZED";}
+        default: {return "UNKNOWN";}
+    }
+
+    return "UNKNOWN";
+}
+
 
 #ifdef HAVE_OPENCV
 cv::Mat Image::cv_mat() const

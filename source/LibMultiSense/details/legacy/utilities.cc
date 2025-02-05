@@ -68,6 +68,25 @@ bool is_image_source(const DataSource &source)
     return false;
 }
 
+Status get_status(const crl::multisense::details::wire::Ack::AckStatus &status)
+{
+    using namespace crl::multisense::details::wire;
+
+    switch(status)
+    {
+        case Ack::Status_Ok: {return Status::OK;}
+        case Ack::Status_TimedOut: {return Status::TIMEOUT;}
+        case Ack::Status_Error: {return Status::ERROR;}
+        case Ack::Status_Failed: {return Status::FAILED;}
+        case Ack::Status_Unsupported: {return Status::UNSUPPORTED;}
+        case Ack::Status_Unknown: {return Status::UNKNOWN;}
+        case Ack::Status_Exception: {return Status::EXCEPTION;}
+        default: {return Status::UNKNOWN;}
+    }
+
+    return Status::UNKNOWN;
+}
+
 MultiSenseInfo::Version get_version(const crl::multisense::details::wire::VersionType &version)
 {
     return MultiSenseInfo::Version{static_cast<uint32_t>(version >> 8), static_cast<uint32_t>(version & 0xFF), 0};

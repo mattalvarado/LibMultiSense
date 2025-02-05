@@ -44,6 +44,11 @@ namespace multisense
 {
 
 ///
+/// @brief Convert a status object to a user readable string
+///
+std::string to_string(const Status &status);
+
+///
 /// @brief Write a image to a specific path on disk. The type of serialization is determined by the
 ///        input path
 ///

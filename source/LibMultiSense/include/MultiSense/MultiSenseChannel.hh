@@ -148,13 +148,13 @@ public:
     ///
     /// @brief Start a collection of data sources streaming from the camera.
     ///
-    virtual bool start_streams(const std::vector<DataSource> &sources) = 0;
+    virtual Status start_streams(const std::vector<DataSource> &sources) = 0;
 
     ///
     /// @brief Stop specific data sources from streaming from the camera. An empty
     ///        collection of sources will stop all sources
     ///
-    virtual bool stop_streams(const std::vector<DataSource> &sources) = 0;
+    virtual Status stop_streams(const std::vector<DataSource> &sources) = 0;
 
     ///
     /// @brief Setup user callback that will be invoked whenever a new image frame is received.
@@ -169,7 +169,7 @@ public:
     ///
     /// @brief Initialize the connection to the camera
     ///
-    virtual bool connect(const ChannelConfig &config) = 0;
+    virtual Status connect(const ChannelConfig &config) = 0;
 
     ///
     /// @brief Disconnect from the camera
@@ -204,7 +204,7 @@ public:
     ///
     /// @brief Get set the current MultiSense configuration
     ///
-    virtual bool set_configuration(const MultiSenseConfiguration &config) = 0;
+    virtual Status set_configuration(const MultiSenseConfiguration &config) = 0;
 
     ///
     /// @brief Get the current stereo calibration. The output calibration will correspond to the full-resolution
@@ -216,7 +216,7 @@ public:
     /// @brief Set the current stereo calibration. The calibration is expected to be or the full-resolution
     ///        operating mode of the camera
     ///
-    virtual bool set_calibration(const StereoCalibration &calibration) = 0;
+    virtual Status set_calibration(const StereoCalibration &calibration) = 0;
 
     ///
     /// @brief Get the static information associated with the camera
@@ -227,7 +227,7 @@ public:
     /// @brief Set the camera's device info. This setting is protected via a key since invalid values in the
     ///        device info can result in internal camera failures
     ///
-    virtual bool set_device_info(const MultiSenseInfo::DeviceInfo &device_info, const std::string &key) = 0;
+    virtual Status set_device_info(const MultiSenseInfo::DeviceInfo &device_info, const std::string &key) = 0;
 
     ///
     /// @brief Query the current system status
@@ -238,7 +238,7 @@ public:
     /// @brief Update the network configuration of the MultiSense. This will require a hardware reboot of the
     ///        MultiSense after it's been succeffully applied
     ///
-    virtual bool set_network_configuration(const MultiSenseInfo::NetworkInfo &config) = 0;
+    virtual Status set_network_configuration(const MultiSenseInfo::NetworkInfo &config) = 0;
 };
 
 }

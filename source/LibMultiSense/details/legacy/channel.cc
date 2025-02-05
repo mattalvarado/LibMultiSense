@@ -88,6 +88,8 @@
 #include "details/legacy/status.hh"
 #include "details/legacy/utilities.hh"
 
+#include "MultiSense/MultiSenseUtilities.hh"
+
 namespace multisense {
 namespace legacy {
 
@@ -120,14 +122,14 @@ LegacyChannel::~LegacyChannel()
 }
 
 
-bool LegacyChannel::start_streams(const std::vector<DataSource> &sources)
+Status LegacyChannel::start_streams(const std::vector<DataSource> &sources)
 {
     using namespace crl::multisense::details;
     using namespace std::chrono_literals;
 
     if (!m_connected)
     {
-        return false;
+        return Status::UNINITIALIZED;
     }
 
     wire::StreamControl cmd;
@@ -144,27 +146,27 @@ bool LegacyChannel::start_streams(const std::vector<DataSource> &sources)
         if (ack->status != wire::Ack::Status_Ok)
         {
             CRL_DEBUG("Start streams ack invalid: %i\n", ack->status);
-            return false;
+            return get_status(ack->status);
         }
 
         ///
         /// TODO (malvarado): Handle DataSource::ALL here
         ///
         m_active_streams.insert(std::begin(sources), std::end(sources));
-        return true;
+        return Status::OK;
     }
 
-    return false;
+    return Status::TIMEOUT;
 }
 
-bool LegacyChannel::stop_streams(const std::vector<DataSource> &sources)
+Status LegacyChannel::stop_streams(const std::vector<DataSource> &sources)
 {
     using namespace crl::multisense::details;
     using namespace std::chrono_literals;
 
     if (!m_connected)
     {
-        return false;
+        return Status::UNINITIALIZED;
     }
 
     wire::StreamControl cmd;
@@ -181,7 +183,7 @@ bool LegacyChannel::stop_streams(const std::vector<DataSource> &sources)
         if (ack->status != wire::Ack::Status_Ok)
         {
             CRL_DEBUG("Start streams ack invalid: %i\n", ack->status);
-            return false;
+            return get_status(ack->status);
         }
 
         for (const auto &source : sources)
@@ -189,10 +191,10 @@ bool LegacyChannel::stop_streams(const std::vector<DataSource> &sources)
             m_active_streams.erase(source);
         }
 
-        return true;
+        return Status::OK;
     }
 
-    return false;
+    return Status::TIMEOUT;
 }
 
 void LegacyChannel::add_image_frame_callback(std::function<void(const ImageFrame&)> callback)
@@ -209,14 +211,14 @@ void LegacyChannel::add_imu_frame_callback(std::function<void(const ImuFrame&)> 
     m_user_imu_frame_callback = callback;
 }
 
-bool LegacyChannel::connect(const ChannelConfig &config)
+Status LegacyChannel::connect(const ChannelConfig &config)
 {
     using namespace crl::multisense::details;
 
     if (m_connected)
     {
         CRL_DEBUG("Channel is already connected to the MultiSense\n");
-        return m_connected;
+        return Status::UNINITIALIZED;
     }
 
     std::lock_guard<std::mutex> lock(m_mutex);
@@ -269,9 +271,10 @@ bool LegacyChannel::connect(const ChannelConfig &config)
     //
     // Set the user requested MTU
     //
-    if (!set_mtu(config.mtu))
+    if (const auto status = set_mtu(config.mtu); status != Status::OK)
     {
-        CRL_EXCEPTION("Unable to set MTU");
+        CRL_DEBUG("Unable to set MTU: %s\n", to_string(status).c_str());
+        return status;
     }
 
     //
@@ -295,7 +298,7 @@ bool LegacyChannel::connect(const ChannelConfig &config)
     }
     else
     {
-        CRL_EXCEPTION("Unable to query the camera's device info ");
+        CRL_EXCEPTION("Unable to query the camera's info ");
     }
 
     //
@@ -308,12 +311,12 @@ bool LegacyChannel::connect(const ChannelConfig &config)
     }
     else
     {
-        CRL_EXCEPTION("Unable to query the camera's device info ");
+        CRL_EXCEPTION("Unable to query the camera's configuraton");
     }
 
     m_connected = true;
 
-    return true;
+    return Status::OK;
 }
 
 void LegacyChannel::disconnect()
@@ -360,7 +363,7 @@ MultiSenseConfiguration LegacyChannel::get_configuration()
     return m_multisense_config;
 }
 
-bool LegacyChannel::set_configuration(const MultiSenseConfiguration &config)
+Status LegacyChannel::set_configuration(const MultiSenseConfiguration &config)
 {
     using namespace crl::multisense::details;
 
@@ -381,7 +384,7 @@ bool LegacyChannel::set_configuration(const MultiSenseConfiguration &config)
     //
     if (!res_ack || res_ack->status != wire::Ack::Status_Ok)
     {
-        return false;
+        return get_status(res_ack->status);
     }
 
     //
@@ -399,7 +402,7 @@ bool LegacyChannel::set_configuration(const MultiSenseConfiguration &config)
     //
     if (!cam_ack || cam_ack->status != wire::Ack::Status_Ok)
     {
-        return false;
+        return get_status(cam_ack->status);
     }
 
     //
@@ -421,7 +424,7 @@ bool LegacyChannel::set_configuration(const MultiSenseConfiguration &config)
         //
         if (!aux_ack || aux_ack->status != wire::Ack::Status_Ok)
         {
-            return false;
+            return get_status(aux_ack->status);
         }
     }
 
@@ -444,7 +447,7 @@ bool LegacyChannel::set_configuration(const MultiSenseConfiguration &config)
         //
         if (!imu_ack || imu_ack->status != wire::Ack::Status_Ok)
         {
-            return false;
+            return get_status(imu_ack->status);
         }
     }
 
@@ -467,7 +470,7 @@ bool LegacyChannel::set_configuration(const MultiSenseConfiguration &config)
         //
         if (!lighting_ack || lighting_ack->status != wire::Ack::Status_Ok)
         {
-            return false;
+            return get_status(lighting_ack->status);
         }
     }
 
@@ -486,7 +489,7 @@ bool LegacyChannel::set_configuration(const MultiSenseConfiguration &config)
     //
     if (!ptp_ack || ptp_ack->status != wire::Ack::Status_Ok)
     {
-        return false;
+        return get_status(ptp_ack->status);
     }
 
     //
@@ -501,7 +504,7 @@ bool LegacyChannel::set_configuration(const MultiSenseConfiguration &config)
 
     if (!packet_ack || packet_ack->status != wire::Ack::Status_Ok)
     {
-        return false;
+        return get_status(packet_ack->status);
     }
 
     //
@@ -516,7 +519,7 @@ bool LegacyChannel::set_configuration(const MultiSenseConfiguration &config)
 
     if (!transmit_ack || transmit_ack->status != wire::Ack::Status_Ok)
     {
-        return false;
+        return get_status(transmit_ack->status);
     }
 
     //
@@ -528,10 +531,10 @@ bool LegacyChannel::set_configuration(const MultiSenseConfiguration &config)
                                                     ptp_enabled); new_config)
     {
         m_multisense_config = new_config.value();
-        return true;
+        return Status::OK;
     }
 
-    return false;
+    return Status::ERROR;
 }
 
 StereoCalibration LegacyChannel::get_calibration()
@@ -541,7 +544,7 @@ StereoCalibration LegacyChannel::get_calibration()
     return m_calibration;
 }
 
-bool LegacyChannel::set_calibration(const StereoCalibration &calibration)
+Status LegacyChannel::set_calibration(const StereoCalibration &calibration)
 {
     using namespace crl::multisense::details;
 
@@ -563,13 +566,13 @@ bool LegacyChannel::set_calibration(const StereoCalibration &calibration)
             {
                 std::lock_guard<std::mutex> lock(m_mutex);
                 m_calibration = new_cal.value();
-                return true;
             }
-
         }
+
+        return get_status(ack->status);
     }
 
-    return false;
+    return Status::TIMEOUT;
 }
 
 MultiSenseInfo LegacyChannel::get_info()
@@ -579,7 +582,7 @@ MultiSenseInfo LegacyChannel::get_info()
     return m_info;
 }
 
-bool LegacyChannel::set_device_info(const MultiSenseInfo::DeviceInfo &device_info, const std::string &key)
+Status LegacyChannel::set_device_info(const MultiSenseInfo::DeviceInfo &device_info, const std::string &key)
 {
     using namespace crl::multisense::details;
 
@@ -601,12 +604,13 @@ bool LegacyChannel::set_device_info(const MultiSenseInfo::DeviceInfo &device_inf
             {
                 std::lock_guard<std::mutex> lock(m_mutex);
                 m_info.device = new_device_info.value();
-                return true;
             }
         }
+
+        return get_status(ack->status);
     }
 
-    return false;
+    return Status::TIMEOUT;
 }
 
 std::optional<MultiSenseStatus> LegacyChannel::get_system_status()
@@ -668,7 +672,7 @@ std::optional<MultiSenseStatus> LegacyChannel::get_system_status()
                             std::move(time_status)};
 }
 
-bool LegacyChannel::set_network_configuration(const MultiSenseInfo::NetworkInfo &config)
+Status LegacyChannel::set_network_configuration(const MultiSenseInfo::NetworkInfo &config)
 {
     using namespace crl::multisense::details;
 
@@ -679,16 +683,13 @@ bool LegacyChannel::set_network_configuration(const MultiSenseInfo::NetworkInfo 
                                       m_current_mtu,
                                       m_config.receive_timeout); ack)
     {
-        if (ack->status == wire::Ack::Status_Ok)
-        {
-            return true;
-        }
+        return get_status(ack->status);
     }
 
-    return false;
+    return Status::TIMEOUT;
 }
 
-bool LegacyChannel::set_mtu(uint16_t mtu)
+Status LegacyChannel::set_mtu(uint16_t mtu)
 {
     using namespace crl::multisense::details;
 
@@ -702,7 +703,7 @@ bool LegacyChannel::set_mtu(uint16_t mtu)
         CRL_DEBUG("Testing MTU of %u bytes failed."
                   " Please verify you can ping the MultiSense with a MTU of %u bytes at %s.\n",
                   mtu, mtu, inet_ntoa(m_socket.sensor_address->sin_addr));
-        return false;
+        return Status::ERROR;
     }
 
     if (const auto ack = wait_for_ack(m_message_assembler,
@@ -715,15 +716,15 @@ bool LegacyChannel::set_mtu(uint16_t mtu)
         if (ack->status != wire::Ack::Status_Ok)
         {
             CRL_DEBUG("Unable to set MTU to %u bytes: %i\n", mtu, ack->status);
-            return false;
+            return get_status(ack->status);
         }
     }
 
     m_current_mtu = mtu;
-    return true;
+    return Status::OK;
 }
 
-bool LegacyChannel::set_mtu(const std::optional<uint16_t> &mtu)
+Status LegacyChannel::set_mtu(const std::optional<uint16_t> &mtu)
 {
     using namespace crl::multisense::details;
 
@@ -735,17 +736,17 @@ bool LegacyChannel::set_mtu(const std::optional<uint16_t> &mtu)
     {
         for (const auto &value : MTUS_TO_TEST)
         {
-            if (const auto ret = set_mtu(value); ret)
+            if (const auto status = set_mtu(value); status == Status::OK)
             {
                 CRL_DEBUG("Auto-setting MTU to %u bytes \n", value);
-                return ret;
+                return status;
             }
         }
         CRL_DEBUG("Unable to find a MTU that works with the MultiSense. "
                   "Please verify you can ping the MultiSense at %s\n", inet_ntoa(m_socket.sensor_address->sin_addr));
     }
 
-    return false;
+    return Status::ERROR;
 }
 
 std::optional<MultiSenseConfiguration> LegacyChannel::query_configuration(bool has_aux_camera,
@@ -848,7 +849,7 @@ std::optional<MultiSenseInfo> LegacyChannel::query_info()
                                                               m_config.receive_timeout);
     if (!version)
     {
-        CRL_DEBUG("Unable to query the device info\n");
+        CRL_DEBUG("Unable to query the version info\n");
         return std::nullopt;
     }
 
@@ -861,7 +862,7 @@ std::optional<MultiSenseInfo> LegacyChannel::query_info()
 
     if (!device_modes)
     {
-        CRL_DEBUG("Unable to query the device info\n");
+        CRL_DEBUG("Unable to query the device modes\n");
         return std::nullopt;
     }
 

@@ -39,6 +39,7 @@
 #include <utility/Exception.hh>
 #include <wire/Protocol.hh>
 #include <utility/BufferStream.hh>
+#include <wire/AckMessage.hh>
 #include <wire/ImuDataMessage.hh>
 
 #include "details/legacy/message.hh"
@@ -77,6 +78,14 @@ constexpr crl::multisense::details::wire::SourceType all_sources = {
 ///
 bool is_image_source(const DataSource &source);
 
+///
+/// Convert a wire status to a API Status
+///
+Status get_status(const crl::multisense::details::wire::Ack::AckStatus &status);
+
+///
+/// @brief Convert a wire version to a API Version
+///
 MultiSenseInfo::Version get_version(const crl::multisense::details::wire::VersionType &version);
 
 ///

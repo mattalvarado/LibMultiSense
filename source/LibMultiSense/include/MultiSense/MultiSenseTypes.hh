@@ -53,6 +53,18 @@
 namespace multisense
 {
 
+enum class Status
+{
+    OK,
+    TIMEOUT,
+    ERROR,
+    FAILED,
+    UNSUPPORTED,
+    UNKNOWN,
+    EXCEPTION,
+    UNINITIALIZED
+};
+
 ///
 /// @brief Identifies which camera or data source the image is from
 ///
