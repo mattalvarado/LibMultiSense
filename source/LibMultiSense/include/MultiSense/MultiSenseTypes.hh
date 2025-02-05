@@ -273,7 +273,7 @@ struct ImageFrame
     std::chrono::system_clock::time_point frame_time{};
 
     ///
-    /// @brief The  MultiSeense ptp timestamp associated with the frame
+    /// @brief The MultiSeense ptp timestamp associated with the frame
     ///
     std::chrono::system_clock::time_point ptp_frame_time{};
 };

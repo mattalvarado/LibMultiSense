@@ -325,21 +325,6 @@ private:
     NetworkSocket m_socket;
 
     ///
-    /// @brief Helper object to receive UDP traffic. Internally manages a receive thread
-    ///
-    std::unique_ptr<UdpReceiver> m_udp_receiver = nullptr;
-
-    ///
-    /// @brief A collection of buffers to avoid dynamic allocation for incoming messages
-    ///
-    std::shared_ptr<BufferPool> m_buffer_pool = nullptr;
-
-    ///
-    /// @brief Helper object to assemble raw UDP packets into complete MultiSense wire messages
-    ///
-    MessageAssembler m_message_assembler;
-
-    ///
     /// @brief Monotonically increasing internal id used to uniquely identify requests sent to the camera
     ///
     std::atomic_uint16_t m_transmit_id = 0;
@@ -404,6 +389,23 @@ private:
     ///        sample threshold for dispatch
     ///
     ImuFrame m_current_imu_frame;
+
+    ///
+    /// @brief A collection of buffers to avoid dynamic allocation for incoming messages
+    ///
+    std::shared_ptr<BufferPool> m_buffer_pool = nullptr;
+
+    ///
+    /// @brief Helper object to assemble raw UDP packets into complete MultiSense wire messages
+    ///
+    MessageAssembler m_message_assembler;
+
+    ///
+    /// @brief Helper object to receive UDP traffic. Internally manages a receive thread
+    ///
+    std::unique_ptr<UdpReceiver> m_udp_receiver = nullptr;
+
+
 };
 
 }

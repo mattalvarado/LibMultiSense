@@ -325,12 +325,12 @@ void LegacyChannel::disconnect()
         return;
     }
 
-    std::lock_guard<std::mutex> lock(m_mutex);
-
     //
     // Stop all our streams before disconnecting
     //
     stop_streams({DataSource::ALL});
+
+    std::lock_guard<std::mutex> lock(m_mutex);
 
     m_connected = false;
 
@@ -1132,8 +1132,6 @@ void LegacyChannel::handle_and_dispatch(Image image,
     //
     // Check if our frame is valid, if so dispatch to our callbacks and notify anyone who is waiting on
     // the next frame
-    //
-    // TODO (malvarado): Only use image streams for this test
     //
     if (const auto &frame = m_frame_buffer[frame_id];
             std::all_of(std::begin(m_active_streams),
