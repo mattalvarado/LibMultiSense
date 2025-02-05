@@ -396,16 +396,14 @@ private:
     std::shared_ptr<BufferPool> m_buffer_pool = nullptr;
 
     ///
-    /// @brief Helper object to assemble raw UDP packets into complete MultiSense wire messages
-    ///
-    MessageAssembler m_message_assembler;
-
-    ///
     /// @brief Helper object to receive UDP traffic. Internally manages a receive thread
     ///
     std::unique_ptr<UdpReceiver> m_udp_receiver = nullptr;
 
-
+    ///
+    /// @brief Helper object to assemble raw UDP packets into complete MultiSense wire messages
+    ///
+    MessageAssembler m_message_assembler;
 };
 
 }

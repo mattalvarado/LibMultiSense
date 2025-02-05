@@ -143,7 +143,7 @@ bool LegacyChannel::start_streams(const std::vector<DataSource> &sources)
     {
         if (ack->status != wire::Ack::Status_Ok)
         {
-            CRL_DEBUG("Start streams ack invalid: %i", ack->status);
+            CRL_DEBUG("Start streams ack invalid: %i\n", ack->status);
             return false;
         }
 
@@ -180,7 +180,7 @@ bool LegacyChannel::stop_streams(const std::vector<DataSource> &sources)
     {
         if (ack->status != wire::Ack::Status_Ok)
         {
-            CRL_DEBUG("Start streams ack invalid: %i", ack->status);
+            CRL_DEBUG("Start streams ack invalid: %i\n", ack->status);
             return false;
         }
 
@@ -215,7 +215,7 @@ bool LegacyChannel::connect(const ChannelConfig &config)
 
     if (m_connected)
     {
-        CRL_DEBUG("Channel is already connected to the MultiSense");
+        CRL_DEBUG("Channel is already connected to the MultiSense\n");
         return m_connected;
     }
 
@@ -229,7 +229,7 @@ bool LegacyChannel::connect(const ChannelConfig &config)
     int result = WSAStartup (MAKEWORD (0x02, 0x02), &wsaData);
     if (result != 0)
     {
-        CRL_EXCEPTION("WSAStartup() failed: %d", result);
+        CRL_EXCEPTION("WSAStartup() failed: %d\n", result);
     }
 
 #endif
@@ -263,7 +263,7 @@ bool LegacyChannel::connect(const ChannelConfig &config)
                                                    {
                                                        if (!this->m_message_assembler.process_packet(data))
                                                        {
-                                                           CRL_DEBUG("Processing packet of %li bytes failed", data.size());
+                                                           CRL_DEBUG("Processing packet of %li bytes failed\n", data.size());
                                                        }
                                                    });
     //
@@ -339,7 +339,6 @@ void LegacyChannel::disconnect()
     m_socket = NetworkSocket{};
 
     m_udp_receiver = nullptr;
-
 
     return;
 }
@@ -948,7 +947,7 @@ void LegacyChannel::image_callback(std::shared_ptr<const std::vector<uint8_t>> d
     {
         case 8: {pixel_format = Image::PixelFormat::MONO8; break;}
         case 16: {pixel_format = Image::PixelFormat::MONO16; break;}
-        default: {CRL_DEBUG("Unknown pixel format %d", wire_image.bitsPerPixel);}
+        default: {CRL_DEBUG("Unknown pixel format %d\n", wire_image.bitsPerPixel);}
     }
 
     const auto source = convert_sources(static_cast<uint64_t>(wire_image.sourceExtended) << 32 | wire_image.source);
@@ -1014,7 +1013,7 @@ void LegacyChannel::disparity_callback(std::shared_ptr<const std::vector<uint8_t
     {
         case 8: {pixel_format = Image::PixelFormat::MONO8; break;}
         case 16: {pixel_format = Image::PixelFormat::MONO16; break;}
-        default: {CRL_DEBUG("Unknown pixel format %d", wire::Disparity::API_BITS_PER_PIXEL);}
+        default: {CRL_DEBUG("Unknown pixel format %d\n", wire::Disparity::API_BITS_PER_PIXEL);}
     }
 
     const auto source = DataSource::LEFT_DISPARITY_RAW;
