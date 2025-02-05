@@ -60,13 +60,13 @@ crl::multisense::details::wire::CameraCalData create_valid_wire_cal(float fx, fl
     cal.R[1][1] = 1.0;
     cal.R[2][2] = 1.0;
 
-    cal.D[0] = 1.0;
+    cal.D[0] = -1.0;
     cal.D[1] = 0.1;
-    cal.D[2] = 0.2;
+    cal.D[2] = -0.02;
     cal.D[3] = 2.0;
-    cal.D[5] = 3.0;
+    cal.D[5] = -3.0;
     cal.D[6] = 3.0;
-    cal.D[7] = 3.0;
+    cal.D[7] = -3.0;
 
     cal.P[0][0] = fx;
     cal.P[0][2] = cx;

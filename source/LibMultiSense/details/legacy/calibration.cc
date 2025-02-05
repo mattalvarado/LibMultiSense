@@ -45,7 +45,7 @@ bool is_valid(const crl::multisense::details::wire::CameraCalData &cal)
     // Do a crude check the un-rectified focal length image center and distortion values. If these values
     // are zero, then the cal is invalid
     //
-    if (cal.M[0][0] < 0.1 || cal.M[0][2] < 0.1 || cal.M[1][1] < 0.1 || cal.M[1][2] < 0.1 || cal.D[0] < 1e-10)
+    if (cal.M[0][0] < 0.1 || cal.M[0][2] < 0.1 || cal.M[1][1] < 0.1 || cal.M[1][2] < 0.1 || std::abs(cal.D[0]) < 1e-10)
     {
         return false;
     }
