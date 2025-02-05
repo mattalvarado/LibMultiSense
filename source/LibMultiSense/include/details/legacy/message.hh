@@ -77,7 +77,7 @@ T deserialize(const std::vector<uint8_t>& data)
 ///
 /// @brief Unwrap the wire ID into a full 16 bit sequence ID
 ///
-int64_t unwrap_sequence_id(uint16_t current_wire_id, int32_t previous_wire_id);
+int64_t unwrap_sequence_id(uint16_t current_wire_id, int32_t previous_wire_id, int64_t current_sequence_id);
 
 ///
 /// @brief Validate the Multisense header
@@ -311,6 +311,11 @@ private:
     /// @brief Internal id used to detect internal rollover of the 16 bit wire id
     ///
     int32_t m_previous_wire_id = -1;
+
+    ///
+    /// @brief Internal cache of our last sequence id
+    ///
+    int64_t m_current_sequence_id = 0;
 
     ///
     /// @brief Tracking for the ordering of the small buffers we have allocated. Used to determine

@@ -44,34 +44,41 @@ using namespace multisense::legacy;
 
 TEST(unwrap_sequence_id, null)
 {
-    auto full_sequence_id = unwrap_sequence_id(0, -1);
+    auto full_sequence_id = unwrap_sequence_id(0, -1, 0);
 
     EXPECT_EQ(full_sequence_id, 0);
 
-    full_sequence_id = unwrap_sequence_id(0, 0);
+    full_sequence_id = unwrap_sequence_id(0, 0, 0);
 
     EXPECT_EQ(full_sequence_id, 0);
 }
 
 TEST(unwrap_sequence_id, no_increment)
 {
-    const auto full_sequence_id = unwrap_sequence_id(1, 1);
+    const auto full_sequence_id = unwrap_sequence_id(1, 1, 0);
 
-    EXPECT_EQ(full_sequence_id, 1);
+    EXPECT_EQ(full_sequence_id, 0);
 }
 
 TEST(unwrap_sequence_id, increment)
 {
-    const auto full_sequence_id = unwrap_sequence_id(1, 0);
+    const auto full_sequence_id = unwrap_sequence_id(1, 0, 0);
 
     EXPECT_EQ(full_sequence_id, 1);
 }
 
 TEST(unwrap_sequence_id, rollover)
 {
-    const auto full_sequence_id = unwrap_sequence_id(0, 65535);
+    const auto full_sequence_id = unwrap_sequence_id(0, 65535, 0);
 
-    EXPECT_EQ(full_sequence_id, 65536);
+    EXPECT_EQ(full_sequence_id, 1);
+}
+
+TEST(unwrap_sequence_id, rollover_unique)
+{
+    const auto full_sequence_id = unwrap_sequence_id(0, 65535, 123456);
+
+    EXPECT_EQ(full_sequence_id, 123457);
 }
 
 TEST(header_valid, invalid)

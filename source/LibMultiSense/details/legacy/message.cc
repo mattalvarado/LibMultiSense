@@ -50,9 +50,9 @@ namespace legacy{
 /// @brief Unwrap a 16-bit wire sequence ID into a unique 64-bit local ID
 ///
 ///
-int64_t unwrap_sequence_id(uint16_t current_wire_id, int32_t previous_wire_id)
+int64_t unwrap_sequence_id(uint16_t current_wire_id, int32_t previous_wire_id, int64_t current_sequence_id)
 {
-    int64_t unwrapped_id = previous_wire_id;
+    auto unwrapped_id = current_sequence_id;
 
     //
     // Look for a sequence change
@@ -191,7 +191,8 @@ bool MessageAssembler::process_packet(const std::vector<uint8_t> &raw_data)
     //
     // Create a unique sequence ID based on the wire ID
     //
-    const int64_t full_sequence_id = unwrap_sequence_id(header.sequenceIdentifier, m_previous_wire_id);
+    const int64_t full_sequence_id = unwrap_sequence_id(header.sequenceIdentifier, m_previous_wire_id, m_current_sequence_id);
+    m_current_sequence_id = full_sequence_id;
     m_previous_wire_id = header.sequenceIdentifier;
 
     auto active_message = m_active_messages.find(full_sequence_id);
