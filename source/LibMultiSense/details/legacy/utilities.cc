@@ -102,6 +102,8 @@ std::vector<DataSource> convert_sources(const crl::multisense::details::wire::So
     if (source & wire::SOURCE_COMPRESSED_RECTIFIED_RIGHT) {sources.push_back(DataSource::RIGHT_RECTIFIED_COMPRESSED);}
     if (source & wire::SOURCE_DISPARITY) {sources.push_back(DataSource::LEFT_DISPARITY_RAW);}
     if (source & wire::SOURCE_COMPRESSED_AUX) {sources.push_back(DataSource::AUX_COMPRESSED);}
+    if (source & wire::SOURCE_COMPRESSED_RECTIFIED_AUX) {sources.push_back(DataSource::AUX_RECTIFIED_COMPRESSED);}
+    if (source & wire::SOURCE_LUMA_AUX) {sources.push_back(DataSource::AUX_LUMA_RAW);}
     if (source & wire::SOURCE_LUMA_RECT_AUX) {sources.push_back(DataSource::AUX_LUMA_RECTIFIED_RAW);}
     if (source & wire::SOURCE_CHROMA_AUX) {sources.push_back(DataSource::AUX_CHROMA_RAW);}
     if (source & wire::SOURCE_CHROMA_RECT_AUX) {sources.push_back(DataSource::AUX_CHROMA_RECTIFIED_RAW);}
@@ -132,6 +134,8 @@ crl::multisense::details::wire::SourceType convert_sources(const std::vector<Dat
             case DataSource::LEFT_DISPARITY_RAW: {mask |= wire::SOURCE_DISPARITY; break;}
             case DataSource::LEFT_DISPARITY_COMPRESSED: { CRL_DEBUG("Compressed disparity not supported"); break;}
             case DataSource::AUX_COMPRESSED: {mask |= wire::SOURCE_COMPRESSED_AUX; break;}
+            case DataSource::AUX_RECTIFIED_COMPRESSED: {mask |= wire::SOURCE_COMPRESSED_RECTIFIED_AUX; break;}
+            case DataSource::AUX_LUMA_RAW: {mask |= wire::SOURCE_LUMA_AUX; break;}
             case DataSource::AUX_LUMA_RECTIFIED_RAW: {mask |= wire::SOURCE_LUMA_RECT_AUX; break;}
             case DataSource::AUX_CHROMA_RAW: {mask |= wire::SOURCE_CHROMA_AUX; break;}
             case DataSource::AUX_CHROMA_RECTIFIED_RAW: {mask |= wire::SOURCE_CHROMA_RECT_AUX; break;}

@@ -63,6 +63,8 @@ constexpr crl::multisense::details::wire::SourceType all_sources = {
     crl::multisense::details::wire::SOURCE_COMPRESSED_RECTIFIED_RIGHT |
     crl::multisense::details::wire::SOURCE_DISPARITY |
     crl::multisense::details::wire::SOURCE_COMPRESSED_AUX |
+    crl::multisense::details::wire::SOURCE_COMPRESSED_RECTIFIED_AUX |
+    crl::multisense::details::wire::SOURCE_LUMA_AUX |
     crl::multisense::details::wire::SOURCE_LUMA_RECT_AUX |
     crl::multisense::details::wire::SOURCE_CHROMA_AUX |
     crl::multisense::details::wire::SOURCE_CHROMA_RECT_AUX |
