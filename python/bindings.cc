@@ -116,6 +116,8 @@ PYBIND11_MODULE(libmultisense, m) {
 #if HAVE_OPENCV
         .def_property_readonly("image_data", [](const multisense::Image& image)
         {
+            py::gil_scoped_release release;
+
             //
             // Inspired from https://github.com/carnegierobotics/simple_sfm/blob/28dbcadb6682e002c5206a172f70dd5640ff70b5/python/bindings.cpp#L87
             //
@@ -522,9 +524,61 @@ PYBIND11_MODULE(libmultisense, m) {
         .def("get_system_status", &multisense::Channel::get_system_status, py::call_guard<py::gil_scoped_release>());
 
     // Utilities
-    m.def("write_image", [](const multisense::Image &image, const std::string &path)
-                         {
-                             return multisense::write_image(image, std::filesystem::path{path});
-                         }
-         );
+    py::class_<multisense::Point<void>>(m, "Point")
+        .def(py::init<>())
+        .def_readwrite("x", &multisense::Point<void>::x)
+        .def_readwrite("y", &multisense::Point<void>::y)
+        .def_readwrite("z", &multisense::Point<void>::z);
+
+    py::class_<multisense::Point<uint8_t>>(m, "PointLuma8")
+        .def(py::init<>())
+        .def_readwrite("x", &multisense::Point<uint8_t>::x)
+        .def_readwrite("y", &multisense::Point<uint8_t>::y)
+        .def_readwrite("z", &multisense::Point<uint8_t>::z)
+        .def_readwrite("color", &multisense::Point<uint8_t>::color);
+
+    py::class_<multisense::Point<uint16_t>>(m, "PointLuma16")
+        .def(py::init<>())
+        .def_readwrite("x", &multisense::Point<uint16_t>::x)
+        .def_readwrite("y", &multisense::Point<uint16_t>::y)
+        .def_readwrite("z", &multisense::Point<uint16_t>::z)
+        .def_readwrite("color", &multisense::Point<uint16_t>::color);
+
+    m.def("write_image",
+          [](const multisense::Image &image, const std::string &path)
+          {
+              py::gil_scoped_release release;
+              return multisense::write_image(image, std::filesystem::path{path});
+          }
+    );
+
+    m.def("write_pointcloud_ply",
+          [](const multisense::PointCloud<void> &pointcloud, const std::string &path)
+          {
+              py::gil_scoped_release release;
+              return multisense::write_pointcloud_ply(pointcloud, std::filesystem::path{path});
+          }
+    );
+
+    m.def("create_pointcloud", &multisense::create_pointcloud, py::call_guard<py::gil_scoped_release>());
+
+    m.def("write_pointcloud_ply_luma8",
+          [](const multisense::PointCloud<uint8_t> &pointcloud, const std::string &path)
+          {
+              py::gil_scoped_release release;
+              return multisense::write_pointcloud_ply(pointcloud, std::filesystem::path{path});
+          }
+    );
+
+    m.def("create_pointcloud_luma8", &multisense::create_color_pointcloud<uint8_t>, py::call_guard<py::gil_scoped_release>());
+
+    m.def("write_pointcloud_ply_luma16",
+          [](const multisense::PointCloud<uint16_t> &pointcloud, const std::string &path)
+          {
+              py::gil_scoped_release release;
+              return multisense::write_pointcloud_ply(pointcloud, std::filesystem::path{path});
+          }
+    );
+
+    m.def("create_pointcloud_luma16", &multisense::create_color_pointcloud<uint16_t>, py::call_guard<py::gil_scoped_release>());
 }

@@ -54,7 +54,7 @@ bool write_binary_image(const Image &image, const std::filesystem::path &path)
 {
     std::ofstream output(path, std::ios::binary | std::ios::out);
 
-    if (false == output.good())
+    if (!output.good())
     {
         std::cerr << "Failed to open: " << path << std::endl;
         return false;
@@ -167,6 +167,13 @@ bool write_image(const Image &image, const std::filesystem::path &path)
     throw std::runtime_error("Unsupported path extension: " + extension.string() + ". Try compiling with OpenCV");
 #endif
     return false;
+}
+
+std::optional<PointCloud<void>> create_pointcloud(const ImageFrame &frame,
+                                                  double max_range,
+                                                  const DataSource &disparity_source)
+{
+    return create_color_pointcloud<void>(frame, max_range, DataSource::UNKNOWN, disparity_source);
 }
 
 }

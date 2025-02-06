@@ -36,12 +36,44 @@
 
 #pragma once
 
+#include <array>
 #include <filesystem>
+#include <fstream>
+#include <sstream>
+#include <vector>
 
 #include "MultiSenseTypes.hh"
 
 namespace multisense
 {
+
+///
+/// Make sure our Points and point clouds are packed for applications which might need to handle
+/// the underlying raw data
+///
+#pragma pack(push, 1)
+
+template<typename Color>
+struct Point
+{
+    float x = 0;
+    float y = 0;
+    float z = 0;
+    Color color;
+};
+
+template<>
+struct Point<void>
+{
+    float x = 0;
+    float y = 0;
+    float z = 0;
+};
+
+template<typename Color = void>
+using PointCloud = std::vector<Point<Color>>;
+
+#pragma pack(pop)
 
 ///
 /// @brief Convert a status object to a user readable string
@@ -53,5 +85,205 @@ std::string to_string(const Status &status);
 ///        input path
 ///
 bool write_image(const Image &image, const std::filesystem::path &path);
+
+///
+/// @brief Write a point cloud to a ASCII ply file
+///
+template <typename Color>
+bool write_pointcloud_ply(const PointCloud<Color> &point_cloud, const std::filesystem::path &path)
+{
+    std::stringstream ss;
+
+    ss << "ply\n";
+    ss << "format ascii 1.0\n";
+    ss << "element vertex " << point_cloud.size() << "\n";
+    ss << "property float x\n";
+    ss << "property float y\n";
+    ss << "property float z\n";
+
+    if constexpr (std::is_same_v<Color, uint8_t>)
+    {
+        ss << "property uchar intensity\n";
+    }
+    else if constexpr (std::is_same_v<Color, uint16_t>)
+    {
+        ss << "property ushort intensity\n";
+    }
+    else if constexpr (std::is_same_v<Color, std::array<uint8_t, 3>>)
+    {
+        ss << "property uchar r\n";
+        ss << "property uchar g\n";
+        ss << "property uchar b\n";
+    }
+    else if (!std::is_same_v<Color, void>)
+    {
+        throw std::runtime_error("Unsupported color type");
+    }
+
+    ss << "end_header\n";
+
+    for (const auto &point : point_cloud)
+    {
+        if constexpr (std::is_same_v<Color, std::array<uint8_t, 3>>)
+        {
+            ss << point.x << " " <<
+                  point.y << " " <<
+                  point.z << " " <<
+                  static_cast<uint32_t>(point.color[0]) << " " <<
+                  static_cast<uint32_t>(point.color[1]) << " " <<
+                  static_cast<uint32_t>(point.color[2]) << "\n";
+        }
+        else if constexpr(std::is_same_v<Color, void>)
+        {
+            ss << point.x << " " << point.y << " " << point.z << "\n";
+        }
+        else
+        {
+            ss << point.x << " " << point.y << " " << point.z << " " << static_cast<uint32_t>(point.color) << "\n";
+        }
+    }
+
+    std::ofstream ply(path.c_str());
+    if (!ply.good())
+    {
+        return false;
+    }
+
+    ply << ss.str();
+
+    return true;
+}
+
+///
+/// @brief Create a point cloud from a image frame and a color source.
+///
+template<typename Color>
+std::optional<PointCloud<Color>> create_color_pointcloud(const ImageFrame &frame,
+                                                         double max_range,
+                                                         const DataSource &color_source = DataSource::UNKNOWN,
+                                                         const DataSource &disparity_source = DataSource::LEFT_DISPARITY_RAW)
+{
+    Image placeholder{};
+    std::reference_wrapper<const Image> disparity = std::cref(placeholder);
+    std::reference_wrapper<const Image> color = std::cref(placeholder);
+
+    constexpr size_t color_step = std::is_same_v<Color, void> ? 0 : sizeof(color);
+    double color_disparity_scale = 0.0;
+
+    if constexpr (std::is_same_v<Color, void>)
+    {
+        if (!frame.has_image(disparity_source))
+        {
+            return std::nullopt;
+        }
+
+        disparity = frame.get_image(disparity_source);
+
+        if (disparity.get().format != Image::PixelFormat::MONO16 ||
+            disparity.get().width < 0 ||
+            disparity.get().height < 0)
+        {
+            return std::nullopt;
+        }
+    }
+    else
+    {
+        if (!frame.has_image(color_source) || !frame.has_image(disparity_source))
+        {
+            return std::nullopt;
+        }
+
+        disparity = frame.get_image(disparity_source);
+        color = frame.get_image(color_source);
+
+        if (disparity.get().format != Image::PixelFormat::MONO16 ||
+            color.get().width != disparity.get().width ||
+            color.get().height != disparity.get().height ||
+            disparity.get().width < 0 ||
+            disparity.get().height < 0)
+        {
+            return std::nullopt;
+        }
+
+        const double tx = frame.calibration.right.P[0][3] / frame.calibration.right.P[0][0];
+        const double color_tx = color.get().calibration.P[0][3] / color.get().calibration.P[0][0];
+        color_disparity_scale = color_tx / tx;
+    }
+
+    constexpr double scale = 1.0 / 16.0;
+
+    const double squared_range = max_range * max_range;
+
+    const double fx = disparity.get().calibration.P[0][0];
+    const double fy = disparity.get().calibration.P[1][1];
+    const double cx = disparity.get().calibration.P[0][2];
+    const double cy = disparity.get().calibration.P[1][2];
+    const double tx = frame.calibration.right.P[0][3] / frame.calibration.right.P[0][0];
+    const double cx_prime = frame.calibration.right.P[0][2];
+
+    const double fytx = fy * tx;
+    const double fxtx = fx * tx;
+
+    const double fycxtx = fy * cx * tx;
+    const double fxcytx = fx * cy * tx;
+    const double fxfytx = fx * fy * tx;
+    const double fycxcxprime = fy * (cx - cx_prime);
+
+    PointCloud<Color> output;
+    output.reserve(disparity.get().width * disparity.get().height);
+
+    for (size_t h = 0 ; h < static_cast<size_t>(disparity.get().height) ; ++h)
+    {
+        for (size_t w = 0 ; w < static_cast<size_t>(disparity.get().width) ; ++w)
+        {
+            const size_t index = disparity.get().image_data_offset +
+                                 (h * disparity.get().width * sizeof(uint16_t)) +
+                                 (w * sizeof(uint16_t));
+
+            const double d =
+                static_cast<double>(*reinterpret_cast<const uint16_t*>(disparity.get().raw_data->data() + index)) * scale;
+
+            if (d == 0.0)
+            {
+                continue;
+            }
+
+            const double inversebeta = 1.0 / (-fy * d + fycxcxprime);
+            const double x = ((fytx * w) + (-fycxtx)) * inversebeta;
+            const double y = ((fxtx * h) + (-fxcytx)) * inversebeta;
+            const double z = fxfytx * inversebeta;
+
+            if ((x*x + y*y + z*z) > squared_range)
+            {
+                continue;
+            }
+
+            if constexpr (std::is_same_v<Color, void>)
+            {
+                output.push_back(Point<Color>{static_cast<float>(x), static_cast<float>(y), static_cast<float>(z)});
+            }
+            else
+            {
+                //
+                // Use the approximation that color_pixel_u = disp_u - (tx_color/ tx) * d
+                //
+                const size_t color_index = color.get().image_data_offset +
+                                           (h * color.get().width * color_step) +
+                                           ((w - (color_disparity_scale * d)) * color_step);
+
+                const Color color_pixel = *reinterpret_cast<const Color*>(color.get().raw_data->data() + color_index);
+
+                output.push_back(Point<Color>{static_cast<float>(x), static_cast<float>(y), static_cast<float>(z),
+                                              color_pixel});
+            }
+        }
+    }
+
+    return output;
+}
+
+std::optional<PointCloud<void>> create_pointcloud(const ImageFrame &frame,
+                                                  double max_range,
+                                                  const DataSource &disparity_source = DataSource::LEFT_DISPARITY_RAW);
 
 }

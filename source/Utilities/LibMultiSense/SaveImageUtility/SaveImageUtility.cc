@@ -135,7 +135,7 @@ int main(int argc, char** argv)
     channel->add_image_frame_callback(image_callback);
 
     if (const auto status = channel->start_streams({lms::DataSource::LEFT_RECTIFIED_RAW,
-                                                    //lms::DataSource::LEFT_DISPARITY_RAW}))
+                                                    lms::DataSource::LEFT_DISPARITY_RAW,
                                                     lms::DataSource::IMU}); status != lms::Status::OK)
     {
         std::cerr << "Cannot start streams: " << lms::to_string(status) << std::endl;
@@ -146,11 +146,17 @@ int main(int argc, char** argv)
     {
         if (const auto image_frame = channel->get_next_image_frame(); image_frame)
         {
-            for (const auto &[source, image] : image_frame->images)
+            const auto point_cloud = lms::create_color_pointcloud<uint8_t>(image_frame.value(), 20.0, lms::DataSource::LEFT_RECTIFIED_RAW);
+
+            if (point_cloud)
             {
-                std::cout << "frame " << image_frame->frame_id << " " << static_cast<int>(source) << std::endl;
-                //write_image(image, std::to_string(image_frame->frame_id) + "_" + std::to_string(static_cast<int>(source)) + ".pgm");
+                write_pointcloud_ply(point_cloud.value(), std::to_string(image_frame->frame_id) + ".ply");
             }
+            //for (const auto &[source, image] : image_frame->images)
+            //{
+            //    std::cout << "frame " << image_frame->frame_id << " " << static_cast<int>(source) << std::endl;
+            //    //write_image(image, std::to_string(image_frame->frame_id) + "_" + std::to_string(static_cast<int>(source)) + ".pgm");
+            //}
         }
 
         if (const auto status = channel->get_system_status())
