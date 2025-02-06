@@ -506,19 +506,20 @@ PYBIND11_MODULE(libmultisense, m) {
     // Channel
     py::class_<multisense::Channel, std::unique_ptr<multisense::Channel>>(m, "Channel")
         .def_static("create", &multisense::Channel::create)
-        .def("start_streams", &multisense::Channel::start_streams)
-        .def("stop_streams", &multisense::Channel::stop_streams)
-        .def("add_image_frame_callback", &multisense::Channel::add_image_frame_callback)
+        .def("start_streams", &multisense::Channel::start_streams, py::call_guard<py::gil_scoped_release>())
+        .def("stop_streams", &multisense::Channel::stop_streams, py::call_guard<py::gil_scoped_release>())
+        .def("add_image_frame_callback", &multisense::Channel::add_image_frame_callback, py::call_guard<py::gil_scoped_acquire>())
+        .def("add_imu_frame_callback", &multisense::Channel::add_imu_frame_callback, py::call_guard<py::gil_scoped_acquire>())
         .def("connect", &multisense::Channel::connect)
         .def("disconnect", &multisense::Channel::disconnect)
-        .def("get_next_image_frame", &multisense::Channel::get_next_image_frame)
-        .def("get_configuration", &multisense::Channel::get_configuration)
-        .def("set_configuration", &multisense::Channel::set_configuration)
-        .def("get_calibration", &multisense::Channel::get_calibration)
-        .def("set_calibration", &multisense::Channel::set_calibration)
-        .def("get_info", &multisense::Channel::get_info)
-        .def("set_device_info", &multisense::Channel::set_device_info)
-        .def("get_system_status", &multisense::Channel::get_system_status);
+        .def("get_next_image_frame", &multisense::Channel::get_next_image_frame, py::call_guard<py::gil_scoped_release>())
+        .def("get_configuration", &multisense::Channel::get_configuration, py::call_guard<py::gil_scoped_release>())
+        .def("set_configuration", &multisense::Channel::set_configuration, py::call_guard<py::gil_scoped_release>())
+        .def("get_calibration", &multisense::Channel::get_calibration, py::call_guard<py::gil_scoped_release>())
+        .def("set_calibration", &multisense::Channel::set_calibration, py::call_guard<py::gil_scoped_release>())
+        .def("get_info", &multisense::Channel::get_info, py::call_guard<py::gil_scoped_release>())
+        .def("set_device_info", &multisense::Channel::set_device_info, py::call_guard<py::gil_scoped_release>())
+        .def("get_system_status", &multisense::Channel::get_system_status, py::call_guard<py::gil_scoped_release>());
 
     // Utilities
     m.def("write_image", [](const multisense::Image &image, const std::string &path)

@@ -617,7 +617,6 @@ std::optional<MultiSenseStatus> LegacyChannel::get_system_status()
 {
     using namespace crl::multisense::details;
 
-    std::lock_guard<std::mutex> lock(m_mutex);
     //
     // Query the main status info, and time when we send the ack, and when we receive the response
     //
@@ -1023,6 +1022,7 @@ void LegacyChannel::disparity_callback(std::shared_ptr<const std::vector<uint8_t
         static_cast<size_t>(((static_cast<double>(wire::Disparity::API_BITS_PER_PIXEL) / 8.0) *
                             wire_image.width *
                             wire_image.height));
+
     //
     // Copy our calibration and device info locally to make this thread safe
     //
@@ -1053,6 +1053,7 @@ void LegacyChannel::disparity_callback(std::shared_ptr<const std::vector<uint8_t
                         scale_calibration(cal, cal_x_scale, cal_y_scale),
                         capture_time,
                         ptp_capture_time);
+
 }
 
 void LegacyChannel::imu_callback(std::shared_ptr<const std::vector<uint8_t>> data)
@@ -1153,6 +1154,7 @@ void LegacyChannel::handle_and_dispatch(Image image,
                 m_user_image_frame_callback(frame);
             }
         }
+
 
         //
         // Remove our image frame from our frame buffer and the associated image metadata since we are

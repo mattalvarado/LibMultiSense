@@ -65,6 +65,11 @@ void imu_callback(const lms::ImuFrame &frame)
     std::cout << "imu callback " << frame.samples.size() << std::endl;
 }
 
+void image_callback(const lms::ImageFrame &frame)
+{
+    std::cout << "image callback " << frame.frame_id << std::endl;
+}
+
 void usage(const char *name)
 {
     std::cerr << "USAGE: " << name << " [<options>]" << std::endl;
@@ -127,6 +132,7 @@ int main(int argc, char** argv)
     }
 
     channel->add_imu_frame_callback(imu_callback);
+    channel->add_image_frame_callback(image_callback);
 
     if (const auto status = channel->start_streams({lms::DataSource::LEFT_RECTIFIED_RAW,
                                                     //lms::DataSource::LEFT_DISPARITY_RAW}))
