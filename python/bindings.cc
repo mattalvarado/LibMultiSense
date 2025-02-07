@@ -110,7 +110,8 @@ PYBIND11_MODULE(libmultisense, m) {
         .value("UNKNOWN", multisense::Image::PixelFormat::UNKNOWN)
         .value("MONO8", multisense::Image::PixelFormat::MONO8)
         .value("RGB8", multisense::Image::PixelFormat::RGB8)
-        .value("MONO16", multisense::Image::PixelFormat::MONO16);
+        .value("MONO16", multisense::Image::PixelFormat::MONO16)
+        .value("FLOAT32", multisense::Image::PixelFormat::FLOAT32);
 
     // Image
     py::class_<multisense::Image>(m, "Image")
@@ -149,6 +150,13 @@ PYBIND11_MODULE(libmultisense, m) {
                     format = py::format_descriptor<uint8_t>::format();
                     shape.push_back(3);
                     strides = {sizeof(uint8_t) * image.width, sizeof(uint8_t), sizeof(uint8_t)};
+                    break;
+                }
+                case multisense::Image::PixelFormat::FLOAT32:
+                {
+                    element_size = sizeof(float);
+                    format = py::format_descriptor<float>::format();
+                    strides = {sizeof(float) * image.width, sizeof(float)};
                     break;
                 }
                 default: {throw std::runtime_error("Unknown pixel format");}
@@ -672,4 +680,6 @@ PYBIND11_MODULE(libmultisense, m) {
     m.def("create_gray8_pointcloud", &multisense::create_color_pointcloud<uint8_t>, py::call_guard<py::gil_scoped_release>());
 
     m.def("create_gray16_pointcloud", &multisense::create_color_pointcloud<uint16_t>, py::call_guard<py::gil_scoped_release>());
+
+    m.def("create_depth_image", &multisense::create_depth_image, py::call_guard<py::gil_scoped_release>());
 }

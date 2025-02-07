@@ -90,72 +90,15 @@ std::string to_string(const Status &status);
 bool write_image(const Image &image, const std::filesystem::path &path);
 
 ///
-/// @brief Write a point cloud to a ASCII ply file
+/// @brief Create a depth image from a image frame
 ///
-template <typename Color>
-bool write_pointcloud_ply(const PointCloud<Color> &point_cloud, const std::filesystem::path &path)
-{
-    std::stringstream ss;
-
-    ss << "ply\n";
-    ss << "format ascii 1.0\n";
-    ss << "element vertex " << point_cloud.cloud.size() << "\n";
-    ss << "property float x\n";
-    ss << "property float y\n";
-    ss << "property float z\n";
-
-    if constexpr (std::is_same_v<Color, uint8_t>)
-    {
-        ss << "property uchar intensity\n";
-    }
-    else if constexpr (std::is_same_v<Color, uint16_t>)
-    {
-        ss << "property ushort intensity\n";
-    }
-    else if constexpr (std::is_same_v<Color, std::array<uint8_t, 3>>)
-    {
-        ss << "property uchar r\n";
-        ss << "property uchar g\n";
-        ss << "property uchar b\n";
-    }
-    else if (!std::is_same_v<Color, void>)
-    {
-        throw std::runtime_error("Unsupported color type");
-    }
-
-    ss << "end_header\n";
-
-    for (const auto &point : point_cloud.cloud)
-    {
-        if constexpr (std::is_same_v<Color, std::array<uint8_t, 3>>)
-        {
-            ss << point.x << " " <<
-                  point.y << " " <<
-                  point.z << " " <<
-                  static_cast<uint32_t>(point.color[0]) << " " <<
-                  static_cast<uint32_t>(point.color[1]) << " " <<
-                  static_cast<uint32_t>(point.color[2]) << "\n";
-        }
-        else if constexpr(std::is_same_v<Color, void>)
-        {
-            ss << point.x << " " << point.y << " " << point.z << "\n";
-        }
-        else
-        {
-            ss << point.x << " " << point.y << " " << point.z << " " << static_cast<uint32_t>(point.color) << "\n";
-        }
-    }
-
-    std::ofstream ply(path.c_str());
-    if (!ply.good())
-    {
-        return false;
-    }
-
-    ply << ss.str();
-
-    return true;
-}
+/// @param depth_format Supported formats include MONO16 and FLOAT32. Note MONO16 will be quantized to millimeters)
+/// @param invalid_value The value to set invalid depth measurements to. (i.e. points where disparity = 0)
+///
+std::optional<Image> create_depth_image(const ImageFrame &frame,
+                                        const Image::PixelFormat &depth_format,
+                                        const DataSource &disparity_source = DataSource::LEFT_DISPARITY_RAW,
+                                        int32_t invalid_value = 65535);
 
 ///
 /// @brief Create a point cloud from a image frame and a color source.
@@ -288,5 +231,73 @@ std::optional<PointCloud<Color>> create_color_pointcloud(const ImageFrame &frame
 std::optional<PointCloud<void>> create_pointcloud(const ImageFrame &frame,
                                                   double max_range,
                                                   const DataSource &disparity_source = DataSource::LEFT_DISPARITY_RAW);
+
+///
+/// @brief Write a point cloud to a ASCII ply file
+///
+template <typename Color>
+bool write_pointcloud_ply(const PointCloud<Color> &point_cloud, const std::filesystem::path &path)
+{
+    std::stringstream ss;
+
+    ss << "ply\n";
+    ss << "format ascii 1.0\n";
+    ss << "element vertex " << point_cloud.cloud.size() << "\n";
+    ss << "property float x\n";
+    ss << "property float y\n";
+    ss << "property float z\n";
+
+    if constexpr (std::is_same_v<Color, uint8_t>)
+    {
+        ss << "property uchar intensity\n";
+    }
+    else if constexpr (std::is_same_v<Color, uint16_t>)
+    {
+        ss << "property ushort intensity\n";
+    }
+    else if constexpr (std::is_same_v<Color, std::array<uint8_t, 3>>)
+    {
+        ss << "property uchar r\n";
+        ss << "property uchar g\n";
+        ss << "property uchar b\n";
+    }
+    else if (!std::is_same_v<Color, void>)
+    {
+        throw std::runtime_error("Unsupported color type");
+    }
+
+    ss << "end_header\n";
+
+    for (const auto &point : point_cloud.cloud)
+    {
+        if constexpr (std::is_same_v<Color, std::array<uint8_t, 3>>)
+        {
+            ss << point.x << " " <<
+                  point.y << " " <<
+                  point.z << " " <<
+                  static_cast<uint32_t>(point.color[0]) << " " <<
+                  static_cast<uint32_t>(point.color[1]) << " " <<
+                  static_cast<uint32_t>(point.color[2]) << "\n";
+        }
+        else if constexpr(std::is_same_v<Color, void>)
+        {
+            ss << point.x << " " << point.y << " " << point.z << "\n";
+        }
+        else
+        {
+            ss << point.x << " " << point.y << " " << point.z << " " << static_cast<uint32_t>(point.color) << "\n";
+        }
+    }
+
+    std::ofstream ply(path.c_str());
+    if (!ply.good())
+    {
+        return false;
+    }
+
+    ply << ss.str();
+
+    return true;
+}
 
 }

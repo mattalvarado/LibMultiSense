@@ -144,6 +144,7 @@ cv::Mat Image::cv_mat() const
         case Image::PixelFormat::MONO8: {cv_type = CV_8UC1; break;}
         case Image::PixelFormat::RGB8: {cv_type = CV_8UC3; break;}
         case Image::PixelFormat::MONO16: {cv_type = CV_16UC1; break;}
+        case Image::PixelFormat::FLOAT32: {cv_type = CV_32FC1; break;}
         default: {throw std::runtime_error("invalid pixel format");}
     }
 
@@ -167,6 +168,105 @@ bool write_image(const Image &image, const std::filesystem::path &path)
     throw std::runtime_error("Unsupported path extension: " + extension.string() + ". Try compiling with OpenCV");
 #endif
     return false;
+}
+
+std::optional<Image> create_depth_image(const ImageFrame &frame,
+                                        const Image::PixelFormat &depth_format,
+                                        const DataSource &disparity_source,
+                                        int32_t invalid_value)
+{
+    if (!frame.has_image(disparity_source))
+    {
+        return std::nullopt;
+    }
+
+    const auto disparity = frame.get_image(disparity_source);
+
+    if (disparity.format != Image::PixelFormat::MONO16 ||
+        disparity.width < 0 ||
+        disparity.height < 0)
+    {
+        return std::nullopt;
+    }
+
+    const double fx = disparity.calibration.P[0][0];
+    const double tx = frame.calibration.right.P[0][3] / frame.calibration.right.P[0][0];
+
+    size_t bytes_per_pixel = 0;
+    switch (depth_format)
+    {
+        case Image::PixelFormat::MONO16:
+        {
+            bytes_per_pixel = sizeof(uint16_t);
+            break;
+        }
+        case Image::PixelFormat::FLOAT32:
+        {
+            bytes_per_pixel = sizeof(float);
+            break;
+        }
+        default:
+        {
+            std::cerr << "Unsupported depth pixel format" << std::endl;
+            return std::nullopt;
+        }
+    }
+
+    auto data = std::make_shared<std::vector<uint8_t>>(disparity.width * disparity.height * bytes_per_pixel, 0);
+
+    //
+    // MONO16 disparity images are quantized to 1/16th of a pixel
+    //
+    constexpr double scale = 1.0 / 16.0;
+
+    for (size_t i = 0 ; i < static_cast<size_t>(disparity.width * disparity.height) ; ++i)
+    {
+        const size_t index = disparity.image_data_offset + (i * sizeof(uint16_t));
+
+        const double d =
+            static_cast<double>(*reinterpret_cast<const uint16_t*>(disparity.raw_data->data() + index)) * scale;
+
+        switch (depth_format)
+        {
+            case Image::PixelFormat::MONO16:
+            {
+                //
+                // Quantize to millimeters
+                //
+                const uint16_t depth = (d == 0.0) ? static_cast<uint16_t>(invalid_value) :
+                                                    static_cast<uint16_t>(1000 * fx * -tx / d);
+
+                auto data_pointer = reinterpret_cast<uint16_t*>(data->data() + (sizeof(uint16_t) * i));
+                *data_pointer = depth;
+                continue;
+            }
+            case Image::PixelFormat::FLOAT32:
+            {
+                const float depth = (d == 0.0) ? static_cast<float>(invalid_value) :
+                                                 static_cast<float>(fx * -tx / d);
+
+                auto data_pointer = reinterpret_cast<float*>(data->data() + (sizeof(float) * i));
+                *data_pointer = depth;
+                continue;
+            }
+            default:
+            {
+                std::cerr << "Unsupported depth pixel format" << std::endl;
+                return std::nullopt;
+            }
+        }
+    }
+
+    return Image{data,
+                 0,
+                 data->size(),
+                 depth_format,
+                 disparity.width,
+                 disparity.height,
+                 disparity.camera_timestamp,
+                 disparity.ptp_timestamp,
+                 disparity.source,
+                 disparity.calibration};
 }
 
 std::optional<PointCloud<void>> create_pointcloud(const ImageFrame &frame,

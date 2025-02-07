@@ -152,6 +152,12 @@ int main(int argc, char** argv)
             {
                 write_pointcloud_ply(point_cloud.value(), std::to_string(image_frame->frame_id) + ".ply");
             }
+
+            const auto depth_image = lms::create_depth_image(image_frame.value(), lms::Image::PixelFormat::FLOAT32);
+            if (depth_image)
+            {
+                write_image(depth_image.value(), std::to_string(image_frame->frame_id) + "_depth.tiff");
+            }
             //for (const auto &[source, image] : image_frame->images)
             //{
             //    std::cout << "frame " << image_frame->frame_id << " " << static_cast<int>(source) << std::endl;

@@ -163,7 +163,8 @@ struct Image
         UNKNOWN,
         MONO8,
         RGB8,
-        MONO16
+        MONO16,
+        FLOAT32
     };
 
     ///
