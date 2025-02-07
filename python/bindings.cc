@@ -118,8 +118,6 @@ PYBIND11_MODULE(libmultisense, m) {
         .def(py::init<>())
         .def_property_readonly("image_data", [](const multisense::Image& image)
         {
-            py::gil_scoped_release release;
-
             //
             // Inspired from https://github.com/carnegierobotics/simple_sfm/blob/28dbcadb6682e002c5206a172f70dd5640ff70b5/python/bindings.cpp#L87
             //
