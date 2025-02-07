@@ -1154,6 +1154,14 @@ struct MultiSenseInfo
         uint32_t patch = 0;
 
         ///
+        /// @brief Convert a Version info to string for convenience
+        ///
+        std::string to_string() const
+        {
+            return std::to_string(major) + "." + std::to_string(minor) + "." + std::to_string(patch);
+        }
+
+        ///
         /// @brief Convenience operator for comparing versions
         ///
         bool operator<(const Version& other) const

@@ -46,8 +46,10 @@
 #include <arpa/inet.h> // htons
 #endif
 
+#include <chrono>
 #include <csignal>
 #include <iostream>
+#include <thread>
 
 #include <MultiSense/MultiSenseChannel.hh>
 #include <MultiSense/MultiSenseUtilities.hh>
@@ -60,24 +62,12 @@ namespace
 
 volatile bool done = false;
 
-void imu_callback(const lms::ImuFrame &frame)
-{
-    std::cout << "imu callback " << frame.samples.size() << std::endl;
-}
-
-void image_callback(const lms::ImageFrame &frame)
-{
-    std::cout << "image callback " << frame.frame_id << std::endl;
-}
-
 void usage(const char *name)
 {
     std::cerr << "USAGE: " << name << " [<options>]" << std::endl;
     std::cerr << "Where <options> are:" << std::endl;
     std::cerr << "\t-a <current_address>    : CURRENT IPV4 address (default=10.66.171.21)" << std::endl;
     std::cerr << "\t-m <mtu>                : MTU to set the camera to (default=1500)" << std::endl;
-    std::cerr << "\t-r <head_id>    : remote head ID (default=0)" << std::endl;
-
     exit(1);
 }
 
@@ -100,6 +90,7 @@ void signal_handler(int sig)
 
 int main(int argc, char** argv)
 {
+    using namespace std::chrono_literals;
 
 #if WIN32
     SetConsoleCtrlHandler (signal_handler, TRUE);
@@ -121,8 +112,27 @@ int main(int argc, char** argv)
         }
     }
 
-    const auto channel = lms::Channel::create(lms::Channel::ChannelConfig{ip_address, mtu, std::chrono::milliseconds{500}});
+    const auto channel = lms::Channel::create(lms::Channel::ChannelConfig{ip_address, mtu});
+    if (!channel)
+    {
+        std::cerr << "Failed to create channel";
+    }
 
+    //
+    // Query Static info from the camera
+    //
+    auto info = channel->get_info();
+
+	std::cout << "Firmware build date :  " << info.version.firmware_build_date << std::endl;
+	std::cout << "Firmware version    :  " << info.version.firmware_version.to_string() << std::endl;
+	std::cout << "Hardware version    :  0x" << std::hex << info.version.hardware_version << std::endl;
+	std::cout << "Hardware magic      :  0x" << std::hex << info.version.hardware_magic << std::endl;
+	std::cout << "FPGA DNA            :  0x" << std::hex << info.version.fpga_dna << std::endl;
+	std::cout << std::dec;
+
+    //
+    // QuerySet dynamic config from the camera
+    //
     auto config = channel->get_configuration();
     config.frames_per_second = 30.0;
     if (const auto status = channel->set_configuration(config); status != lms::Status::OK)
@@ -131,48 +141,56 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    channel->add_imu_frame_callback(imu_callback);
-    channel->add_image_frame_callback(image_callback);
-
-    if (const auto status = channel->start_streams({lms::DataSource::LEFT_RECTIFIED_RAW,
-                                                    lms::DataSource::LEFT_DISPARITY_RAW,
-                                                    lms::DataSource::IMU}); status != lms::Status::OK)
+    //
+    // Start a single image stream
+    //
+    if (const auto status = channel->start_streams({lms::DataSource::LEFT_RECTIFIED_RAW}); status != lms::Status::OK)
     {
         std::cerr << "Cannot start streams: " << lms::to_string(status) << std::endl;
         return 1;
     }
 
+    //
+    // Only save the first image
+    //
+    bool saved_image = false;
+
     while(!done)
     {
-        if (const auto image_frame = channel->get_next_image_frame(); image_frame)
+        if (!saved_image)
         {
-            const auto point_cloud = lms::create_color_pointcloud<uint8_t>(image_frame.value(), 20.0, lms::DataSource::LEFT_RECTIFIED_RAW);
-
-            if (point_cloud)
+            if (const auto image_frame = channel->get_next_image_frame(); image_frame)
             {
-                write_pointcloud_ply(point_cloud.value(), std::to_string(image_frame->frame_id) + ".ply");
+                for (const auto &[source, image]: image_frame->images)
+                {
+                    const auto path = std::to_string(image_frame->frame_id) +  "_" +
+                                      std::to_string(static_cast<int>(source)) + ".pgm";
+                    lms::write_image(image, path);
+                    saved_image = true;
+                }
             }
-
-            const auto depth_image = lms::create_depth_image(image_frame.value(), lms::Image::PixelFormat::FLOAT32);
-            if (depth_image)
-            {
-                write_image(depth_image.value(), std::to_string(image_frame->frame_id) + "_depth.tiff");
-            }
-            //for (const auto &[source, image] : image_frame->images)
-            //{
-            //    std::cout << "frame " << image_frame->frame_id << " " << static_cast<int>(source) << std::endl;
-            //    //write_image(image, std::to_string(image_frame->frame_id) + "_" + std::to_string(static_cast<int>(source)) + ".pgm");
-            //}
         }
 
-        if (const auto status = channel->get_system_status())
+        if (const auto status = channel->get_system_status(); status)
         {
-            std::cout << status->system_ok << " " <<
-                         status->client_network.received_messages << " " <<
-                         status->client_network.dropped_messages << " " <<
-                         status->client_network.invalid_packets << std::endl;
+            std::cout << "Camera Time(ns): " << status->time.camera_time.count() << ", " <<
+                         "System Ok: " << status->system_ok << ", " <<
+                         "FPGA Temp (C): " << status->temperature.fpga_temperature_C << ", " <<
+                         "Left Imager Temp (C): " << status->temperature.left_imager_temperature_C << ", " <<
+                         "Right Imager Temp (C): " << status->temperature.right_imager_temperature_C << ", " <<
+                         "Input Voltage (V): " << status->power.input_voltage << ", " <<
+                         "Input Current (A): " << status->power.input_current << ", " <<
+                         "FPGA Power (W): " << status->power.fpga_power << std::endl;
         }
+        else
+        {
+            std::cerr << "Failed to query sensor status" << std::endl;
+        }
+
+        std::this_thread::sleep_for(1s);
     }
+
+    channel->stop_streams({lms::DataSource::ALL});
 
     return 0;
 }
