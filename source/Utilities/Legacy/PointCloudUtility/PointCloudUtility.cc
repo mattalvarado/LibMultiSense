@@ -58,7 +58,7 @@
 #include <string>
 
 #include <Utilities/portability/getopt/getopt.h>
-#include <Utilities/shared/ChannelUtilities.hh>
+#include <ChannelUtilities.hh>
 
 #include <MultiSense/details/utility/Portability.hh>
 #include <MultiSense/MultiSenseChannel.hh>

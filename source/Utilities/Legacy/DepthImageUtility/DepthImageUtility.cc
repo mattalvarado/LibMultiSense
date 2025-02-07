@@ -62,8 +62,8 @@
 #include <string>
 
 #include <Utilities/portability/getopt/getopt.h>
-#include <Utilities/shared/ChannelUtilities.hh>
-#include <Utilities/shared/Io.hh>
+#include <ChannelUtilities.hh>
+#include <Io.hh>
 
 using namespace crl::multisense;
 

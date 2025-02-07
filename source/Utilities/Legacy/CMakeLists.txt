@@ -7,6 +7,7 @@
 #
 
 include_directories (
+    shared
     ${BASE_DIRECTORY}${SOURCE_DIRECTORY}/source
 )
 
