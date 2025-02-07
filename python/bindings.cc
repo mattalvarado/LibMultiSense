@@ -34,6 +34,8 @@
  *   2025-01-19, malvarado@carnegierobotics.com, IRAD, Created file.
  **/
 
+#include <iostream>
+
 #include <pybind11/pybind11.h>
 #include <pybind11/chrono.h>
 #include <pybind11/functional.h>
@@ -113,7 +115,6 @@ PYBIND11_MODULE(libmultisense, m) {
     // Image
     py::class_<multisense::Image>(m, "Image")
         .def(py::init<>())
-#if HAVE_OPENCV
         .def_property_readonly("image_data", [](const multisense::Image& image)
         {
             py::gil_scoped_release release;
@@ -162,7 +163,6 @@ PYBIND11_MODULE(libmultisense, m) {
                              shape,
                              strides));
         })
-#endif
         .def_readonly("format", &multisense::Image::format)
         .def_readonly("width", &multisense::Image::width)
         .def_readonly("height", &multisense::Image::height)
@@ -544,6 +544,97 @@ PYBIND11_MODULE(libmultisense, m) {
         .def_readwrite("z", &multisense::Point<uint16_t>::z)
         .def_readwrite("color", &multisense::Point<uint16_t>::color);
 
+    py::class_<multisense::PointCloud<void>>(m, "PointCloud")
+        .def(py::init<>())
+        .def_readwrite("cloud", &multisense::PointCloud<void>::cloud)
+        .def_property_readonly("as_array", [](const multisense::PointCloud<void> &cloud)
+        {
+            const std::vector<size_t> shape = {static_cast<size_t>(cloud.cloud.size()), 3};
+            const std::vector<size_t> strides = {sizeof(multisense::Point<void>), sizeof(float)};
+            const size_t element_size = sizeof(float);
+            const std::string format = py::format_descriptor<float>::format();;
+
+            return py::array(py::buffer_info(
+                             const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(cloud.cloud.data())),
+                             element_size,
+                             format,
+                             shape.size(),
+                             shape,
+                             strides));
+        });
+    py::class_<multisense::PointCloud<uint8_t>>(m, "PointCloudLuma8")
+        .def(py::init<>())
+        .def_readwrite("cloud", &multisense::PointCloud<uint8_t>::cloud)
+        .def_property_readonly("as_array", [](const multisense::PointCloud<uint8_t> &cloud)
+        {
+            const std::vector<size_t> shape = {static_cast<size_t>(cloud.cloud.size()), 3};
+            //
+            // Make sure we skip over the color
+            //
+            const std::vector<size_t> strides = {sizeof(multisense::Point<uint8_t>), sizeof(float)};
+            const size_t element_size = sizeof(multisense::Point<uint8_t>);
+            const std::string format = py::format_descriptor<float>::format();;
+
+            return py::array(py::buffer_info(
+                             const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(cloud.cloud.data())),
+                             element_size,
+                             format,
+                             2,
+                             shape,
+                             strides));
+        })
+        .def_property_readonly("as_raw_array", [](const multisense::PointCloud<uint8_t> &cloud)
+        {
+            const std::vector<size_t> shape = {static_cast<size_t>(cloud.cloud.size())};
+            const std::vector<size_t> strides = {sizeof(multisense::Point<uint8_t>)};
+            const size_t element_size = sizeof(multisense::Point<uint8_t>);
+
+            return py::array(py::buffer_info(
+                             const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(cloud.cloud.data())),
+                             element_size,
+                             "13B",
+                             1,
+                             shape,
+                             strides));
+        });
+
+
+    py::class_<multisense::PointCloud<uint16_t>>(m, "PointCloudLuma16")
+        .def(py::init<>())
+        .def_readwrite("cloud", &multisense::PointCloud<uint16_t>::cloud)
+        .def_property_readonly("as_array", [](const multisense::PointCloud<uint16_t> &cloud)
+        {
+            const std::vector<size_t> shape = {static_cast<size_t>(cloud.cloud.size()), 3};
+            //
+            // Make sure we skip over the color
+            //
+            const std::vector<size_t> strides = {sizeof(multisense::Point<uint16_t>), sizeof(float)};
+            const size_t element_size = sizeof(multisense::Point<uint16_t>);
+            const std::string format = py::format_descriptor<float>::format();;
+
+            return py::array(py::buffer_info(
+                             const_cast<uint16_t*>(reinterpret_cast<const uint16_t*>(cloud.cloud.data())),
+                             element_size,
+                             format,
+                             2,
+                             shape,
+                             strides));
+        })
+        .def_property_readonly("as_raw_array", [](const multisense::PointCloud<uint16_t> &cloud)
+        {
+            const std::vector<size_t> shape = {static_cast<size_t>(cloud.cloud.size())};
+            const std::vector<size_t> strides = {sizeof(multisense::Point<uint16_t>)};
+            const size_t element_size = sizeof(multisense::Point<uint16_t>);
+
+            return py::array(py::buffer_info(
+                             const_cast<uint16_t*>(reinterpret_cast<const uint16_t*>(cloud.cloud.data())),
+                             element_size,
+                             "14B",
+                             1,
+                             shape,
+                             strides));
+        });
+
     m.def("write_image",
           [](const multisense::Image &image, const std::string &path)
           {
@@ -578,7 +669,7 @@ PYBIND11_MODULE(libmultisense, m) {
 
     m.def("create_pointcloud", &multisense::create_pointcloud, py::call_guard<py::gil_scoped_release>());
 
-    m.def("create_color_pointcloud", &multisense::create_color_pointcloud<uint8_t>, py::call_guard<py::gil_scoped_release>());
+    m.def("create_gray8_pointcloud", &multisense::create_color_pointcloud<uint8_t>, py::call_guard<py::gil_scoped_release>());
 
-    m.def("create_color_pointcloud", &multisense::create_color_pointcloud<uint16_t>, py::call_guard<py::gil_scoped_release>());
+    m.def("create_gray16_pointcloud", &multisense::create_color_pointcloud<uint16_t>, py::call_guard<py::gil_scoped_release>());
 }

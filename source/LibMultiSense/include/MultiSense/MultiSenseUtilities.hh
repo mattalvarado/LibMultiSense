@@ -71,7 +71,10 @@ struct Point<void>
 };
 
 template<typename Color = void>
-using PointCloud = std::vector<Point<Color>>;
+struct PointCloud
+{
+    std::vector<Point<Color>> cloud;
+};
 
 #pragma pack(pop)
 
@@ -96,7 +99,7 @@ bool write_pointcloud_ply(const PointCloud<Color> &point_cloud, const std::files
 
     ss << "ply\n";
     ss << "format ascii 1.0\n";
-    ss << "element vertex " << point_cloud.size() << "\n";
+    ss << "element vertex " << point_cloud.cloud.size() << "\n";
     ss << "property float x\n";
     ss << "property float y\n";
     ss << "property float z\n";
@@ -122,7 +125,7 @@ bool write_pointcloud_ply(const PointCloud<Color> &point_cloud, const std::files
 
     ss << "end_header\n";
 
-    for (const auto &point : point_cloud)
+    for (const auto &point : point_cloud.cloud)
     {
         if constexpr (std::is_same_v<Color, std::array<uint8_t, 3>>)
         {
@@ -230,7 +233,7 @@ std::optional<PointCloud<Color>> create_color_pointcloud(const ImageFrame &frame
     const double fycxcxprime = fy * (cx - cx_prime);
 
     PointCloud<Color> output;
-    output.reserve(disparity.get().width * disparity.get().height);
+    output.cloud.reserve(disparity.get().width * disparity.get().height);
 
     for (size_t h = 0 ; h < static_cast<size_t>(disparity.get().height) ; ++h)
     {
@@ -260,7 +263,7 @@ std::optional<PointCloud<Color>> create_color_pointcloud(const ImageFrame &frame
 
             if constexpr (std::is_same_v<Color, void>)
             {
-                output.push_back(Point<Color>{static_cast<float>(x), static_cast<float>(y), static_cast<float>(z)});
+                output.cloud.push_back(Point<Color>{static_cast<float>(x), static_cast<float>(y), static_cast<float>(z)});
             }
             else
             {
@@ -273,8 +276,8 @@ std::optional<PointCloud<Color>> create_color_pointcloud(const ImageFrame &frame
 
                 const Color color_pixel = *reinterpret_cast<const Color*>(color.get().raw_data->data() + color_index);
 
-                output.push_back(Point<Color>{static_cast<float>(x), static_cast<float>(y), static_cast<float>(z),
-                                              color_pixel});
+                output.cloud.push_back(Point<Color>{static_cast<float>(x), static_cast<float>(y), static_cast<float>(z),
+                                                    color_pixel});
             }
         }
     }
