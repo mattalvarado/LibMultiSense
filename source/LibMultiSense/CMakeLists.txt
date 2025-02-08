@@ -17,8 +17,15 @@ set(DETAILS_SRC details/factory.cc
                 details/legacy/udp.cc
                 details/legacy/utilities.cc)
 
-add_library(MultiSense ${MULTISENSE_HEADERS}
-                       ${DETAILS_SRC})
+if (${BUILD_SHARED_LIBS})
+    add_library(MultiSense SHARED ${MULTISENSE_HEADERS}
+                                      ${DETAILS_SRC})
+else()
+    add_library(MultiSense STATIC ${MULTISENSE_HEADERS}
+                                   ${DETAILS_SRC})
+    set_target_properties(MultiSense PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+endif()
 
 target_link_libraries(MultiSense MultiSenseWire)
 target_include_directories(MultiSense

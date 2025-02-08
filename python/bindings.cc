@@ -440,13 +440,14 @@ PYBIND11_MODULE(libmultisense, m) {
         .def("__lt__", &multisense::MultiSenseInfo::Version::operator<)
         .def_readwrite("major", &multisense::MultiSenseInfo::Version::major)
         .def_readwrite("minor", &multisense::MultiSenseInfo::Version::minor)
-        .def_readwrite("patch", &multisense::MultiSenseInfo::Version::patch);
+        .def_readwrite("patch", &multisense::MultiSenseInfo::Version::patch)
+        .def("to_string", &multisense::MultiSenseInfo::Version::to_string);
 
     // MultiSenseInfo::SensorVersion
     py::class_<multisense::MultiSenseInfo::SensorVersion>(m, "SensorVersion")
         .def(py::init<>())
         .def_readwrite("firmware_build_date", &multisense::MultiSenseInfo::SensorVersion::firmware_build_date)
-        .def_readwrite("firmware_version", &multisense::MultiSenseInfo::SensorVersion::firmware_build_date)
+        .def_readwrite("firmware_version", &multisense::MultiSenseInfo::SensorVersion::firmware_version)
         .def_readwrite("hardware_version", &multisense::MultiSenseInfo::SensorVersion::hardware_version)
         .def_readwrite("hardware_magic", &multisense::MultiSenseInfo::SensorVersion::hardware_magic)
         .def_readwrite("fpga_dna", &multisense::MultiSenseInfo::SensorVersion::fpga_dna);
@@ -513,7 +514,9 @@ PYBIND11_MODULE(libmultisense, m) {
 
     // Channel
     py::class_<multisense::Channel, std::unique_ptr<multisense::Channel>>(m, "Channel")
-        .def_static("create", &multisense::Channel::create)
+        .def_static("create", &multisense::Channel::create,
+                py::arg("config"),
+                py::arg("impl") = multisense::Channel::ChannelImplementation::LEGACY)
         .def("start_streams", &multisense::Channel::start_streams, py::call_guard<py::gil_scoped_release>())
         .def("stop_streams", &multisense::Channel::stop_streams, py::call_guard<py::gil_scoped_release>())
         .def("add_image_frame_callback", &multisense::Channel::add_image_frame_callback, py::call_guard<py::gil_scoped_acquire>())

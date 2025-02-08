@@ -257,7 +257,8 @@ public:
     MessageStatistics get_message_statistics() const
     {
         return MessageStatistics{m_dispatched_messages,
-                                 m_received_messages - m_dispatched_messages,
+                                 (m_processing_messages ? (m_received_messages - 1 - m_dispatched_messages) :
+                                                          (m_received_messages - m_dispatched_messages)),
                                  m_invalid_packets};
     }
 
@@ -350,6 +351,11 @@ private:
     /// @brief A counter for the number of messages we have received
     ///
     std::atomic_uint64_t m_received_messages = 0;
+
+    ///
+    /// @brief The a flag which indicates if a message is being processed
+    ///
+    std::atomic_bool m_processing_messages = false;
 
     ///
     /// @brief A counter for the number of messages we dispatched

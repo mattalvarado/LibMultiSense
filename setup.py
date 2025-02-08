@@ -48,7 +48,8 @@ class CMakeBuild(build_ext):
             f"-DPYTHON_EXECUTABLE={sys.executable}",
             f"-DCMAKE_BUILD_TYPE={cfg}",  # not used on MSVC, but no harm
             f"-DBUILD_LEGACY_API=OFF",
-            f"-DBUILD_PYTHON_BINDINGS=ON"
+            f"-DBUILD_PYTHON_BINDINGS=ON",
+            f"-DBUILD_SHARED_LIBS=OFF"
         ]
         build_args = []
         # Adding CMake arguments set as environment variable
@@ -128,14 +129,15 @@ class CMakeBuild(build_ext):
 # logic and declaration, and simpler if you include description/version in a file.
 setup(
     name="libmultisense",
-    version="1.0.0",
+    version="7.0.0",
     author="Matt Alvarado",
     author_email="support@carnegierobotics.com",
     description="LibMultiSense python wrapper",
     long_description="",
-    ext_modules=[CMakeExtension("libmultisense._core")],
+    ext_modules=[CMakeExtension("libmultisense")],
     cmdclass={"build_ext": CMakeBuild},
     zip_safe=False,
     extras_require={"test": ["pytest>=6.0"]},
+    extra_link_args=['-static'], # Ensure static linking (may vary by compiler/system)
     python_requires=">=3.8",
 )

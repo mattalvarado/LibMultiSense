@@ -1,5 +1,5 @@
 /**
- * @file SaveImageUtility.hh
+ * @file SaveImageUtility.cc
  *
  * Copyright 2013-2025
  * Carnegie Robotics, LLC
@@ -66,8 +66,8 @@ void usage(const char *name)
 {
     std::cerr << "USAGE: " << name << " [<options>]" << std::endl;
     std::cerr << "Where <options> are:" << std::endl;
-    std::cerr << "\t-a <current_address>    : CURRENT IPV4 address (default=10.66.171.21)" << std::endl;
-    std::cerr << "\t-m <mtu>                : MTU to set the camera to (default=1500)" << std::endl;
+    std::cerr << "\t-a <current_address> : CURRENT IPV4 address (default=10.66.171.21)" << std::endl;
+    std::cerr << "\t-m <mtu>             : MTU to use to communicate with the camera (default=1500)" << std::endl;
     exit(1);
 }
 
@@ -180,7 +180,9 @@ int main(int argc, char** argv)
                          "Right Imager Temp (C): " << status->temperature.right_imager_temperature_C << ", " <<
                          "Input Voltage (V): " << status->power.input_voltage << ", " <<
                          "Input Current (A): " << status->power.input_current << ", " <<
-                         "FPGA Power (W): " << status->power.fpga_power << std::endl;
+                         "FPGA Power (W): " << status->power.fpga_power << " , " <<
+                         "Received Messages: " << status->client_network.received_messages << " , " <<
+                         "Dropped Messages: " << status->client_network.dropped_messages << std::endl;
         }
         else
         {

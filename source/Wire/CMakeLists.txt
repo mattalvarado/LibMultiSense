@@ -88,9 +88,17 @@ if(NOT HAVE_VASPRINTF)
     add_definitions(-DNEED_VASPRINTF=1)
 endif()
 
-add_library(MultiSenseWire ${WIRE_HEADERS}
-                           ${UTILITY_HEADERS}
-                           ${DETAILS_SRC})
+if (${BUILD_SHARED_LIBS})
+    add_library(MultiSenseWire SHARED ${WIRE_HEADERS}
+                                       ${UTILITY_HEADERS}
+                                       ${DETAILS_SRC})
+else()
+    add_library(MultiSenseWire STATIC  ${WIRE_HEADERS}
+                                       ${UTILITY_HEADERS}
+                                       ${DETAILS_SRC})
+    set_target_properties(MultiSenseWire PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+endif()
 
 target_compile_definitions(MultiSenseWire PRIVATE MultiSense_EXPORTS=True)
 if (MULTISENSE_USE_MONOTONIC_CLOCK)

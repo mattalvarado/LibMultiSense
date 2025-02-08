@@ -42,7 +42,7 @@ option (MULTISENSE_BUILD_UTILITIES "Build MultiSense utility applications. Defau
 option (BUILD_SHARED_LIBS "Build LibMultiSense as a shared library. Defaults to ON." ON)
 option (BUILD_TESTS "Build LibMultiSense GTests. Defaults to ON." ON)
 option (USE_OPENCV "Use OpenCV if found on the host system" OFF)
-option(BUILD_PYTHON_BINDINGS "Build Python bindings with pybind11." ON)
+option (BUILD_PYTHON_BINDINGS "Build Python bindings with pybind11." ON)
 
 if (BUILD_TESTS)
     enable_testing()

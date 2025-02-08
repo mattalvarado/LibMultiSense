@@ -235,6 +235,7 @@ bool MessageAssembler::process_packet(const std::vector<uint8_t> &raw_data)
         active_message = inserted_iterator;
         ordered_messages.emplace_back(full_sequence_id);
 
+        m_processing_messages = true;
         ++m_received_messages;
     }
 
@@ -275,6 +276,7 @@ bool MessageAssembler::process_packet(const std::vector<uint8_t> &raw_data)
                 ordered_messages.erase(it);
             }
 
+            m_processing_messages = false;
             ++m_dispatched_messages;
         }
     }
