@@ -105,6 +105,10 @@ endif()
 
 add_subdirectory(source)
 
+if (NOT BUILD_LEGACY_API AND BUILD_PYTHON_BINDINGS)
+    add_subdirectory(python)
+endif()
+
 #
 # Generate pc file, for pkgconfig compatibility
 #

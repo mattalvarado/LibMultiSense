@@ -116,7 +116,7 @@ PYBIND11_MODULE(libmultisense, m) {
     // Image
     py::class_<multisense::Image>(m, "Image")
         .def(py::init<>())
-        .def_property_readonly("image_data", [](const multisense::Image& image)
+        .def_property_readonly("as_array", [](const multisense::Image& image)
         {
             //
             // Inspired from https://github.com/carnegierobotics/simple_sfm/blob/28dbcadb6682e002c5206a172f70dd5640ff70b5/python/bindings.cpp#L87

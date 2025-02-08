@@ -21,4 +21,4 @@ if (USE_OPENCV)
 endif()
 
 
-set_target_properties(libmultisense PROPERTIES libmultisense _bindings)
+set_target_properties(libmultisense PROPERTIES libmultisense _core)
