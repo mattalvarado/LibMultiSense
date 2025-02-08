@@ -113,7 +113,7 @@ std::optional<PointCloud<Color>> create_color_pointcloud(const ImageFrame &frame
     std::reference_wrapper<const Image> disparity = std::cref(placeholder);
     std::reference_wrapper<const Image> color = std::cref(placeholder);
 
-    constexpr size_t color_step = std::is_same_v<Color, void> ? 0 : sizeof(color);
+    size_t color_step = 0;
     double color_disparity_scale = 0.0;
 
     if constexpr (std::is_same_v<Color, void>)
@@ -134,6 +134,8 @@ std::optional<PointCloud<Color>> create_color_pointcloud(const ImageFrame &frame
     }
     else
     {
+        color_step = sizeof(Color);
+
         if (!frame.has_image(color_source) || !frame.has_image(disparity_source))
         {
             return std::nullopt;
