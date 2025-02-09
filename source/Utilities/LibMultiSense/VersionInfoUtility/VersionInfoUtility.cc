@@ -1,5 +1,5 @@
 /**
- * @file PointCloudUtility.cc
+ * @file SaveImageUtility.cc
  *
  * Copyright 2013-2025
  * Carnegie Robotics, LLC
@@ -31,7 +31,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * Significant history (date, user, job code, action):
- *   2025-02-07, malvarado@carnegierobotics.com, IRAD, Created file.
+ *   2024-12-24, malvarado@carnegierobotics.com, IRAD, Created file.
  **/
 
 #ifdef WIN32
@@ -68,7 +68,6 @@ void usage(const char *name)
     std::cerr << "Where <options> are:" << std::endl;
     std::cerr << "\t-a <current_address> : CURRENT IPV4 address (default=10.66.171.21)" << std::endl;
     std::cerr << "\t-m <mtu>             : MTU to use to communicate with the camera (default=1500)" << std::endl;
-    std::cerr << "\t-r <max-range>       : Current max range from the camera for points to be included (default=50m)" << std::endl;
     exit(1);
 }
 
@@ -101,16 +100,14 @@ int main(int argc, char** argv)
 
     std::string ip_address = "10.66.171.21";
     int16_t mtu = 1500;
-    double max_range = 50.0;
 
     int c;
-    while(-1 != (c = getopt(argc, argv, "a:m:r:")))
+    while(-1 != (c = getopt(argc, argv, "a:m:")))
     {
         switch(c)
         {
             case 'a': ip_address = std::string(optarg); break;
             case 'm': mtu = atoi(optarg); break;
-            case 'r': max_range = std::stod(optarg); break;
             default: usage(*argv); break;
         }
     }
@@ -123,42 +120,16 @@ int main(int argc, char** argv)
     }
 
     //
-    // QuerySet dynamic config from the camera
+    // Query Static info from the camera
     //
-    auto config = channel->get_configuration();
-    config.frames_per_second = 10.0;
-    if (const auto status = channel->set_configuration(config); status != lms::Status::OK)
-    {
-        std::cerr << "Cannot set config" << std::endl;
-        return 1;
-    }
+    auto info = channel->get_info();
 
-    //
-    // Start a single image stream
-    //
-    if (const auto status = channel->start_streams({lms::DataSource::LEFT_RECTIFIED_RAW,
-                                                    lms::DataSource::LEFT_DISPARITY_RAW}); status != lms::Status::OK)
-    {
-        std::cerr << "Cannot start streams: " << lms::to_string(status) << std::endl;
-        return 1;
-    }
-
-    while(!done)
-    {
-        if (const auto image_frame = channel->get_next_image_frame(); image_frame)
-        {
-            if (const auto point_cloud = lms::create_color_pointcloud<uint8_t>(image_frame.value(),
-                                                                               max_range,
-                                                                               lms::DataSource::LEFT_RECTIFIED_RAW,
-                                                                               lms::DataSource::LEFT_DISPARITY_RAW); point_cloud)
-            {
-                std::cout << "Saving pointcloud for frame id: " << image_frame->frame_id << std::endl;
-                lms::write_pointcloud_ply(point_cloud.value(), std::to_string(image_frame->frame_id) + ".ply");
-            }
-        }
-    }
-
-    channel->stop_streams({lms::DataSource::ALL});
+	std::cout << "Firmware build date :  " << info.version.firmware_build_date << std::endl;
+	std::cout << "Firmware version    :  " << info.version.firmware_version.to_string() << std::endl;
+	std::cout << "Hardware version    :  0x" << std::hex << info.version.hardware_version << std::endl;
+	std::cout << "Hardware magic      :  0x" << std::hex << info.version.hardware_magic << std::endl;
+	std::cout << "FPGA DNA            :  0x" << std::hex << info.version.fpga_dna << std::endl;
+	std::cout << std::dec;
 
     return 0;
 }

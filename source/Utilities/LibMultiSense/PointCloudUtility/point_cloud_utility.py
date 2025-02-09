@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# @file saved_image_utility.cc
+# @file point_cloud_utility.cc
 #
 # Copyright 2013-2025
 # Carnegie Robotics, LLC
@@ -38,8 +38,15 @@
 import argparse
 import time
 import cv2
+import numpy as np
 
 import libmultisense as lms
+
+
+color_point_dtype = np.dtype({'names': ['x', 'y', 'z', 'color'],
+                              'formats': [np.float32, np.float32, np.float32, np.uint8],
+                              'offsets': [0, 4, 8, 12],
+                              'itemsize': 13})
 
 def main(args):
     channel_config = lms.ChannelConfig()
@@ -48,55 +55,40 @@ def main(args):
 
     channel = lms.Channel.create(channel_config)
     if not channel:
-        raise RuntimeError("Invalid channel")
-
-    info = channel.get_info();
-
-    print("Firmware build date :  ", info.version.firmware_build_date)
-    print("Firmware version    :  ", info.version.firmware_version.to_string())
-    print("Hardware version    :  ", hex(info.version.hardware_version))
-    print("Hardware magic      :  ", hex(info.version.hardware_magic))
-    print("FPGA DNA            :  ", hex(info.version.fpga_dna))
+        print("Invalid channel")
+        return
 
     config = channel.get_configuration()
-    config.frames_per_second = 30.0
+    config.frames_per_second = 10.0
     if channel.set_configuration(config) != lms.Status.OK:
-        raise RuntimeError("Cannot set configuration")
+        print("Cannot set configuration")
+        return
 
-
-    if channel.start_streams([lms.DataSource.LEFT_RECTIFIED_RAW]) != lms.Status.OK:
-        raise RuntimeError("Unable to start streams")
-
-    #Only save the first image
-    saved = False
+    if channel.start_streams([lms.DataSource.LEFT_RECTIFIED_RAW, lms.DataSource.LEFT_DISPARITY_RAW]) != lms.Status.OK:
+        print("Unable to start streams")
+        return
 
     while True:
-        if not saved:
-            frame = channel.get_next_image_frame()
-            if frame:
-                for source, image in frame.images.items():
-                    cv2.imwrite(str(source) + ".png", image.as_array)
-                    saved = True
+        frame = channel.get_next_image_frame()
+        if frame:
+            point_cloud = lms.create_gray8_pointcloud(frame,
+                                                     args.max_range,
+                                                     lms.DataSource.LEFT_RECTIFIED_RAW,
+                                                     lms.DataSource.LEFT_DISPARITY_RAW)
 
-        status = channel.get_system_status()
-        if status:
-            print("Camera Time(ns): " , status.time.camera_time,
-                  "System Ok: " , status.system_ok,
-                  "FPGA Temp (C): " , status.temperature.fpga_temperature_C,
-                  "Left Imager Temp (C): " , status.temperature.left_imager_temperature_C,
-                  "Right Imager Temp (C): " , status.temperature.right_imager_temperature_C,
-                  "Input Voltage (V): " , status.power.input_voltage,
-                  "Input Current (A): " , status.power.input_current,
-                  "FPGA Power (W): " , status.power.fpga_power,
-                  "Received Messages ", status.client_network.received_messages,
-                  "Dropped Messages ", status.client_network.dropped_messages)
+            # Convert to numpy array and compute the average depth
+            point_cloud_array = point_cloud.as_raw_array.view(color_point_dtype)
+            mean_depth = np.mean(point_cloud_array["z"])
+            print("Mean depth:", mean_depth, "(m)")
 
-        time.sleep(1)
+            print("Saving pointcloud for frame id: ", frame.frame_id)
+            lms.write_pointcloud_ply(point_cloud, str(frame.frame_id) + ".ply")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser("LibMultiSense save image utility")
     parser.add_argument("-a", "--ip_address", default="10.66.171.21", help="The IPv4 address of the MultiSense.")
     parser.add_argument("-m", "--mtu", type=int, default=1500, help="The MTU to use to communicate with the camera.")
+    parser.add_argument("-r", "--max-range", type=float, default=50.0, help="The max point cloud range in meters.")
     main(parser.parse_args())
 
 

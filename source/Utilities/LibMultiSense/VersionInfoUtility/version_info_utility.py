@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# @file saved_image_utility.cc
+# @file version_info_utility.cc
 #
 # Copyright 2013-2025
 # Carnegie Robotics, LLC
@@ -58,42 +58,6 @@ def main(args):
     print("Hardware version    :  ", hex(info.version.hardware_version))
     print("Hardware magic      :  ", hex(info.version.hardware_magic))
     print("FPGA DNA            :  ", hex(info.version.fpga_dna))
-
-    config = channel.get_configuration()
-    config.frames_per_second = 30.0
-    if channel.set_configuration(config) != lms.Status.OK:
-        print("Cannot set configuration")
-        return
-
-    if channel.start_streams([lms.DataSource.LEFT_RECTIFIED_RAW]) != lms.Status.OK:
-        print("Unable to start streams")
-        return
-
-    #Only save the first image
-    saved = False
-
-    while True:
-        if not saved:
-            frame = channel.get_next_image_frame()
-            if frame:
-                for source, image in frame.images.items():
-                    cv2.imwrite(str(source) + ".png", image.as_array)
-                    saved = True
-
-        status = channel.get_system_status()
-        if status:
-            print("Camera Time(ns): " , status.time.camera_time,
-                  "System Ok: " , status.system_ok,
-                  "FPGA Temp (C): " , status.temperature.fpga_temperature_C,
-                  "Left Imager Temp (C): " , status.temperature.left_imager_temperature_C,
-                  "Right Imager Temp (C): " , status.temperature.right_imager_temperature_C,
-                  "Input Voltage (V): " , status.power.input_voltage,
-                  "Input Current (A): " , status.power.input_current,
-                  "FPGA Power (W): " , status.power.fpga_power,
-                  "Received Messages ", status.client_network.received_messages,
-                  "Dropped Messages ", status.client_network.dropped_messages)
-
-        time.sleep(1)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser("LibMultiSense save image utility")

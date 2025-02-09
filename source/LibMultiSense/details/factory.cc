@@ -46,7 +46,14 @@ std::unique_ptr<Channel> Channel::create(const ChannelConfig &config,
     {
         case ChannelImplementation::LEGACY:
         {
-            return std::unique_ptr<legacy::LegacyChannel>(new legacy::LegacyChannel(config));
+            try
+            {
+                return std::unique_ptr<legacy::LegacyChannel>(new legacy::LegacyChannel(config));
+            }
+            catch(...)
+            {
+                return nullptr;
+            }
         }
         default:
         {

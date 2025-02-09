@@ -113,7 +113,10 @@ LegacyChannel::LegacyChannel(const ChannelConfig &config):
                                                                 config.receive_buffer_configuration.large_buffer_size})),
     m_message_assembler(m_buffer_pool)
 {
-    connect(config);
+    if (connect(config) != Status::OK)
+    {
+        CRL_EXCEPTION("Connection to MultiSense failed\n");
+    }
 }
 
 LegacyChannel::~LegacyChannel()

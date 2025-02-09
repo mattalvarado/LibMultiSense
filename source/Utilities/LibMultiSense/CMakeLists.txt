@@ -26,5 +26,6 @@ set (MULTISENSE_UTILITY_LIBS
 
 endif ()
 
-add_subdirectory(SaveImageUtility)
 add_subdirectory(PointCloudUtility)
+add_subdirectory(SaveImageUtility)
+add_subdirectory(VersionInfoUtility)
