@@ -1,5 +1,5 @@
 /**
- * @file PointCloudUtility.cc
+ * @file RectifiedFocalLengthUtility.cc
  *
  * Copyright 2013-2025
  * Carnegie Robotics, LLC
@@ -31,7 +31,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * Significant history (date, user, job code, action):
- *   2025-02-07, malvarado@carnegierobotics.com, IRAD, Created file.
+ *   2025-02-08, malvarado@carnegierobotics.com, IRAD, Created file.
  **/
 
 #ifdef WIN32
@@ -60,103 +60,94 @@ namespace lms = multisense;
 namespace
 {
 
-volatile bool done = false;
-
 void usage(const char *name)
 {
     std::cerr << "USAGE: " << name << " [<options>]" << std::endl;
     std::cerr << "Where <options> are:" << std::endl;
-    std::cerr << "\t-a <current_address> : CURRENT IPV4 address (default=10.66.171.21)" << std::endl;
-    std::cerr << "\t-m <mtu>             : MTU to use to communicate with the camera (default=1500)" << std::endl;
-    std::cerr << "\t-r <max-range>       : Current max range from the camera for points to be included (default=50m)" << std::endl;
+    std::cerr << "\t-a <current_address>            : CURRENT IPV4 address (default=10.66.171.21)" << std::endl;
+    std::cerr << "\t-m <mtu>                        : MTU to use to communicate with the camera (default=1500)" << std::endl;
+    std::cerr << "\t-r <new-rectified-focal-length> : The new rectified focal length" << std::endl;
+    std::cerr << "\t-s                              : Set the new calibration (Default is query)" << std::endl;
     exit(1);
 }
 
-#ifdef WIN32
-BOOL WINAPI signal_handler(DWORD dwCtrlType)
+lms::StereoCalibration update_calibration(lms::StereoCalibration cal, double new_focal_length)
 {
-    (void) dwCtrlType:
-    done = true;
-    return TRUE;
+    std::cout << "Updating focal length from " << cal.left.P[0][0] << " to " << new_focal_length << std::endl;
+
+    cal.left.P[0][0] = new_focal_length;
+    cal.left.P[1][1] = new_focal_length;
+
+    const double right_tx = cal.right.P[0][3] / cal.right.P[0][0];
+    cal.right.P[0][0] = new_focal_length;
+    cal.right.P[1][1] = new_focal_length;
+    cal.right.P[0][3] = new_focal_length * right_tx;
+
+    if (cal.aux)
+    {
+        const double aux_tx = cal.aux->P[0][3] / cal.aux->P[0][0];
+        const double aux_ty = cal.aux->P[1][3] / cal.aux->P[1][1];
+
+        cal.aux->P[0][0] = new_focal_length;
+        cal.aux->P[1][1] = new_focal_length;
+        cal.aux->P[0][3] = new_focal_length * aux_tx;
+        cal.aux->P[1][3] = new_focal_length * aux_ty;
+    }
+
+    return cal;
 }
-#else
-void signal_handler(int sig)
-{
-    (void) sig;
-    done = true;
-}
-#endif
 
 }
 
 int main(int argc, char** argv)
 {
-#if WIN32
-    SetConsoleCtrlHandler (signal_handler, TRUE);
-#else
-    signal(SIGINT, signal_handler);
-#endif
-
     std::string ip_address = "10.66.171.21";
     int16_t mtu = 1500;
-    double max_range = 50.0;
+    std::optional<double> rectified_focal_length = std::nullopt;
+    bool set = false;
 
     int c;
-    while(-1 != (c = getopt(argc, argv, "a:m:r:")))
+    while(-1 != (c = getopt(argc, argv, "a:m:r:s")))
     {
         switch(c)
         {
             case 'a': ip_address = std::string(optarg); break;
             case 'm': mtu = atoi(optarg); break;
-            case 'r': max_range = std::stod(optarg); break;
+            case 'r': rectified_focal_length = std::stod(optarg); break;
+            case 's': set = true; break;
             default: usage(*argv); break;
         }
+    }
+
+    if (!rectified_focal_length || rectified_focal_length.value() < 0.0)
+    {
+        std::cerr << "Invalid input rectified focal length" << std::endl;;
+        usage(*argv);
     }
 
     const auto channel = lms::Channel::create(lms::Channel::ChannelConfig{ip_address, mtu});
     if (!channel)
     {
-        std::cerr << "Failed to create channel" << std::endl;;
+        std::cerr << "Failed to create channel" << std::endl;
         return 1;
     }
 
-    //
-    // QuerySet dynamic config from the camera
-    //
-    auto config = channel->get_configuration();
-    config.frames_per_second = 10.0;
-    if (const auto status = channel->set_configuration(config); status != lms::Status::OK)
-    {
-        std::cerr << "Cannot set config" << std::endl;
-        return 1;
-    }
+    const auto current_calibration = channel->get_calibration();
 
-    //
-    // Start a single image stream
-    //
-    if (const auto status = channel->start_streams({lms::DataSource::LEFT_RECTIFIED_RAW,
-                                                    lms::DataSource::LEFT_DISPARITY_RAW}); status != lms::Status::OK)
-    {
-        std::cerr << "Cannot start streams: " << lms::to_string(status) << std::endl;
-        return 1;
-    }
+    const auto new_calibration = update_calibration(current_calibration, rectified_focal_length.value());
 
-    while(!done)
+    if (set)
     {
-        if (const auto image_frame = channel->get_next_image_frame(); image_frame)
+        if (channel->set_calibration(new_calibration) != lms::Status::OK)
         {
-            if (const auto point_cloud = lms::create_color_pointcloud<uint8_t>(image_frame.value(),
-                                                                               max_range,
-                                                                               lms::DataSource::LEFT_RECTIFIED_RAW,
-                                                                               lms::DataSource::LEFT_DISPARITY_RAW); point_cloud)
-            {
-                std::cout << "Saving pointcloud for frame id: " << image_frame->frame_id << std::endl;
-                lms::write_pointcloud_ply(point_cloud.value(), std::to_string(image_frame->frame_id) + ".ply");
-            }
+            std::cerr << "Failed to set the updated calibration" << std::endl;
+            return 1;
         }
     }
-
-    channel->stop_streams({lms::DataSource::ALL});
+    else
+    {
+        std::cout << "Please add the \"-s\" argument to write the new rectified focal length to the camera" << std::endl;
+    }
 
     return 0;
 }

@@ -1,5 +1,5 @@
 /**
- * @file SaveImageUtility.cc
+ * @file VersionInfoUtility.cc
  *
  * Copyright 2013-2025
  * Carnegie Robotics, LLC
@@ -31,7 +31,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * Significant history (date, user, job code, action):
- *   2024-12-24, malvarado@carnegierobotics.com, IRAD, Created file.
+ *   2025-02-08, malvarado@carnegierobotics.com, IRAD, Created file.
  **/
 
 #ifdef WIN32
@@ -60,8 +60,6 @@ namespace lms = multisense;
 namespace
 {
 
-volatile bool done = false;
-
 void usage(const char *name)
 {
     std::cerr << "USAGE: " << name << " [<options>]" << std::endl;
@@ -71,33 +69,10 @@ void usage(const char *name)
     exit(1);
 }
 
-#ifdef WIN32
-BOOL WINAPI signal_handler(DWORD dwCtrlType)
-{
-    (void) dwCtrlType:
-    done = true;
-    return TRUE;
-}
-#else
-void signal_handler(int sig)
-{
-    (void) sig;
-    done = true;
-}
-#endif
-
 }
 
 int main(int argc, char** argv)
 {
-    using namespace std::chrono_literals;
-
-#if WIN32
-    SetConsoleCtrlHandler (signal_handler, TRUE);
-#else
-    signal(SIGINT, signal_handler);
-#endif
-
     std::string ip_address = "10.66.171.21";
     int16_t mtu = 1500;
 

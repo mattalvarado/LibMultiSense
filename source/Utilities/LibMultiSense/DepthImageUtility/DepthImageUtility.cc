@@ -90,8 +90,6 @@ void signal_handler(int sig)
 
 int main(int argc, char** argv)
 {
-    using namespace std::chrono_literals;
-
 #if WIN32
     SetConsoleCtrlHandler (signal_handler, TRUE);
 #else
