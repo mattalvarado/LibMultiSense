@@ -178,7 +178,7 @@ multisense::MultiSenseInfo::DeviceInfo create_info(const std::string &name)
     info.lens_name = name;
     info.nominal_stereo_baseline = 0.21;
     info.nominal_focal_length = 0.024;
-    info.nominal_relative_aperature = 0.1;
+    info.nominal_relative_aperture = 0.1;
     info.lighting_type = MultiSenseInfo::DeviceInfo::LightingType::EXTERNAL;
     info.number_of_lights = 1;
 
@@ -260,7 +260,7 @@ void check_equal(const crl::multisense::details::wire::SysDeviceInfo &wire,
     ASSERT_EQ(wire.lensName, info.lens_name);
     ASSERT_EQ(wire.nominalBaseline, info.nominal_stereo_baseline);
     ASSERT_EQ(wire.nominalFocalLength, info.nominal_focal_length);
-    ASSERT_EQ(wire.nominalRelativeAperture, info.nominal_relative_aperature);
+    ASSERT_EQ(wire.nominalRelativeAperture, info.nominal_relative_aperture);
 
     switch (wire.lightingType)
     {

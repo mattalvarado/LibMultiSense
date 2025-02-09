@@ -36,8 +36,6 @@
 #
 
 import argparse
-import time
-import cv2
 import numpy as np
 
 import libmultisense as lms
@@ -56,17 +54,17 @@ def main(args):
     channel = lms.Channel.create(channel_config)
     if not channel:
         print("Invalid channel")
-        return
+        exit(1)
 
     config = channel.get_configuration()
     config.frames_per_second = 10.0
     if channel.set_configuration(config) != lms.Status.OK:
         print("Cannot set configuration")
-        return
+        exit(1)
 
     if channel.start_streams([lms.DataSource.LEFT_RECTIFIED_RAW, lms.DataSource.LEFT_DISPARITY_RAW]) != lms.Status.OK:
         print("Unable to start streams")
-        return
+        exit(1)
 
     while True:
         frame = channel.get_next_image_frame()

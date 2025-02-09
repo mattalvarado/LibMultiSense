@@ -107,9 +107,10 @@ MultiSenseInfo::DeviceInfo convert(const crl::multisense::details::wire::SysDevi
 
     output.lens_name = info.lensName;
     //TODO (malvarado): Handle lens_type
+    output.lens_type = MultiSenseInfo::DeviceInfo::LensType::UNKNOWN;
     output.nominal_stereo_baseline = info.nominalBaseline;
     output.nominal_focal_length = info.nominalFocalLength;
-    output.nominal_relative_aperature = info.nominalRelativeAperture;;
+    output.nominal_relative_aperture = info.nominalRelativeAperture;;
 
     switch (info.lightingType)
     {
@@ -199,7 +200,7 @@ crl::multisense::details::wire::SysDeviceInfo convert(const MultiSenseInfo::Devi
     //TODO (malvarado): Handle lens_type
     output.nominalBaseline = info.nominal_stereo_baseline;
     output.nominalFocalLength = info.nominal_focal_length;
-    output.nominalRelativeAperture = info.nominal_relative_aperature;;
+    output.nominalRelativeAperture = info.nominal_relative_aperture;;
 
     switch (info.lighting_type)
     {

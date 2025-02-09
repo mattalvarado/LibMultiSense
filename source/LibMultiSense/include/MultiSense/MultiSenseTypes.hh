@@ -1100,7 +1100,7 @@ struct MultiSenseInfo
         ///
         /// @brief The nominal relative aperture for the primary camera modules in f-stop
         ///
-        float nominal_relative_aperature;
+        float nominal_relative_aperture;
 
         ///
         /// @brief The type of lighting used in the MultiSense

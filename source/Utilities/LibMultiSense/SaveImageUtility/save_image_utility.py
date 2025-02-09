@@ -63,11 +63,11 @@ def main(args):
     config.frames_per_second = 30.0
     if channel.set_configuration(config) != lms.Status.OK:
         print("Cannot set configuration")
-        return
+        exit(1)
 
     if channel.start_streams([lms.DataSource.LEFT_RECTIFIED_RAW]) != lms.Status.OK:
         print("Unable to start streams")
-        return
+        exit(1)
 
     #Only save the first image
     saved = False

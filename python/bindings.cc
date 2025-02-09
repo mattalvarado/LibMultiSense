@@ -429,7 +429,7 @@ PYBIND11_MODULE(libmultisense, m) {
         .def_readwrite("lens_type", &multisense::MultiSenseInfo::DeviceInfo::lens_type)
         .def_readwrite("nominal_stereo_baseline", &multisense::MultiSenseInfo::DeviceInfo::nominal_stereo_baseline)
         .def_readwrite("nominal_focal_length", &multisense::MultiSenseInfo::DeviceInfo::nominal_focal_length)
-        .def_readwrite("nominal_relative_aperature", &multisense::MultiSenseInfo::DeviceInfo::nominal_relative_aperature)
+        .def_readwrite("nominal_relative_aperture", &multisense::MultiSenseInfo::DeviceInfo::nominal_relative_aperture)
         .def_readwrite("lighting_type", &multisense::MultiSenseInfo::DeviceInfo::lighting_type)
         .def_readwrite("number_of_lights", &multisense::MultiSenseInfo::DeviceInfo::number_of_lights)
         .def("has_aux_camera", &multisense::MultiSenseInfo::DeviceInfo::has_aux_camera);

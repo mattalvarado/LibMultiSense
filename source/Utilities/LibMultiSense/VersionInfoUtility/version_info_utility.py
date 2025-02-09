@@ -36,8 +36,6 @@
 #
 
 import argparse
-import time
-import cv2
 
 import libmultisense as lms
 
@@ -49,7 +47,7 @@ def main(args):
     channel = lms.Channel.create(channel_config)
     if not channel:
         print("Invalid channel")
-        return
+        exit(1)
 
     info = channel.get_info();
 

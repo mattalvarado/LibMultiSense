@@ -36,8 +36,6 @@
 #
 
 import argparse
-import time
-import cv2
 
 import libmultisense as lms
 
@@ -71,7 +69,7 @@ def main(args):
     channel = lms.Channel.create(channel_config)
     if not channel:
         print("Invalid channel")
-        return
+        exit(1)
 
     current_calibration = channel.get_calibration();
 
@@ -80,7 +78,7 @@ def main(args):
     if args.set:
         if channel.set_calibration(new_calibration) != lms.Status.OK:
             print("Failed to set the updated calibration")
-            return
+            exit(1)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser("LibMultiSense save image utility")
