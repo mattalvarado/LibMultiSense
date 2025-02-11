@@ -495,6 +495,9 @@ Status LegacyChannel::set_configuration(const MultiSenseConfiguration &config)
         return get_status(ptp_ack->status);
     }
 
+    //
+    // Only firmware >= 6.X supports a packet delay
+    //
     if (MultiSenseInfo::Version{6, 0, 0} < m_info.version.firmware_version)
     {
         //
@@ -511,6 +514,11 @@ Status LegacyChannel::set_configuration(const MultiSenseConfiguration &config)
         {
             return get_status(packet_ack->status);
         }
+    }
+    else if (config.network_config.packet_delay_enabled)
+    {
+        CRL_DEBUG("Warning: attempting to set a packet delay which is unsupported on the current camera firmware. "
+                  "Please update the camera firmware: https://docs.carnegierobotics.com/firmware/update.html \n");
     }
 
     //
@@ -789,6 +797,9 @@ std::optional<MultiSenseConfiguration> LegacyChannel::query_configuration(bool h
                                                            m_current_mtu,
                                                            m_config.receive_timeout);
 
+    //
+    // Only firmware >= 6.X supports a packet delay
+    //
     std::optional<wire::SysPacketDelay> packet_delay = std::nullopt;
     if (m_info.version.firmware_version < MultiSenseInfo::Version{6, 0, 0})
     {
