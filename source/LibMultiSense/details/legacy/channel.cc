@@ -495,19 +495,22 @@ Status LegacyChannel::set_configuration(const MultiSenseConfiguration &config)
         return get_status(ptp_ack->status);
     }
 
-    //
-    // Set our packet delay
-    //
-    const auto packet_ack = wait_for_ack(m_message_assembler,
-                                         m_socket,
-                                         convert<wire::SysPacketDelay>(config.network_config),
-                                         m_transmit_id++,
-                                         m_current_mtu,
-                                         m_config.receive_timeout);
-
-    if (!packet_ack || packet_ack->status != wire::Ack::Status_Ok)
+    if (MultiSenseInfo::Version{6, 0, 0} < m_info.version.firmware_version)
     {
-        return get_status(packet_ack->status);
+        //
+        // Set our packet delay
+        //
+        const auto packet_ack = wait_for_ack(m_message_assembler,
+                                             m_socket,
+                                             convert<wire::SysPacketDelay>(config.network_config),
+                                             m_transmit_id++,
+                                             m_current_mtu,
+                                             m_config.receive_timeout);
+
+        if (!packet_ack || packet_ack->status != wire::Ack::Status_Ok)
+        {
+            return get_status(packet_ack->status);
+        }
     }
 
     //
@@ -786,12 +789,20 @@ std::optional<MultiSenseConfiguration> LegacyChannel::query_configuration(bool h
                                                            m_current_mtu,
                                                            m_config.receive_timeout);
 
-    const auto packet_delay = wait_for_data<wire::SysPacketDelay>(m_message_assembler,
-                                                                  m_socket,
-                                                                  wire::SysGetPacketDelay(),
-                                                                  m_transmit_id++,
-                                                                  m_current_mtu,
-                                                                  m_config.receive_timeout);
+    std::optional<wire::SysPacketDelay> packet_delay = std::nullopt;
+    if (m_info.version.firmware_version < MultiSenseInfo::Version{6, 0, 0})
+    {
+        packet_delay = wire::SysPacketDelay(false);
+    }
+    else
+    {
+        packet_delay = wait_for_data<wire::SysPacketDelay>(m_message_assembler,
+                                                           m_socket,
+                                                           wire::SysGetPacketDelay(),
+                                                           m_transmit_id++,
+                                                           m_current_mtu,
+                                                           m_config.receive_timeout);
+    }
 
     const auto transmit_delay = wait_for_data<wire::SysTransmitDelay>(m_message_assembler,
                                                                       m_socket,
@@ -811,7 +822,7 @@ std::optional<MultiSenseConfiguration> LegacyChannel::query_configuration(bool h
                        ptp_enabled);
     }
 
-    CRL_DEBUG("Unable to query the camera's configuration");
+    CRL_DEBUG("Unable to query the camera's configuration\n");
 
     return std::nullopt;
 }
