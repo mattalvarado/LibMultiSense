@@ -42,7 +42,7 @@ option(MULTISENSE_BUILD_UTILITIES "Build MultiSense utility applications. Defaul
 option(BUILD_SHARED_LIBS "Build LibMultiSense as a shared library. Defaults to ON." ON)
 option(BUILD_TESTS "Build LibMultiSense GTests. Defaults to ON." ON)
 option(BUILD_OPENCV "Use OpenCV if found on the host system" OFF)
-option(BUILD_PYTHON_BINDINGS "Build Python bindings with pybind11." ON)
+option(BUILD_PYTHON_BINDINGS "Build Python bindings with pybind11." OFF)
 option(BUILD_JSON_SERIALIZATION "Build json type serialization with nlohmann json." OFF)
 
 if (BUILD_TESTS)
