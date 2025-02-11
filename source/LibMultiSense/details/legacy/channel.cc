@@ -811,6 +811,8 @@ std::optional<MultiSenseConfiguration> LegacyChannel::query_configuration(bool h
                        ptp_enabled);
     }
 
+    CRL_DEBUG("Unable to query the camera's configuration");
+
     return std::nullopt;
 }
 
