@@ -10,7 +10,7 @@ target_link_libraries(
     PRIVATE
     MultiSense)
 
-if (BUILD_JSON_SERIALIZATON)
+if (BUILD_JSON_SERIALIZATION)
     if(nlohmann_json_FOUND)
         target_compile_definitions(libmultisense PRIVATE BUILD_JSON="True")
     endif()
