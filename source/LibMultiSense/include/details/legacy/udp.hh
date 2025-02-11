@@ -89,11 +89,6 @@ private:
     socket_t m_socket;
 
     ///
-    /// @brief The host machine UDP port which data is received on
-    ///
-    uint16_t m_socket_port = 0;
-
-    ///
     /// @brief The rx_thread object which is spawned on construction
     ///
     std::thread m_rx_thread;

@@ -48,7 +48,6 @@ UdpReceiver::UdpReceiver(const NetworkSocket &socket,
                          size_t max_mtu,
                          std::function<void(const std::vector<uint8_t>&)> receive_callback):
     m_socket(socket.sensor_socket),
-    m_socket_port(socket.server_socket_port),
     m_stop(false),
     m_max_mtu(max_mtu),
     m_incoming_buffer(max_mtu, 0),
