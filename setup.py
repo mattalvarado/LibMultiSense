@@ -48,6 +48,7 @@ class CMakeBuild(build_ext):
             f"-DPYTHON_EXECUTABLE={sys.executable}",
             f"-DCMAKE_BUILD_TYPE={cfg}",  # not used on MSVC, but no harm
             f"-DBUILD_LEGACY_API=OFF",
+            f"-DBUILD_TESTS=OFF",
             f"-DBUILD_PYTHON_BINDINGS=ON",
             f"-DBUILD_JSON_SERIALIZATION=ON",
             f"-DBUILD_SHARED_LIBS=OFF"
