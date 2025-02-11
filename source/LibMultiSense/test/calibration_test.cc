@@ -161,6 +161,11 @@ TEST(is_valid, invalid)
     using namespace crl::multisense::details;
 
     wire::CameraCalData cal;
+    memset(cal.M, 0, sizeof(float) * 9);
+    memset(cal.D, 0, sizeof(float) * 8);
+    memset(cal.R, 0, sizeof(float) * 9);
+    memset(cal.P, 0, sizeof(float) * 12);
+
     ASSERT_FALSE(is_valid(cal));
 }
 
