@@ -220,13 +220,39 @@ struct Image
     CameraCalibration calibration;
 
     ///
+    /// @brief Get a pixel at a certain width/height location in the image.
+    ///        NOTE: This check is slower since it checks to make sure the request is safe. It
+    ///        should not be called repeatedly at high frequency
+    ///
+    template <typename T>
+    std::optional<T> at(int w, int h) const
+    {
+        if (w < 0 || h < 0 || w >= width || h >= height || raw_data == nullptr || format == PixelFormat::UNKNOWN)
+        {
+            return std::nullopt;
+        }
+
+        if ((sizeof(T) == 8 && format == PixelFormat::MONO8) ||
+            (sizeof(T) == 16 && format == PixelFormat::MONO16) ||
+            (sizeof(T) == 24 && format == PixelFormat::RGB8) ||
+            (sizeof(T) == 32 && format == PixelFormat::FLOAT32))
+        {
+            const size_t offset = sizeof(T) * ((width * h) + w);
+
+            return *reinterpret_cast<const T*>(raw_data->data() + image_data_offset + offset);
+        }
+
+        return std::nullopt;
+    }
+
+#ifdef HAVE_OPENCV
+    ///
     /// @brief Transform a image into a cv::Mat object if the user wants to build OpenCV utilities
     ///        The cv::Mat returned here wraps the underlying image data pointer associated with
     ///        the Image object. If the input Image object goes out of scope while you are still using
     ///        the corresponding cv::Mat, you will need to `clone` the cv::Mat creating an internal copy
     ///        of all the data
     ///
-#ifdef HAVE_OPENCV
     cv::Mat cv_mat() const;
 #endif
 };
@@ -880,6 +906,24 @@ struct MultiSenseStatus
         ///        machine sent the status request, and received the status response
         ///
         std::chrono::nanoseconds network_delay{0};
+
+        ///
+        /// @brief Compute the time offset which can manually be added to all camera timestamps to
+        ///        change the camera timestamps from the reference clock of the camera into reference clock of the host
+        ///
+        std::chrono::nanoseconds offset_to_host() const
+        {
+            return (client_host_time + network_delay) - camera_time;
+        }
+
+        ///
+        /// @brief Apply the time offset to a camera timestamps to camera timestamp from the reference clock of
+        ///        the camera into reference clock of the host
+        ///
+        std::chrono::system_clock::time_point apply_offset_to_host(const std::chrono::system_clock::time_point &input_camera_time) const
+        {
+            return input_camera_time + offset_to_host();
+        }
     };
 
     ///
@@ -1216,7 +1260,7 @@ struct MultiSenseInfo
         ///
         /// @brief Supported operating disparity
         ///
-        MultiSenseConfiguration::MaxDisparities disparities = MultiSenseConfiguration::MaxDisparities::D64;
+        MultiSenseConfiguration::MaxDisparities disparities = MultiSenseConfiguration::MaxDisparities::D256;
 
         ///
         /// @brief Data sources supported at that mode

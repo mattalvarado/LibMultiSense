@@ -397,7 +397,9 @@ PYBIND11_MODULE(libmultisense, m) {
         PYBIND11_JSON_SUPPORT(multisense::MultiSenseStatus::TimeStatus)
         .def_readwrite("camera_time", &multisense::MultiSenseStatus::TimeStatus::camera_time)
         .def_readwrite("client_host_time", &multisense::MultiSenseStatus::TimeStatus::client_host_time)
-        .def_readwrite("network_delay", &multisense::MultiSenseStatus::TimeStatus::network_delay);
+        .def_readwrite("network_delay", &multisense::MultiSenseStatus::TimeStatus::network_delay)
+        .def("offset_to_host", &multisense::MultiSenseStatus::TimeStatus::offset_to_host)
+        .def("apply_offset_to_host", &multisense::MultiSenseStatus::TimeStatus::apply_offset_to_host);
 
     // MultiSenseStatus
     py::class_<multisense::MultiSenseStatus>(m, "MultiSenseStatus")

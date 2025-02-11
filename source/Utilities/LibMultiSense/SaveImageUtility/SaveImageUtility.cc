@@ -164,6 +164,7 @@ int main(int argc, char** argv)
             {
                 for (const auto &[source, image]: image_frame->images)
                 {
+
                     const auto path = std::to_string(image_frame->frame_id) +  "_" +
                                       std::to_string(static_cast<int>(source)) + ".pgm";
                     lms::write_image(image, path);
