@@ -184,16 +184,16 @@ CameraCalibration scale_calibration(const CameraCalibration &input, double x_sca
 {
     auto output = input;
 
-    output.K[0][0] *= x_scale; // fx
-    output.K[0][2] *= x_scale; // cx
-    output.K[1][1] *= y_scale; // fy
-    output.K[1][2] *= y_scale; // cy
+    output.K[0][0] = static_cast<float>(static_cast<double>(output.K[0][0]) * x_scale); // fx
+    output.K[0][2] = static_cast<float>(static_cast<double>(output.K[0][2]) * x_scale); // cx
+    output.K[1][1] = static_cast<float>(static_cast<double>(output.K[1][1]) * y_scale); // fy
+    output.K[1][2] = static_cast<float>(static_cast<double>(output.K[1][2]) * y_scale); // cy
 
-    output.P[0][0] *= x_scale; // fx
-    output.P[0][2] *= x_scale; // cx
-    output.P[0][3] *= x_scale; // fx * tx
-    output.P[1][1] *= y_scale; // fy
-    output.P[1][2] *= y_scale; // cy
+    output.P[0][0] = static_cast<float>(static_cast<double>(output.P[0][0]) * x_scale); // fx
+    output.P[0][2] = static_cast<float>(static_cast<double>(output.P[0][2]) * x_scale); // cx
+    output.P[0][3] = static_cast<float>(static_cast<double>(output.P[0][3]) * x_scale); // fx * tx
+    output.P[1][1] = static_cast<float>(static_cast<double>(output.P[1][1]) * y_scale); // fy
+    output.P[1][2] = static_cast<float>(static_cast<double>(output.P[1][2]) * y_scale); // cy
 
     return output;
 }
