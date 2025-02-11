@@ -5,7 +5,7 @@ set(MULTISENSE_HEADERS include/MultiSense/MultiSenseChannel.hh
                        include/MultiSense/MultiSenseTypes.hh
                        include/MultiSense/MultiSenseUtilities.hh)
 
-if (BUILD_JSON_SERIALIZATON)
+if (BUILD_JSON_SERIALIZATION)
     if(nlohmann_json_FOUND)
         list("APPEND" MULTISENSE_HEADERS include/MultiSense/MultiSenseSerialization.hh)
     endif()
@@ -39,7 +39,7 @@ target_include_directories(MultiSense
         PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         PUBLIC $<INSTALL_INTERFACE:include>)
 
-if (USE_OPENCV)
+if (BUILD_OPENCV)
   if(OpenCV_FOUND)
     target_compile_definitions(MultiSense PRIVATE HAVE_OPENCV)
 

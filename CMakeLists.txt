@@ -41,9 +41,9 @@ option(BUILD_LEGACY_API "Build the legacy MultiSense API. Defaults to On for bac
 option(MULTISENSE_BUILD_UTILITIES "Build MultiSense utility applications. Defaults to ON for backwards compatibility." ON)
 option(BUILD_SHARED_LIBS "Build LibMultiSense as a shared library. Defaults to ON." ON)
 option(BUILD_TESTS "Build LibMultiSense GTests. Defaults to ON." ON)
-option(USE_OPENCV "Use OpenCV if found on the host system" OFF)
+option(BUILD_OPENCV "Use OpenCV if found on the host system" OFF)
 option(BUILD_PYTHON_BINDINGS "Build Python bindings with pybind11." ON)
-option(BUILD_JSON_SERIALIZATON "Build json type serialization with nlohmann json." ON)
+option(BUILD_JSON_SERIALIZATION "Build json type serialization with nlohmann json." OFF)
 
 if (BUILD_TESTS)
     enable_testing()
@@ -89,7 +89,7 @@ set (CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 #
 # Setup optional dependencies
 #
-if (USE_OPENCV)
+if (BUILD_OPENCV)
    find_package(OpenCV QUIET)
 
   if(OpenCV_FOUND)
@@ -99,7 +99,7 @@ if (USE_OPENCV)
   endif()
 endif()
 
-if (BUILD_JSON_SERIALIZATON)
+if (BUILD_JSON_SERIALIZATION)
     find_package(nlohmann_json 3.9)
     if(nlohmann_json_FOUND)
         message(STATUS "Building JSON serialization helper functions")
