@@ -2,7 +2,14 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(MULTISENSE_HEADERS include/MultiSense/MultiSenseChannel.hh
-                       include/MultiSense/MultiSenseTypes.hh)
+                       include/MultiSense/MultiSenseTypes.hh
+                       include/MultiSense/MultiSenseUtilities.hh)
+
+if (BUILD_JSON_SERIALIZATON)
+    if(nlohmann_json_FOUND)
+        list("APPEND" MULTISENSE_HEADERS include/MultiSense/MultiSenseSerialization.hh)
+    endif()
+endif()
 
 set(DETAILS_SRC details/factory.cc
                 details/utilities.cc

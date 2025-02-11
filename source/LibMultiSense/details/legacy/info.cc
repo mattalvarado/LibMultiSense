@@ -75,7 +75,7 @@ MultiSenseInfo::DeviceInfo convert(const crl::multisense::details::wire::SysDevi
         default: {CRL_EXCEPTION("Unsupported hardware revision");}
     }
 
-    output.number_of_pcbs = info.numberOfPcbs;
+    output.pcb_info.resize(info.numberOfPcbs);
     for (uint32_t i = 0; i < info.numberOfPcbs; ++i)
     {
         output.pcb_info[i].name = info.pcbs[i].name;
@@ -166,8 +166,8 @@ crl::multisense::details::wire::SysDeviceInfo convert(const MultiSenseInfo::Devi
         default: {CRL_EXCEPTION("Unsupported hardware revision");}
     }
 
-    output.numberOfPcbs = info.number_of_pcbs;
-    for (uint32_t i = 0; i < info.number_of_pcbs; ++i)
+    output.numberOfPcbs = info.pcb_info.size();
+    for (uint32_t i = 0; i < info.pcb_info.size(); ++i)
     {
         output.pcbs[i].name = info.pcb_info[i].name;
         output.pcbs[i].revision = info.pcb_info[i].revision;

@@ -10,14 +10,10 @@ target_link_libraries(
     PRIVATE
     MultiSense)
 
-if (USE_OPENCV)
-  if(OpenCV_FOUND)
-    target_compile_definitions(libmultisense PRIVATE HAVE_OPENCV)
-
-    target_include_directories(libmultisense PUBLIC ${OpenCV_INCLUDE_DIRS})
-
-    target_link_libraries(libmultisense PRIVATE ${OpenCV_LIBS})
-  endif()
+if (BUILD_JSON_SERIALIZATON)
+    if(nlohmann_json_FOUND)
+        target_compile_definitions(libmultisense PRIVATE BUILD_JSON="True")
+    endif()
 endif()
 
 

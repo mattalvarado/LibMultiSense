@@ -169,7 +169,6 @@ multisense::MultiSenseInfo::DeviceInfo create_info(const std::string &name)
     info.build_date = "2024";
     info.serial_number = "4501";
     info.hardware_revision = MultiSenseInfo::DeviceInfo::HardwareRevision::KS21;
-    info.number_of_pcbs = 1;
     info.pcb_info = {MultiSenseInfo::DeviceInfo::PcbInfo{name, 12345}};
     info.imager_name = name;
     info.imager_type = MultiSenseInfo::DeviceInfo::ImagerType::AR0239_COLOR;
@@ -227,7 +226,7 @@ void check_equal(const crl::multisense::details::wire::SysDeviceInfo &wire,
         default: {CRL_EXCEPTION("Unsupported hardware revision");}
     }
 
-    ASSERT_EQ(wire.numberOfPcbs, info.number_of_pcbs);
+    ASSERT_EQ(wire.numberOfPcbs, info.pcb_info.size());
 
     for (uint32_t i = 0; i < wire.numberOfPcbs ; ++i)
     {

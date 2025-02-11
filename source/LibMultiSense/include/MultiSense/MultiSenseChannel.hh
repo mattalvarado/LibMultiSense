@@ -1,5 +1,5 @@
 /**
- * @file LibMultiSense/MultiSenseTypes.hh
+ * @file MultiSenseChannel.hh
  *
  * Copyright 2013-2025
  * Carnegie Robotics, LLC
@@ -41,9 +41,7 @@
 
 #include "MultiSenseTypes.hh"
 
-namespace multisense
-{
-
+namespace multisense {
 
 class Channel {
 public:
@@ -69,19 +67,19 @@ public:
         ///
         /// @brief The number of small buffers to preallocate for receiving small MultiSense messages
         ///
-        size_t num_small_buffers = 0;
+        size_t num_small_buffers = 100;
         ///
         /// @brief The size of each small buffer in bytes
         ///
-        size_t small_buffer_size = 0;
+        size_t small_buffer_size = 1500;
         ///
         /// @brief The number of large buffers to preallocate for receiving MultiSense sensor data
         ///
-        size_t num_large_buffers = 0;
+        size_t num_large_buffers = 16;
         ///
         /// @brief The size of each small buffer in bytes
         ///
-        size_t large_buffer_size = 0;
+        size_t large_buffer_size = 1920*1200*3;
     };
 
     struct ChannelConfig
@@ -119,7 +117,7 @@ public:
         /// @brief Configuration for the number and size of internal buffers used to receive data without
         ///        recurring memory allocations. May only be valid for certain implementations
         ///
-        ReceiveBufferConfiguration receive_buffer_configuration{100, 1500, 16, 1920*1200*3};
+        ReceiveBufferConfiguration receive_buffer_configuration{};
     };
 
     ///

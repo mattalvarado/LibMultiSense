@@ -1,5 +1,5 @@
 /**
- * @file LibMultiSense/MultiSenseTypes.hh
+ * @file MultiSenseTypes.hh
  *
  * Copyright 2013-2025
  * Carnegie Robotics, LLC
@@ -53,14 +53,14 @@
 namespace multisense
 {
 
-enum class Status
+enum class Status : uint8_t
 {
+    UNKNOWN,
     OK,
     TIMEOUT,
     ERROR,
     FAILED,
     UNSUPPORTED,
-    UNKNOWN,
     EXCEPTION,
     UNINITIALIZED
 };
@@ -68,7 +68,7 @@ enum class Status
 ///
 /// @brief Identifies which camera or data source the image is from
 ///
-enum class DataSource
+enum class DataSource : uint16_t
 {
     UNKNOWN,
     ALL,
@@ -97,7 +97,7 @@ struct CameraCalibration
     ///
     /// @brief Distortion type
     ///
-    enum class DistortionType
+    enum class DistortionType : uint8_t
     {
         NONE,
         PLUMBOB,
@@ -158,7 +158,7 @@ struct Image
     ///
     /// @brief Pixel formats
     ///
-    enum class PixelFormat
+    enum class PixelFormat : uint8_t
     {
         UNKNOWN,
         MONO8,
@@ -580,7 +580,7 @@ struct MultiSenseConfiguration
     /// @brief Predefined disparity pixel search windows. Larger values allows the camera to see objects
     ///        closer to the camera
     ///
-    enum class MaxDisparities
+    enum class MaxDisparities : uint8_t
     {
         ///
         /// @brief 64 pixels
@@ -680,7 +680,7 @@ struct MultiSenseConfiguration
         ///
         /// @brief Different flash modes for the camera
         ///
-        enum class FlashMode
+        enum class FlashMode : uint8_t
         {
             NONE,
             SYNC_WITH_MAIN_STEREO,
@@ -964,7 +964,7 @@ struct MultiSenseInfo
         ///
         /// @brief MultiSense Hardware revisions
         ///
-        enum class HardwareRevision
+        enum class HardwareRevision : uint8_t
         {
             UNKNOWN,
             S7,
@@ -982,7 +982,7 @@ struct MultiSenseInfo
         ///
         /// @brief Different imager types
         ///
-        enum class ImagerType
+        enum class ImagerType : uint8_t
         {
             UNKNOWN,
             CMV2000_GREY,
@@ -997,7 +997,7 @@ struct MultiSenseInfo
         ///
         /// @brief MultiSense lighting types
         ///
-        enum class LightingType
+        enum class LightingType : uint8_t
         {
             ///
             /// @brief No lights
@@ -1020,7 +1020,7 @@ struct MultiSenseInfo
         //
         // TODO(malvarado): Populate this with valid inputs
         //
-        enum class LensType
+        enum class LensType : uint8_t
         {
             UNKNOWN
         };
@@ -1028,89 +1028,84 @@ struct MultiSenseInfo
         ///
         /// @brief The name of the MultiSense variant
         ///
-        std::string camera_name;
+        std::string camera_name{};
 
         ///
         /// @brief The date the MultiSense was manufactured
         ///
-        std::string build_date;
+        std::string build_date{};
 
         ///
         /// @brief The unique serial number of the MultiSense
         ///
-        std::string serial_number;
+        std::string serial_number{};
 
         ///
         /// @brief The hardware revision of the MultiSense
         ///
-        HardwareRevision hardware_revision;
-
-        ///
-        /// @brief The number of valid pcb_info objects
-        ///
-        uint8_t number_of_pcbs;
+        HardwareRevision hardware_revision{};
 
         ///
         /// @brief Information about each PCB
         ///
-        std::array<PcbInfo, 8>  pcb_info;
+        std::vector<PcbInfo> pcb_info{};
 
         ///
         /// @brief The name of the imager used by the primary camera. For stereo cameras this is the
         ///        Left/Right stereo pair. For mono cameras this is the single imager
         ///
-        std::string imager_name;
+        std::string imager_name{};
 
         ///
         /// @brief The type of the imager
         ///
-        ImagerType  imager_type;
+        ImagerType imager_type{};
 
         ///
         /// @brief The native width of the primary imager
         ///
-        uint32_t imager_width;
+        uint32_t imager_width = 0;
 
         ///
         /// @brief The native height of the primary imager
         ///
-        uint32_t imager_height;
+        uint32_t imager_height = 0;
 
         ///
         /// @brief The name of the lens used for the primary camera For stereo cameras this is the
         ///        Left/Right stereo pair. For mono cameras this is the single camera
         ///
-        std::string lens_name;
+        std::string lens_name{};
 
         ///
         /// @brief The type of the primary imager
         ///
-        LensType lens_type;
+        LensType lens_type{};
 
         ///
         /// @brief The nominal stereo baseline in meters
         ///
-        float nominal_stereo_baseline;
+        float nominal_stereo_baseline = 0.0f;
 
         ///
         /// @brief The nominal focal length for the primary lens in meters
         ///
-        float nominal_focal_length;
+        float nominal_focal_length = 0.0f;
 
         ///
         /// @brief The nominal relative aperture for the primary camera modules in f-stop
         ///
-        float nominal_relative_aperture;
+        float nominal_relative_aperture = 0.0f;
 
         ///
         /// @brief The type of lighting used in the MultiSense
         ///
-        LightingType lighting_type;
+        LightingType lighting_type{};
 
         ///
         /// @brief The number of lights the MultiSense controls
         ///
-        uint32_t number_of_lights;
+        uint32_t number_of_lights = 0;
 
         ///
         /// @brief Determine if the MultiSense has a Aux color camera based on the DeviceInfo
