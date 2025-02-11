@@ -36,6 +36,7 @@
 
 #pragma once
 
+#include <array>
 #include <chrono>
 #include <cstdint>
 #include <map>
@@ -107,19 +108,19 @@ struct CameraCalibration
     ///
     /// @brief Unrectified camera projection matrix stored in row-major ordering
     ///
-    std::array<std::array<float, 3>, 3> K = {{{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}}};
+    std::array<std::array<float, 3>, 3> K{{{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}}};
 
     ///
     /// @brief Rotation matrix which takes points in the unrectified camera frame and transform
     ///        them in to the rectified coordinate frame
     ///
-    std::array<std::array<float, 3>, 3> R = {{{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}}};
+    std::array<std::array<float, 3>, 3> R{{{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}}};
 
     ///
     /// @brief Rectified projection matrix which takes points in the origin camera coordinate
     ///        frame and projects them into the current camera
     ///
-    std::array<std::array<float, 4>, 3> P = {{{0.0, 0.0, 0.0, 0.0}, {0.0, 0.0, 0.0, 0.0}, {0.0, 0.0, 0.0, 0.0}}};
+    std::array<std::array<float, 4>, 3> P{{{0.0, 0.0, 0.0, 0.0}, {0.0, 0.0, 0.0, 0.0}, {0.0, 0.0, 0.0, 0.0}}};
 
     ///
     /// @brief The type of the distortion model used for the unrectified camera
@@ -798,7 +799,7 @@ struct MultiSenseStatus
         ///
         /// @brief The id of the current grandmaster clock (8 bytes, 0xXXXXXX.XXXX.XXXXXX)
         ///
-        std::array<uint8_t, 8> grandmaster_id = {0, 0, 0, 0, 0, 0, 0, 0};
+        std::array<uint8_t, 8> grandmaster_id{0, 0, 0, 0, 0, 0, 0, 0};
 
         ///
         /// @brief Offset between the camera's PTP Hardware Clock and the grandmaster clock
