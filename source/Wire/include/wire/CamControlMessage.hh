@@ -40,6 +40,8 @@
 #ifndef LibMultiSense_CamControlMessage
 #define LibMultiSense_CamControlMessage
 
+#include <vector>
+
 #include "utility/Portability.hh"
 #include "wire/ExposureConfigMessage.hh"
 #include "wire/Protocol.hh"
