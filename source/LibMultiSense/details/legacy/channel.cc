@@ -372,6 +372,8 @@ Status LegacyChannel::set_configuration(const MultiSenseConfiguration &config)
 
     std::lock_guard<std::mutex> lock(m_mutex);
 
+    std::vector<Status> responses{};
+
     //
     // Set the camera resolution
     //
@@ -382,12 +384,9 @@ Status LegacyChannel::set_configuration(const MultiSenseConfiguration &config)
                                       m_current_mtu,
                                       m_config.receive_timeout);
 
-    //
-    // Bail early if we failed to set the resolution
-    //
     if (!res_ack || res_ack->status != wire::Ack::Status_Ok)
     {
-        return get_status(res_ack->status);
+        responses.push_back(get_status(res_ack->status));
     }
 
     //
@@ -400,12 +399,9 @@ Status LegacyChannel::set_configuration(const MultiSenseConfiguration &config)
                                       m_current_mtu,
                                       m_config.receive_timeout);
 
-    //
-    // Bail early if we failed to set the main stereo controls
-    //
     if (!cam_ack || cam_ack->status != wire::Ack::Status_Ok)
     {
-        return get_status(cam_ack->status);
+        responses.push_back(get_status(cam_ack->status));
     }
 
     //
@@ -422,12 +418,9 @@ Status LegacyChannel::set_configuration(const MultiSenseConfiguration &config)
                                           m_transmit_id++,
                                           m_current_mtu,
                                           m_config.receive_timeout);
-        //
-        // Bail early if we failed to set the aux controls
-        //
         if (!aux_ack || aux_ack->status != wire::Ack::Status_Ok)
         {
-            return get_status(aux_ack->status);
+            responses.push_back(get_status(aux_ack->status));
         }
     }
 
@@ -445,12 +438,9 @@ Status LegacyChannel::set_configuration(const MultiSenseConfiguration &config)
                                           m_transmit_id++,
                                           m_current_mtu,
                                           m_config.receive_timeout);
-        //
-        // Bail early if we failed to set the imu controls
-        //
         if (!imu_ack || imu_ack->status != wire::Ack::Status_Ok)
         {
-            return get_status(imu_ack->status);
+            responses.push_back(get_status(imu_ack->status));
         }
     }
 
@@ -468,12 +458,9 @@ Status LegacyChannel::set_configuration(const MultiSenseConfiguration &config)
                                                m_transmit_id++,
                                                m_current_mtu,
                                                m_config.receive_timeout);
-        //
-        // Bail early if we failed to set the lighting controls
-        //
         if (!lighting_ack || lighting_ack->status != wire::Ack::Status_Ok)
         {
-            return get_status(lighting_ack->status);
+            responses.push_back(get_status(lighting_ack->status));
         }
     }
 
@@ -487,12 +474,9 @@ Status LegacyChannel::set_configuration(const MultiSenseConfiguration &config)
                                       m_current_mtu,
                                       m_config.receive_timeout);
 
-    //
-    // Bail early if we failed to set the ptp config controls
-    //
     if (!ptp_ack || ptp_ack->status != wire::Ack::Status_Ok)
     {
-        return get_status(ptp_ack->status);
+        responses.push_back(get_status(ptp_ack->status));
     }
 
     //
@@ -507,8 +491,18 @@ Status LegacyChannel::set_configuration(const MultiSenseConfiguration &config)
 
     if (!packet_ack || packet_ack->status != wire::Ack::Status_Ok)
     {
-        return get_status(packet_ack->status);
+        responses.push_back(get_status(packet_ack->status));
     }
+
+    const auto errors = std::any_of(std::begin(responses), std::end(responses),
+                                    [](const auto &e)
+                                    {
+                                        return (e == Status::ERROR ||
+                                                e == Status::FAILED ||
+                                                e == Status::EXCEPTION);
+                                    });
+
+    const auto final_status = responses.empty() ? Status::OK : (errors ? Status::ERROR : Status::INCOMPLETE_APPLICATION);
 
     //
     // Update our internal cached image config after we successfully set everything
@@ -519,7 +513,7 @@ Status LegacyChannel::set_configuration(const MultiSenseConfiguration &config)
                                                     ptp_enabled); new_config)
     {
         m_multisense_config = new_config.value();
-        return Status::OK;
+        return final_status;
     }
 
     return Status::ERROR;
@@ -778,13 +772,13 @@ std::optional<MultiSenseConfiguration> LegacyChannel::query_configuration(bool h
                                                                   m_current_mtu,
                                                                   m_config.receive_timeout);
 
-    if (camera_config && packet_delay)
+    if (camera_config)
     {
         return convert(camera_config.value(),
                        aux_config,
                        imu_config,
                        led_config,
-                       packet_delay.value(),
+                       packet_delay ? packet_delay.value() : wire::SysPacketDelay{false},
                        ptp_enabled,
                        m_info.device);
     }

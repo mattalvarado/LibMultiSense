@@ -85,7 +85,8 @@ PYBIND11_MODULE(libmultisense, m) {
         .value("UNSUPPORTED", multisense::Status::UNSUPPORTED)
         .value("UNKNOWN", multisense::Status::UNKNOWN)
         .value("EXCEPTION", multisense::Status::EXCEPTION)
-        .value("UNINITIALIZED", multisense::Status::UNINITIALIZED);
+        .value("UNINITIALIZED", multisense::Status::UNINITIALIZED)
+        .value("INCOMPLETE_APPLICATION", multisense::Status::INCOMPLETE_APPLICATION);
 
     // DataSource
     py::enum_<multisense::DataSource>(m, "DataSource")
