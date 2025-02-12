@@ -502,6 +502,9 @@ Status LegacyChannel::set_configuration(const MultiSenseConfiguration &config)
                                                 e == Status::EXCEPTION);
                                     });
 
+    //
+    // TODO (malvarado): Check equality
+    //
     const auto final_status = responses.empty() ? Status::OK : (errors ? Status::ERROR : Status::INCOMPLETE_APPLICATION);
 
     //

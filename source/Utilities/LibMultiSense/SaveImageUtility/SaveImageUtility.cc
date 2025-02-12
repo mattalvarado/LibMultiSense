@@ -142,6 +142,10 @@ int main(int argc, char** argv)
         std::cerr << "Cannot set config" << std::endl;
         return 1;
     }
+    else if (status == lms::Status::INCOMPLETE_APPLICATION)
+    {
+        std::cerr << "Some config settings failed to apply consider updating your camera's firmware version" << std::endl;
+    }
 
     //
     // Start a single image stream

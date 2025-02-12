@@ -33,6 +33,23 @@ jobs:
           make -C build test
           cmake --install build
 
+  buildmacos:
+    name: build for macos
+    runs-on: macOS-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - id: build-release
+      run: |
+          cmake -B ${{github.workspace}}/build -DBUILD_LEGACY_API=OFF -DBUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
+          cmake --build build -j "$(nproc)"
+          cmake --install build
+    - id: build-debug
+      run: |
+          cmake -B ${{github.workspace}}/build -DBUILD_LEGACY_API=OFF -DBUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Debug
+          cmake --build build -j "$(nproc)"
+          cmake --install build
+
   buildwindows:
     name: build for windows
     runs-on: windows-2022
@@ -47,3 +64,5 @@ jobs:
       run: |
           cmake -B ${{github.workspace}}/build -DBUILD_LEGACY_API=OFF -DBUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Debug
           cmake --build ${{github.workspace}}/build --config Debug --target install -- /m:10
+
+

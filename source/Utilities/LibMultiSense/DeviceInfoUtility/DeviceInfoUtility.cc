@@ -71,9 +71,6 @@ void usage(const char *name)
     std::cerr << "Where <options> are:" << std::endl;
     std::cerr << "\t-a <current_address> : CURRENT IPV4 address (default=10.66.171.21)" << std::endl;
     std::cerr << "\t-m <mtu>             : MTU to use to communicate with the camera (default=1500)" << std::endl;
-    std::cerr << "\t-s <file-path>       : The file path to the device info to set" << std::endl;
-    std::cerr << "\t-k <key>             : The key required to set the device info" << std::endl;
-    std::cerr << "\t-y                   : Disable the confirmation prompt" << std::endl;
     exit(1);
 }
 
@@ -83,9 +80,6 @@ int main(int argc, char** argv)
 {
     std::string ip_address = "10.66.171.21";
     int16_t mtu = 1500;
-    std::optional<std::filesystem::path> device_info_path = std::nullopt;
-    std::string key = "";
-    bool disable_confirmation = false;
 
     int c;
     while(-1 != (c = getopt(argc, argv, "a:m:s:k:y")))
@@ -94,9 +88,6 @@ int main(int argc, char** argv)
         {
             case 'a': ip_address = std::string(optarg); break;
             case 'm': mtu = atoi(optarg); break;
-            case 's': device_info_path = optarg; break;
-            case 'k': key = optarg; break;
-            case 'y': disable_confirmation = true; break;
             default: usage(*argv); break;
         }
     }
@@ -108,36 +99,8 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    if (device_info_path)
-    {
-        if (!disable_confirmation)
-        {
-            std::cout << "Really update device information? (y/n):" << std::endl;
-            int reply = getchar();
-            if ('Y' != reply && 'y' != reply)
-            {
-                std::cout << "Aborting" << std::endl;
-                return 1;
-            }
-        }
-
-        std::ifstream f(device_info_path.value());
-        const auto device_info = json::parse(f).template get<lms::MultiSenseInfo::DeviceInfo>();
-
-        if (const auto status = channel->set_device_info(device_info, key); status != lms::Status::OK)
-        {
-            std::cerr << "Failed to set device info: " << lms::to_string(status) << std::endl;
-            return 1;
-        }
-
-        std::cout << "Succesfully set device info" << std::endl;
-        return 0;
-    }
-    else
-    {
-        const json info = channel->get_info().device;
-        std::cout << info.dump(4) << std::endl;
-    }
+    const json info = channel->get_info().device;
+    std::cout << info.dump(4) << std::endl;
 
     return 0;
 }

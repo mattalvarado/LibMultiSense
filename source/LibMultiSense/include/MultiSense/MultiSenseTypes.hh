@@ -109,19 +109,19 @@ struct CameraCalibration
     ///
     /// @brief Unrectified camera projection matrix stored in row-major ordering
     ///
-    std::array<std::array<float, 3>, 3> K{{{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}}};
+    std::array<std::array<float, 3>, 3> K{{{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}}};
 
     ///
     /// @brief Rotation matrix which takes points in the unrectified camera frame and transform
     ///        them in to the rectified coordinate frame
     ///
-    std::array<std::array<float, 3>, 3> R{{{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}}};
+    std::array<std::array<float, 3>, 3> R{{{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}}};
 
     ///
     /// @brief Rectified projection matrix which takes points in the origin camera coordinate
     ///        frame and projects them into the current camera
     ///
-    std::array<std::array<float, 4>, 3> P{{{0.0, 0.0, 0.0, 0.0}, {0.0, 0.0, 0.0, 0.0}, {0.0, 0.0, 0.0, 0.0}}};
+    std::array<std::array<float, 4>, 3> P{{{0.0f, 0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f, 0.0f}}};
 
     ///
     /// @brief The type of the distortion model used for the unrectified camera
@@ -332,17 +332,17 @@ struct ImuSample
         ///
         /// @brief Measurement on the x-axis of the sensor
         ///
-        float x = 0.0;
+        float x = 0.0f;
 
         ///
         /// @brief Measurement on the y-axis of the sensor
         ///
-        float y = 0.0;
+        float y = 0.0f;
 
         ///
         /// @brief Measurement on the z-axis of the sensor
         ///
-        float z = 0.0;
+        float z = 0.0f;
     };
 
     ///
@@ -400,7 +400,7 @@ struct MultiSenseConfiguration
         ///        host. Larger numbers indicate more aggressive filtering.
         ///        Valid range is [0, 1.0]
         ///
-        float postfilter_strength = 0.85;
+        float postfilter_strength = 0.85f;
     };
 
     ///
@@ -412,7 +412,7 @@ struct MultiSenseConfiguration
         /// @brief The desired electrical and digital gain used to brighten the image.
         ///        Valid range is [1.6842, 16]
         ///
-        float gain = 1.68;
+        float gain = 1.68f;
 
         ///
         /// @brief The manual exposure time in microseconds
@@ -469,18 +469,18 @@ struct MultiSenseConfiguration
         ///        The auto exposure algorithm tries to drive the target_threshold percentage of pixels below the target
         ///        intensity value
         ///
-        float target_intensity = 0.5;
+        float target_intensity = 0.5f;
 
         ///
         /// @brief The ratio of pixels which must be equal or below the pixel value set by the target intensity setting.
         ///
-        float target_threshold = 0.85;
+        float target_threshold = 0.85f;
 
         ///
         /// @brief The auto exposure algorithm adjusts both exposure and gain. This caps the gain the auto exposure
         ///        algorithm can use
         ///
-        float max_gain = 2.0;
+        float max_gain = 2.0f;
 
         ///
         /// @brief The auto exposure region-of-interest used to restrict the portion of the image which the
@@ -498,13 +498,13 @@ struct MultiSenseConfiguration
         /// @brief The manual red white-balance setting
         ///        Valid range is [0.25, 4]
         ///
-        float red = 1.0;
+        float red = 1.0f;
 
         ///
         /// @brief The manual blue white-balance setting
         ///        Valid range is [0.25, 4]
         ///
-        float blue = 1.0;
+        float blue = 1.0f;
     };
 
     ///
@@ -522,7 +522,7 @@ struct MultiSenseConfiguration
         /// @brief The auto white balance threshold
         ///        Valid range [0.0, 1.0]
         ///
-        float threshold = 0.5;
+        float threshold = 0.5f;
     };
 
     ///
@@ -534,7 +534,7 @@ struct MultiSenseConfiguration
         /// @brief Set the gamma correction for the image.
         ///        Valid range [1.0, 2,2]
         ///
-        float gamma = 2.2;
+        float gamma = 2.2f;
 
         ///
         /// @brief Enable HDR. Note this is not supported by the default MultiSense firmware. Please contact
@@ -592,7 +592,7 @@ struct MultiSenseConfiguration
         /// @brief The percentage of the aux image to sharpen
         ///        Valid range is [0, 100]
         ///
-        float sharpening_percentage = 50.0;
+        float sharpening_percentage = 50.0f;
 
         ///
         ///
@@ -717,6 +717,7 @@ struct MultiSenseConfiguration
 
     ///
     /// @brief Lighting configuration for the camera
+    /// TODO (malvarado) Handle serialization explicitly since optionals of optionals are not supported
     ///
     struct LightingConfiguration
     {
@@ -803,7 +804,7 @@ struct MultiSenseConfiguration
     ///
     /// @brief The target framerate the MultiSense should operate at
     ///
-    float frames_per_second = 10;
+    float frames_per_second = 10.0f;
 
     ///
     /// @brief The stereo configuration to use

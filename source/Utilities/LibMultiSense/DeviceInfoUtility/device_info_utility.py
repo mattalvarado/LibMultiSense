@@ -50,32 +50,13 @@ def main(args):
         print("Invalid channel")
         exit(1)
 
-    if args.set_file_path:
-        if not args.skip_confirm:
-            reply = input("Really update device information? (y/n): ")
-            if reply not in ('y', 'Y'):
-                print("Aborting")
-                exit(1)
-
-        with open(args.set_file_path) as f:
-            info = lms.DeviceInfo(json.load(f))
-
-            status = channel.set_device_info(info, "12")
-            if status != lms.Status.OK:
-                print("Failed to set device info:", lms.to_string(status))
-                exit(1)
-            print("Succesfully set device info")
-    else:
-        print(json.dumps(channel.get_info().device.json,
-                         sort_keys=True,
-                         indent=4,
-                         separators=(',', ': ')))
+    print(json.dumps(channel.get_info().device.json,
+                     sort_keys=True,
+                     indent=4,
+                     separators=(',', ': ')))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser("LibMultiSense save image utility")
     parser.add_argument("-a", "--ip_address", default="10.66.171.21", help="The IPv4 address of the MultiSense.")
     parser.add_argument("-m", "--mtu", type=int, default=1500, help="The MTU to use to communicate with the camera.")
-    parser.add_argument("-s", "--set-file-path", help="The path to the device info to send to the camera")
-    parser.add_argument("-k", "--key", help="Key to allow device info to be written to the camera")
-    parser.add_argument("-y", "--skip-confirm", action="store_true", help="Disable the confirmation prompts")
     main(parser.parse_args())
