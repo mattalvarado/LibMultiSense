@@ -780,7 +780,6 @@ std::optional<MultiSenseConfiguration> LegacyChannel::query_configuration(bool h
 
     if (camera_config && packet_delay)
     {
-        std::lock_guard<std::mutex> lock(m_mutex);
         return convert(camera_config.value(),
                        aux_config,
                        imu_config,
