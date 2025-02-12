@@ -984,7 +984,7 @@ struct MultiSenseStatus
         ///
         std::chrono::system_clock::time_point apply_offset_to_host(const std::chrono::system_clock::time_point &input_camera_time) const
         {
-            return input_camera_time + offset_to_host();
+            return input_camera_time + std::chrono::duration_cast<std::chrono::system_clock::duration>(offset_to_host());
         }
     };
 
