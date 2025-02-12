@@ -59,7 +59,7 @@ CameraCalibration convert(const crl::multisense::details::wire::CameraCalData &c
                                  CameraCalibration::DistortionType::PLUMBOB :
                                  CameraCalibration::DistortionType::RATIONAL_POLYNOMIAL;
 
-    CameraCalibration output;
+    CameraCalibration output{};
 
     CPY_ARRAY_2(output.K, cal.M, 3, 3);
     CPY_ARRAY_2(output.R, cal.R, 3, 3);
@@ -105,7 +105,7 @@ StereoCalibration convert(const crl::multisense::details::wire::SysCameraCalibra
 {
     using namespace crl::multisense::details;
 
-    StereoCalibration output;
+    StereoCalibration output{};
 
     output.left = convert(cal.left);
     output.right = convert(cal.right);

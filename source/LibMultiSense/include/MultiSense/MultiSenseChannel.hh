@@ -94,7 +94,7 @@ public:
         ///        will trigger a automatic search for the largest available MTU. For more information
         ///        on MTU see: https://docs.carnegierobotics.com/network/network.html#mtu
         ///
-        std::optional<int16_t> mtu = 1500;
+        std::optional<int16_t> mtu = static_cast<uint16_t>(1500);
 
         ///
         /// @brief Timeout to use when waiting for MultiSense command responses. Setting the timeout to nullopt
@@ -106,7 +106,7 @@ public:
         /// @brief The UDP port on the MultiSense which accepts user commands. All production firmware builds use
         ///        port 9001
         ///
-        uint16_t command_port = 9001;
+        uint16_t command_port{9001};
 
         ///
         /// @brief An optional name of network interface to bind to. (i.e. eth0)
