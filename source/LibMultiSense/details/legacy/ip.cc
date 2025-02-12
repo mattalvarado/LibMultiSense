@@ -100,7 +100,7 @@ std::tuple<socket_t, uint16_t> bind(const std::optional<std::string>& interface_
         if (interface_name && !interface_name->empty())
         {
             CRL_DEBUG("User specified binding to adapter %s, but this feature is only supported under linux."
-                      "Ignoring bind to specific adapter", interface_name.c_str());
+                      "Ignoring bind to specific adapter", interface_name->c_str());
         }
     #endif
 
