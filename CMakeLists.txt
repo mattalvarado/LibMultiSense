@@ -29,7 +29,7 @@ else()
     add_compile_options(-Wall -Wextra -Werror -Wpedantic -Wno-variadic-macros)
 endif()
 
-if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
     #
     # Fix warnings with __VA__OPT__ when we port to c++2a
     # https://gcc.gnu.org/onlinedocs/cpp/Variadic-Macros.html
