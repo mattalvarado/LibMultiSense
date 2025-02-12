@@ -45,8 +45,8 @@ MultiSenseConfiguration convert(const crl::multisense::details::wire::CamConfig 
                                 const std::optional<crl::multisense::details::wire::ImuConfig> &imu_config,
                                 const std::optional<crl::multisense::details::wire::LedStatus> &led_config,
                                 const crl::multisense::details::wire::SysPacketDelay &packet_delay,
-                                const crl::multisense::details::wire::SysTransmitDelay &transmit_delay,
-                                bool ptp_enabled)
+                                bool ptp_enabled,
+                                const MultiSenseInfo::DeviceInfo &info)
 {
     using namespace crl::multisense::details;
 
@@ -82,17 +82,17 @@ MultiSenseConfiguration convert(const crl::multisense::details::wire::CamConfig 
                                         std::move(manual_white_balance),
                                         std::move(auto_white_balance)};
 
-    return MultiSenseConfiguration{config.width,
-                                   config.height,
+    return MultiSenseConfiguration{get_resolution(config.width, config.height, info.imager_width, info.imager_height),
                                    get_disparities(config.disparities),
                                    config.framesPerSecond,
                                    std::move(stereo),
                                    std::move(image),
                                    (aux_config ? std::make_optional(convert(aux_config.value())) : std::nullopt),
                                    ms_config::TimeConfiguration{ptp_enabled},
-                                   convert(packet_delay, transmit_delay),
+                                   convert(packet_delay),
                                    imu_config ? std::make_optional(convert(imu_config.value())) : std::nullopt,
-                                   (led_config && led_config->available != 0) ? std::make_optional(convert(led_config.value())) : std::nullopt};
+                                   (led_config && led_config->available) ? convert(led_config.value(), info.lighting_type) :
+                                       MultiSenseConfiguration::LightingConfiguration{}};
 }
 
 MultiSenseConfiguration::AuxConfiguration convert(const crl::multisense::details::wire::AuxCamConfig &config)
@@ -134,8 +134,9 @@ MultiSenseConfiguration::AuxConfiguration convert(const crl::multisense::details
                                        config.sharpeningLimit};
 }
 
-template <>
-crl::multisense::details::wire::CamSetResolution convert<crl::multisense::details::wire::CamSetResolution>(const MultiSenseConfiguration &config)
+crl::multisense::details::wire::CamSetResolution convert_resolution(const MultiSenseConfiguration &config,
+                                                                    uint32_t imager_width,
+                                                                    uint32_t imager_height)
 {
     using namespace crl::multisense::details;
 
@@ -148,7 +149,31 @@ crl::multisense::details::wire::CamSetResolution convert<crl::multisense::detail
         case MultiSenseConfiguration::MaxDisparities::D256: {disparities = 256; break;}
     }
 
-    wire::CamSetResolution output{config.width, config.height, disparities};
+    auto width = imager_width;
+    auto height = imager_height;
+
+    switch (config.resolution)
+    {
+        case MultiSenseConfiguration::OperatingResolution::FULL_RESOLUTION:
+        {
+            width = imager_width;
+            height = imager_height;
+            break;
+        }
+        case MultiSenseConfiguration::OperatingResolution::QUARTER_RESOLUTION:
+        {
+            width = static_cast<uint32_t>(static_cast<double>(imager_width) * 0.5);
+            height = static_cast<uint32_t>(static_cast<double>(imager_height) * 0.5);
+            break;
+        }
+        case MultiSenseConfiguration::OperatingResolution::UNSUPPORTED:
+        default:
+        {
+            CRL_EXCEPTION("Unsupported operating resolution\n");
+        }
+    }
+
+    wire::CamSetResolution output{width, height, disparities};
 
     return output;
 }
@@ -287,79 +312,121 @@ crl::multisense::details::wire::ImuConfig convert(const MultiSenseConfiguration:
     return output;
 }
 
-MultiSenseConfiguration::LightingConfiguration convert(const crl::multisense::details::wire::LedStatus &led)
+MultiSenseConfiguration::LightingConfiguration convert(const crl::multisense::details::wire::LedStatus &led,
+                                                       const MultiSenseInfo::DeviceInfo::LightingType &type)
 {
     using lighting = MultiSenseConfiguration::LightingConfiguration;
 
-    lighting::FlashMode mode = lighting::FlashMode::NONE;
+    const auto intensity = static_cast<float>(led.intensity[0]) * 100.0f / 255.0f;
 
-    if (led.rolling_shutter_led)
+    std::optional<lighting::InternalConfig> internal = std::nullopt;
+    std::optional<lighting::ExternalConfig> external = std::nullopt;
+    switch (type)
     {
-        mode = lighting::FlashMode::SYNC_WITH_AUX;
-    }
-    else if (led.flash)
-    {
-        mode = lighting::FlashMode::SYNC_WITH_MAIN_STEREO;
+        case MultiSenseInfo::DeviceInfo::LightingType::NONE:
+        {
+            break;
+        }
+        case MultiSenseInfo::DeviceInfo::LightingType::INTERNAL:
+        case MultiSenseInfo::DeviceInfo::LightingType::PATTERN_PROJECTOR:
+        {
+            internal = lighting::InternalConfig{intensity, led.flash != 0};
+            break;
+        }
+        case MultiSenseInfo::DeviceInfo::LightingType::EXTERNAL:
+        {
+            lighting::ExternalConfig::FlashMode mode = lighting::ExternalConfig::FlashMode::NONE;
+
+            if (led.rolling_shutter_led)
+            {
+                mode = lighting::ExternalConfig::FlashMode::SYNC_WITH_AUX;
+            }
+            else if (led.flash)
+            {
+                mode = lighting::ExternalConfig::FlashMode::SYNC_WITH_MAIN_STEREO;
+            }
+
+            external = lighting::ExternalConfig{intensity, mode, led.number_of_pulses, std::chrono::microseconds{led.led_delay_us}};
+            break;
+        }
+        default: {CRL_EXCEPTION("Unsupported lighting type\n");}
     }
 
-    return MultiSenseConfiguration::LightingConfiguration{static_cast<float>(led.intensity[0]) * 100.0f / 255.0f,
-                                                          std::move(mode)};
+    return MultiSenseConfiguration::LightingConfiguration{std::move(internal), std::move(external)};
 }
 
-crl::multisense::details::wire::LedSet convert (const MultiSenseConfiguration::LightingConfiguration &led)
+crl::multisense::details::wire::LedSet convert(const MultiSenseConfiguration::LightingConfiguration &led)
 {
     using namespace crl::multisense::details;
 
+    if (!led.internal && !led.external)
+    {
+        CRL_EXCEPTION("Invalid lighting config input\n");
+    }
+
     wire::LedSet output;
 
-    for(size_t i = 0; i< wire::MAX_LIGHTS; ++i)
+    if (led.internal)
     {
-        output.mask |= (1<<i);
-        output.intensity[i] = static_cast<uint8_t> (255.0f * (std::clamp(led.intensity, 0.0f, 100.0f) / 100.0f));
-    }
+        for(size_t i = 0; i< wire::MAX_LIGHTS; ++i)
+        {
+            output.mask |= (1<<i);
+            output.intensity[i] = static_cast<uint8_t> (255.0f * (std::clamp(led.internal->intensity, 0.0f, 100.0f) / 100.0f));
+        }
 
-    switch (led.flash)
+        output.flash = led.internal->flash ? 1 : 0;
+
+        output.number_of_pulses = 1;
+        output.invert_pulse = 0;
+        output.led_delay_us = 0;
+        output.rolling_shutter_led = false;
+    }
+    else if (led.external)
     {
-        case MultiSenseConfiguration::LightingConfiguration::FlashMode::NONE:
+        for(size_t i = 0; i< wire::MAX_LIGHTS; ++i)
         {
-            output.flash = 0;
-            output.rolling_shutter_led = 0;
-            break;
+            output.mask |= (1<<i);
+            output.intensity[i] = static_cast<uint8_t> (255.0f * (std::clamp(led.external->intensity, 0.0f, 100.0f) / 100.0f));
         }
-        case MultiSenseConfiguration::LightingConfiguration::FlashMode::SYNC_WITH_MAIN_STEREO:
-        {
-            output.flash = 1;
-            output.rolling_shutter_led = 0;
-            output.number_of_pulses = 1;
-            break;
-        }
-        case MultiSenseConfiguration::LightingConfiguration::FlashMode::SYNC_WITH_AUX:
-        {
-            output.flash = 1;
-            output.rolling_shutter_led = 1;
-            output.number_of_pulses = 1;
-            break;
-        }
-        default:
-        {
-            CRL_DEBUG("Unhandled LED flash mode\n");
-            output.flash = 1;
-            output.rolling_shutter_led = 0;
-        }
-    }
 
-    output.invert_pulse = 0;
-    output.led_delay_us = 0;
+        switch (led.external->flash)
+        {
+            case MultiSenseConfiguration::LightingConfiguration::ExternalConfig::FlashMode::NONE:
+            {
+                output.flash = 0;
+                output.rolling_shutter_led = 0;
+                break;
+            }
+            case MultiSenseConfiguration::LightingConfiguration::ExternalConfig::FlashMode::SYNC_WITH_MAIN_STEREO:
+            {
+                output.flash = 1;
+                output.rolling_shutter_led = 0;
+                break;
+            }
+            case MultiSenseConfiguration::LightingConfiguration::ExternalConfig::FlashMode::SYNC_WITH_AUX:
+            {
+                output.flash = 1;
+                output.rolling_shutter_led = 1;
+                break;
+            }
+            default:
+            {
+                CRL_EXCEPTION("Unhandled LED flash mode\n");
+            }
+        }
+
+        output.number_of_pulses = led.external->pulses_per_exposure;
+        output.invert_pulse = false;
+        output.led_delay_us = led.external->startup_time.count();
+    }
 
     return output;
 }
 
 MultiSenseConfiguration::NetworkTransmissionConfiguration
-    convert(const crl::multisense::details::wire::SysPacketDelay &packet,
-            const crl::multisense::details::wire::SysTransmitDelay &transmit)
+    convert(const crl::multisense::details::wire::SysPacketDelay &packet)
 {
-    return MultiSenseConfiguration::NetworkTransmissionConfiguration{std::chrono::milliseconds{transmit.delay},
-                                                                     packet.enable};
+    return MultiSenseConfiguration::NetworkTransmissionConfiguration{ packet.enable};
 }
 
 template <>
@@ -370,18 +437,6 @@ crl::multisense::details::wire::SysPacketDelay convert(const MultiSenseConfigura
     wire::SysPacketDelay delay;
 
     delay.enable = config.packet_delay_enabled;
-
-    return delay;
-}
-
-template <>
-crl::multisense::details::wire::SysTransmitDelay convert(const MultiSenseConfiguration::NetworkTransmissionConfiguration &config)
-{
-    using namespace crl::multisense::details;
-
-    wire::SysTransmitDelay delay;
-
-    delay.delay = config.transmit_delay.count();
 
     return delay;
 }

@@ -51,7 +51,6 @@
 #include <wire/LedStatusMessage.hh>
 #include <wire/LedSetMessage.hh>
 #include <wire/SysPacketDelayMessage.hh>
-#include <wire/SysTransmitDelayMessage.hh>
 #include <wire/SysSetPtpMessage.hh>
 
 #include "MultiSense/MultiSenseTypes.hh"
@@ -72,8 +71,8 @@ MultiSenseConfiguration convert(const crl::multisense::details::wire::CamConfig 
                                 const std::optional<crl::multisense::details::wire::ImuConfig> &imu_config,
                                 const std::optional<crl::multisense::details::wire::LedStatus> &led_config,
                                 const crl::multisense::details::wire::SysPacketDelay &packet_delay,
-                                const crl::multisense::details::wire::SysTransmitDelay &transmit_delay,
-                                bool ptp_enabled);
+                                bool ptp_enabled,
+                                const MultiSenseInfo::DeviceInfo &info);
 
 ///
 /// @brief Generic conversions between the MultiSenseConfiguration config object an MultiSense wire types
@@ -105,7 +104,8 @@ crl::multisense::details::wire::ImuConfig convert(const MultiSenseConfiguration:
 ///
 /// @brief Convert a wire lighting config to a API lighting config
 ///
-MultiSenseConfiguration::LightingConfiguration convert(const crl::multisense::details::wire::LedStatus &led);
+MultiSenseConfiguration::LightingConfiguration convert(const crl::multisense::details::wire::LedStatus &led,
+                                                       const MultiSenseInfo::DeviceInfo::LightingType &type);
 
 ///
 /// @brief Convert a API lighting config to a wire lighting config
@@ -116,8 +116,14 @@ crl::multisense::details::wire::LedSet convert (const MultiSenseConfiguration::L
 /// @brief Create a API transmission config object from wire types
 ///
 MultiSenseConfiguration::NetworkTransmissionConfiguration
-    convert(const crl::multisense::details::wire::SysPacketDelay &packet,
-            const crl::multisense::details::wire::SysTransmitDelay &transmit);
+    convert(const crl::multisense::details::wire::SysPacketDelay &packet);
+
+///
+/// @brief Convert the current configuration to a wire resolution message
+///
+crl::multisense::details::wire::CamSetResolution convert_resolution(const MultiSenseConfiguration &config,
+                                                                    uint32_t imager_width,
+                                                                    uint32_t imager_height);
 
 ///
 /// @brief Generic conversions between the MultiSenseConfiguration::NetworkTransmissionConfiguration config

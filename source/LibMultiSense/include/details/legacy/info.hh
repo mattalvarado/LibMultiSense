@@ -69,7 +69,9 @@ MultiSenseInfo::SensorVersion convert(const crl::multisense::details::wire::Vers
 ///
 /// @brief Convert a wire SysDeviceModes to a API SupportedOperatingMode
 ///
-std::vector<MultiSenseInfo::SupportedOperatingMode> convert(const crl::multisense::details::wire::SysDeviceModes &modes);
+std::vector<MultiSenseInfo::SupportedOperatingMode> convert(const crl::multisense::details::wire::SysDeviceModes &modes,
+                                                            uint32_t imager_width,
+                                                            uint32_t imager_height);
 
 ///
 /// @brief Convert details for a specific imu operating mode to a API ImuSource

@@ -40,7 +40,7 @@
 
 using namespace multisense::legacy;
 
-multisense::MultiSenseConfiguration create_valid_config()
+multisense::MultiSenseConfiguration create_valid_config(const multisense::MultiSenseConfiguration::OperatingResolution &res)
 {
     using namespace multisense;
     using namespace std::chrono_literals;
@@ -73,10 +73,9 @@ multisense::MultiSenseConfiguration create_valid_config()
 
     MultiSenseConfiguration::TimeConfiguration time{true};
 
-    MultiSenseConfiguration::NetworkTransmissionConfiguration network{std::chrono::milliseconds{10}, true};
+    MultiSenseConfiguration::NetworkTransmissionConfiguration network{true};
 
-    return MultiSenseConfiguration{1920,
-                                   1200,
+    return MultiSenseConfiguration{res,
                                    MultiSenseConfiguration::MaxDisparities::D256,
                                    11.0,
                                    stereo_config,
@@ -87,6 +86,19 @@ multisense::MultiSenseConfiguration create_valid_config()
                                    std::nullopt,
                                    std::nullopt};
 }
+
+
+multisense::MultiSenseInfo::DeviceInfo create_device_info(uint32_t imager_width, uint32_t imager_height)
+{
+    multisense::MultiSenseInfo::DeviceInfo info;
+    info.imager_width = imager_width;
+    info.imager_height = imager_height;
+
+    info.lighting_type = multisense::MultiSenseInfo::DeviceInfo::LightingType::EXTERNAL;
+
+    return info;
+}
+
 
 crl::multisense::details::wire::CamConfig create_valid_wire_config()
 {
@@ -165,16 +177,6 @@ crl::multisense::details::wire::SysPacketDelay create_wire_packet_delay()
     return delay;
 }
 
-crl::multisense::details::wire::SysTransmitDelay create_wire_transmit_delay()
-{
-    using namespace crl::multisense::details;
-
-    wire::SysTransmitDelay delay;
-    delay.delay = 10;
-
-    return delay;
-}
-
 crl::multisense::details::wire::ImuConfig create_valid_imu_wire_config()
 {
     using namespace crl::multisense::details;
@@ -221,12 +223,35 @@ crl::multisense::details::wire::LedStatus create_valid_lighting_wire_config()
 }
 
 void check_equal(const multisense::MultiSenseConfiguration &config,
-                 const crl::multisense::details::wire::CamSetResolution &res)
+                 const crl::multisense::details::wire::CamSetResolution &res,
+                 uint32_t imager_width,
+                 uint32_t imager_height)
 {
     using namespace multisense;
 
-    ASSERT_EQ(config.width, res.width);
-    ASSERT_EQ(config.height, res.height);
+    switch (config.resolution)
+    {
+        case MultiSenseConfiguration::OperatingResolution::FULL_RESOLUTION:
+        {
+            ASSERT_EQ(imager_width, res.width);
+            ASSERT_EQ(imager_height, res.height);
+            break;
+        }
+        case MultiSenseConfiguration::OperatingResolution::QUARTER_RESOLUTION:
+        {
+            ASSERT_DOUBLE_EQ(imager_width * 0.5, static_cast<double>(res.width));
+            ASSERT_DOUBLE_EQ(imager_height * 0.5, static_cast<double>(res.height));
+            break;
+        }
+        case MultiSenseConfiguration::OperatingResolution::UNSUPPORTED:
+        {
+            ASSERT_NE(imager_width, res.width);
+            ASSERT_NE(imager_height, res.height);
+            ASSERT_NE(imager_width * 0.5, static_cast<double>(res.width));
+            ASSERT_NE(imager_height * 0.5, static_cast<double>(res.height));
+            break;
+        }
+    }
 
     switch(config.disparities)
     {
@@ -293,13 +318,36 @@ void check_equal(const multisense::MultiSenseConfiguration &config,
 }
 
 void check_equal(const multisense::MultiSenseConfiguration &config,
-                 const crl::multisense::details::wire::CamConfig &wire_config)
+                 const crl::multisense::details::wire::CamConfig &wire_config,
+                 uint32_t imager_width,
+                 uint32_t imager_height)
 {
     using namespace multisense;
 
     ASSERT_FLOAT_EQ(config.stereo_config.postfilter_strength, wire_config.stereoPostFilterStrength);
-    ASSERT_EQ(config.width, wire_config.width);
-    ASSERT_EQ(config.height, wire_config.height);
+    switch (config.resolution)
+    {
+        case MultiSenseConfiguration::OperatingResolution::FULL_RESOLUTION:
+        {
+            ASSERT_EQ(imager_width, wire_config.width);
+            ASSERT_EQ(imager_height, wire_config.height);
+            break;
+        }
+        case MultiSenseConfiguration::OperatingResolution::QUARTER_RESOLUTION:
+        {
+            ASSERT_DOUBLE_EQ(imager_width * 0.5, static_cast<double>(wire_config.width));
+            ASSERT_DOUBLE_EQ(imager_height * 0.5, static_cast<double>(wire_config.height));
+            break;
+        }
+        case MultiSenseConfiguration::OperatingResolution::UNSUPPORTED:
+        {
+            ASSERT_NE(imager_width, wire_config.width);
+            ASSERT_NE(imager_height, wire_config.height);
+            ASSERT_NE(imager_width * 0.5, static_cast<double>(wire_config.width));
+            ASSERT_NE(imager_height * 0.5, static_cast<double>(wire_config.height));
+            break;
+        }
+    }
 
     switch(config.disparities)
     {
@@ -345,35 +393,42 @@ void check_equal(const multisense::MultiSenseConfiguration::LightingConfiguratio
 {
     using namespace multisense;
 
-    ASSERT_FLOAT_EQ(config.intensity, wire.intensity[0] / 255.0f * 100.0f);
-
-    ASSERT_EQ(wire.led_delay_us, 0);
-
-    switch (config.flash)
+    if (config.internal)
     {
-        case MultiSenseConfiguration::LightingConfiguration::FlashMode::NONE:
+        ASSERT_FLOAT_EQ(config.internal->intensity, wire.intensity[0] / 255.0f * 100.0f);
+        ASSERT_EQ(wire.led_delay_us, 0);
+        ASSERT_EQ(wire.number_of_pulses, 1);
+        ASSERT_EQ(wire.invert_pulse, 0);
+        ASSERT_EQ(config.internal->flash, wire.flash != 0);
+    }
+
+    if (config.external)
+    {
+        ASSERT_FLOAT_EQ(config.external->intensity, wire.intensity[0] / 255.0f * 100.0f);
+        ASSERT_EQ(wire.led_delay_us, config.external->startup_time.count());
+        ASSERT_EQ(wire.number_of_pulses, config.external->pulses_per_exposure);
+        ASSERT_EQ(wire.invert_pulse, 0);
+
+        switch (config.external->flash)
         {
-            ASSERT_EQ(wire.flash, 0);
-            ASSERT_EQ(wire.number_of_pulses, 0);
-            ASSERT_EQ(wire.invert_pulse, 0);
-            ASSERT_EQ(wire.rolling_shutter_led, 0);
-            break;
-        }
-        case MultiSenseConfiguration::LightingConfiguration::FlashMode::SYNC_WITH_MAIN_STEREO:
-        {
-            ASSERT_EQ(wire.flash, 1);
-            ASSERT_EQ(wire.number_of_pulses, 1);
-            ASSERT_EQ(wire.invert_pulse, 0);
-            ASSERT_EQ(wire.rolling_shutter_led, 0);
-            break;
-        }
-        case MultiSenseConfiguration::LightingConfiguration::FlashMode::SYNC_WITH_AUX:
-        {
-            ASSERT_EQ(wire.flash, 1);
-            ASSERT_EQ(wire.number_of_pulses, 1);
-            ASSERT_EQ(wire.invert_pulse, 0);
-            ASSERT_EQ(wire.rolling_shutter_led, 1);
-            break;
+            case MultiSenseConfiguration::LightingConfiguration::ExternalConfig::FlashMode::NONE:
+            {
+                ASSERT_EQ(wire.flash, 0);
+                ASSERT_EQ(wire.rolling_shutter_led, 0);
+                break;
+            }
+            case MultiSenseConfiguration::LightingConfiguration::ExternalConfig::FlashMode::SYNC_WITH_MAIN_STEREO:
+            {
+                ASSERT_EQ(wire.flash, 1);
+                ASSERT_EQ(wire.rolling_shutter_led, 0);
+                break;
+            }
+            case MultiSenseConfiguration::LightingConfiguration::ExternalConfig::FlashMode::SYNC_WITH_AUX:
+            {
+                ASSERT_EQ(wire.flash, 1);
+                ASSERT_EQ(wire.rolling_shutter_led, 1);
+                break;
+            }
         }
     }
 }
@@ -384,68 +439,92 @@ void check_equal(const multisense::MultiSenseConfiguration::LightingConfiguratio
     using namespace crl::multisense::details;
     using namespace multisense;
 
-    for (size_t i = 0 ; i < wire::MAX_LIGHTS ; ++i)
+    if (config.internal)
     {
-        ASSERT_FLOAT_EQ(config.intensity, wire.intensity[i] / 255.0f * 100.0f);
-        ASSERT_EQ(wire.mask & 1<<i, 1<<i);
+        for (size_t i = 0 ; i < wire::MAX_LIGHTS ; ++i)
+        {
+            ASSERT_FLOAT_EQ(config.internal->intensity, wire.intensity[i] / 255.0f * 100.0f);
+            ASSERT_EQ(wire.mask & 1<<i, 1<<i);
+        }
+
+        ASSERT_EQ(wire.led_delay_us, 0);
+        ASSERT_EQ(wire.number_of_pulses, 1);
+        ASSERT_EQ(wire.invert_pulse, 0);
+        ASSERT_EQ(config.internal->flash, wire.flash != 0);
     }
 
-
-    ASSERT_EQ(wire.led_delay_us, 0);
-
-    switch (config.flash)
+    if (config.external)
     {
-        case MultiSenseConfiguration::LightingConfiguration::FlashMode::NONE:
+        for (size_t i = 0 ; i < wire::MAX_LIGHTS ; ++i)
         {
-            ASSERT_EQ(wire.flash, 0);
-            ASSERT_EQ(wire.number_of_pulses, 0);
-            ASSERT_EQ(wire.invert_pulse, 0);
-            ASSERT_EQ(wire.rolling_shutter_led, 0);
-            break;
+            ASSERT_FLOAT_EQ(config.external->intensity, wire.intensity[i] / 255.0f * 100.0f);
+            ASSERT_EQ(wire.mask & 1<<i, 1<<i);
         }
-        case MultiSenseConfiguration::LightingConfiguration::FlashMode::SYNC_WITH_MAIN_STEREO:
+
+        ASSERT_EQ(wire.led_delay_us, config.external->startup_time.count());
+        ASSERT_EQ(wire.number_of_pulses, config.external->pulses_per_exposure);
+        ASSERT_EQ(wire.invert_pulse, 0);
+
+        switch (config.external->flash)
         {
-            ASSERT_EQ(wire.flash, 1);
-            ASSERT_EQ(wire.number_of_pulses, 1);
-            ASSERT_EQ(wire.invert_pulse, 0);
-            ASSERT_EQ(wire.rolling_shutter_led, 0);
-            break;
-        }
-        case MultiSenseConfiguration::LightingConfiguration::FlashMode::SYNC_WITH_AUX:
-        {
-            ASSERT_EQ(wire.flash, 1);
-            ASSERT_EQ(wire.number_of_pulses, 1);
-            ASSERT_EQ(wire.invert_pulse, 0);
-            ASSERT_EQ(wire.rolling_shutter_led, 1);
-            break;
+            case MultiSenseConfiguration::LightingConfiguration::ExternalConfig::FlashMode::NONE:
+            {
+                ASSERT_EQ(wire.flash, 0);
+                ASSERT_EQ(wire.rolling_shutter_led, 0);
+                break;
+            }
+            case MultiSenseConfiguration::LightingConfiguration::ExternalConfig::FlashMode::SYNC_WITH_MAIN_STEREO:
+            {
+                ASSERT_EQ(wire.flash, 1);
+                ASSERT_EQ(wire.rolling_shutter_led, 0);
+                break;
+            }
+            case MultiSenseConfiguration::LightingConfiguration::ExternalConfig::FlashMode::SYNC_WITH_AUX:
+            {
+                ASSERT_EQ(wire.flash, 1);
+                ASSERT_EQ(wire.rolling_shutter_led, 1);
+                break;
+            }
         }
     }
 }
 
 void check_equal(const multisense::MultiSenseConfiguration::NetworkTransmissionConfiguration &config,
-                 const crl::multisense::details::wire::SysPacketDelay &packet_delay,
-                 const crl::multisense::details::wire::SysTransmitDelay &transmit_delay)
+                 const crl::multisense::details::wire::SysPacketDelay &packet_delay)
 {
-    ASSERT_EQ(config.transmit_delay.count(), transmit_delay.delay);
     ASSERT_EQ(config.packet_delay_enabled, packet_delay.enable);
 }
 
-TEST(convert, cam_resolution)
+TEST(convert, cam_resolution_full_res)
 {
     using namespace crl::multisense::details;
+    using namespace multisense;
 
-    const auto config = create_valid_config();
+    const auto config = create_valid_config(MultiSenseConfiguration::OperatingResolution::FULL_RESOLUTION);
 
-    const auto wire_resolution = convert<wire::CamSetResolution>(config);
+    const auto wire_resolution = convert_resolution(config, 1920, 1200);
 
-    check_equal(config, wire_resolution);
+    check_equal(config, wire_resolution, 1920, 1200);
+}
+
+TEST(convert, cam_resolution_quarter_res)
+{
+    using namespace crl::multisense::details;
+    using namespace multisense;
+
+    const auto config = create_valid_config(MultiSenseConfiguration::OperatingResolution::QUARTER_RESOLUTION);
+
+    const auto wire_resolution = convert_resolution(config, 1920, 1200);
+
+    check_equal(config, wire_resolution, 1920, 1200);
 }
 
 TEST(convert, cam_control)
 {
     using namespace crl::multisense::details;
+    using namespace multisense;
 
-    const auto config = create_valid_config();
+    const auto config = create_valid_config(MultiSenseConfiguration::OperatingResolution::QUARTER_RESOLUTION);
 
     const auto cam_control = convert<wire::CamControl>(config);
 
@@ -455,8 +534,9 @@ TEST(convert, cam_control)
 TEST(convert, aux_cam_control)
 {
     using namespace crl::multisense::details;
+    using namespace multisense;
 
-    const auto config = create_valid_config();
+    const auto config = create_valid_config(MultiSenseConfiguration::OperatingResolution::QUARTER_RESOLUTION);
 
     ASSERT_TRUE(static_cast<bool>(config.aux_config));
 
@@ -471,19 +551,18 @@ TEST(convert, cam_config)
     const auto wire_config = create_valid_wire_config();
     const auto wire_aux_config = create_valid_wire_aux_config();
     const auto packet_config = create_wire_packet_delay();
-    const auto transmit_config = create_wire_transmit_delay();
 
     const auto config = convert(wire_config,
                                 wire_aux_config,
                                 std::nullopt,
                                 std::nullopt,
                                 packet_config,
-                                transmit_config,
-                                false);
+                                false,
+                                create_device_info(1920, 1200));
 
     ASSERT_TRUE(static_cast<bool>(config.aux_config));
 
-    check_equal(config, wire_config);
+    check_equal(config, wire_config, 1920, 1200);
     check_equal(config.aux_config.value(), wire_aux_config);
 }
 
@@ -491,59 +570,57 @@ TEST(convert, cam_config_invalid_aux)
 {
     const auto wire_config = create_valid_wire_config();
     const auto packet_config = create_wire_packet_delay();
-    const auto transmit_config = create_wire_transmit_delay();
 
     const auto config = convert(wire_config,
                                 std::nullopt,
                                 std::nullopt,
                                 std::nullopt,
                                 packet_config,
-                                transmit_config,
-                                false);
+                                false,
+                                create_device_info(1920, 1200));
 
     ASSERT_FALSE(static_cast<bool>(config.aux_config));
 
-    check_equal(config, wire_config);
+    check_equal(config, wire_config, 1920, 1200);
 }
 
 TEST(convert, cam_config_invalid_imu)
 {
     const auto wire_config = create_valid_wire_config();
     const auto packet_config = create_wire_packet_delay();
-    const auto transmit_config = create_wire_transmit_delay();
 
     const auto config = convert(wire_config,
                                 std::nullopt,
                                 std::nullopt,
                                 std::nullopt,
                                 packet_config,
-                                transmit_config,
-                                false);
+                                false,
+                                create_device_info(1920, 1200));
 
     ASSERT_FALSE(static_cast<bool>(config.imu_config));
 
-    check_equal(config, wire_config);
-    check_equal(config.network_config, packet_config, transmit_config);
+    check_equal(config, wire_config, 1920, 1200);
+    check_equal(config.network_config, packet_config);
 }
 
 TEST(convert, cam_config_invalid_led)
 {
     const auto wire_config = create_valid_wire_config();
     const auto packet_config = create_wire_packet_delay();
-    const auto transmit_config = create_wire_transmit_delay();
 
     const auto config = convert(wire_config,
                                 std::nullopt,
                                 std::nullopt,
                                 std::nullopt,
                                 packet_config,
-                                transmit_config,
-                                false);
+                                false,
+                                create_device_info(1920, 1200));
 
-    ASSERT_FALSE(static_cast<bool>(config.lighting_config));
+    ASSERT_FALSE(static_cast<bool>(config.lighting_config.internal));
+    ASSERT_FALSE(static_cast<bool>(config.lighting_config.external));
 
-    check_equal(config, wire_config);
-    check_equal(config.network_config, packet_config, transmit_config);
+    check_equal(config, wire_config, 1920, 1200);
+    check_equal(config.network_config, packet_config);
 }
 
 TEST(convert, cam_config_valid_led_but_no_ligths)
@@ -554,20 +631,20 @@ TEST(convert, cam_config_valid_led_but_no_ligths)
     lighting_config.available = 0;
 
     const auto packet_config = create_wire_packet_delay();
-    const auto transmit_config = create_wire_transmit_delay();
 
     const auto config = convert(wire_config,
                                 std::nullopt,
                                 std::nullopt,
                                 std::make_optional(lighting_config),
                                 packet_config,
-                                transmit_config,
-                                false);
+                                false,
+                                create_device_info(1920, 1200));
 
-    ASSERT_FALSE(static_cast<bool>(config.lighting_config));
+    ASSERT_FALSE(static_cast<bool>(config.lighting_config.internal));
+    ASSERT_FALSE(static_cast<bool>(config.lighting_config.external));
 
-    check_equal(config, wire_config);
-    check_equal(config.network_config, packet_config, transmit_config);
+    check_equal(config, wire_config, 1920, 1200);
+    check_equal(config.network_config, packet_config);
 }
 
 TEST(convert, imu_config_round_trip)
@@ -595,7 +672,7 @@ TEST(convert, lighting_config_round_trip)
 {
     const auto wire_config = create_valid_lighting_wire_config();
 
-    const auto config = convert(wire_config);
+    const auto config = convert(wire_config, multisense::MultiSenseInfo::DeviceInfo::LightingType::EXTERNAL);
 
     check_equal(config, wire_config);
     check_equal(config, convert(config));
@@ -607,18 +684,16 @@ TEST(convert, network_config)
 
     const auto wire_config = create_valid_wire_config();
     const auto packet_config = create_wire_packet_delay();
-    const auto transmit_config = create_wire_transmit_delay();
 
     const auto config = convert(wire_config,
                                 std::nullopt,
                                 std::nullopt,
                                 std::nullopt,
                                 packet_config,
-                                transmit_config,
-                                false);
+                                false,
+                                create_device_info(1920, 1200));
 
     check_equal(config.network_config,
-                convert<wire::SysPacketDelay>(config.network_config),
-                convert<wire::SysTransmitDelay>(config.network_config));
+                convert<wire::SysPacketDelay>(config.network_config));
 
 }

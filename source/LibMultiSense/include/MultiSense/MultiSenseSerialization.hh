@@ -43,37 +43,6 @@
 
 namespace nlohmann
 {
-    ///
-    /// @brief Handle generic optional
-    ///
-    template <typename T>
-    struct adl_serializer<std::optional<T>>
-    {
-        static void to_json(json& j, const std::optional<T>& opt)
-        {
-            if (opt.has_value())
-            {
-                j = *opt;
-            }
-            else
-            {
-                j = nullptr;
-            }
-        }
-
-        static void from_json(const json& j, std::optional<T>& opt)
-        {
-            if (j.is_null())
-            {
-                opt = std::nullopt;
-            }
-            else
-            {
-                opt = j.get<T>();
-            }
-        }
-    };
-
     template <>
     struct adl_serializer<std::chrono::microseconds>
     {
@@ -113,6 +82,37 @@ namespace nlohmann
         static void from_json(const json& j, std::chrono::nanoseconds& d)
         {
             d = std::chrono::nanoseconds(j.get<std::chrono::nanoseconds::rep>());
+        }
+    };
+
+    ///
+    /// @brief Handle generic optional
+    ///
+    template <typename T>
+    struct adl_serializer<std::optional<T>>
+    {
+        static void to_json(json& j, const std::optional<T>& opt)
+        {
+            if (opt.has_value())
+            {
+                j = *opt;
+            }
+            else
+            {
+                j = nullptr;
+            }
+        }
+
+        static void from_json(const json& j, std::optional<T>& opt)
+        {
+            if (j.is_null())
+            {
+                opt = std::nullopt;
+            }
+            else
+            {
+                opt = j.get<T>();
+            }
         }
     };
 }
@@ -160,16 +160,22 @@ NLOHMANN_JSON_SERIALIZE_ENUM(CameraCalibration::DistortionType, {
     {CameraCalibration::DistortionType::RATIONAL_POLYNOMIAL, "RATIONAL_POLYNOMIAL"}
 })
 
+NLOHMANN_JSON_SERIALIZE_ENUM(MultiSenseConfiguration::OperatingResolution, {
+    {MultiSenseConfiguration::OperatingResolution::UNSUPPORTED, "UNSUPPORTED"},
+    {MultiSenseConfiguration::OperatingResolution::FULL_RESOLUTION, "FULL_RESOLUTION"},
+    {MultiSenseConfiguration::OperatingResolution::QUARTER_RESOLUTION, "QUARTER_RESOLUTION"}
+})
+
 NLOHMANN_JSON_SERIALIZE_ENUM(MultiSenseConfiguration::MaxDisparities, {
     {MultiSenseConfiguration::MaxDisparities::D64, "D64"},
     {MultiSenseConfiguration::MaxDisparities::D128, "D128"},
     {MultiSenseConfiguration::MaxDisparities::D256, "D256"}
 })
 
-NLOHMANN_JSON_SERIALIZE_ENUM(MultiSenseConfiguration::LightingConfiguration::FlashMode, {
-    {MultiSenseConfiguration::LightingConfiguration::FlashMode::NONE, "NONE"},
-    {MultiSenseConfiguration::LightingConfiguration::FlashMode::SYNC_WITH_MAIN_STEREO, "SYNC_WITH_MAIN_STEREO"},
-    {MultiSenseConfiguration::LightingConfiguration::FlashMode::SYNC_WITH_AUX, "SYNC_WITH_AUXx"}
+NLOHMANN_JSON_SERIALIZE_ENUM(MultiSenseConfiguration::LightingConfiguration::ExternalConfig::FlashMode, {
+    {MultiSenseConfiguration::LightingConfiguration::ExternalConfig::FlashMode::NONE, "NONE"},
+    {MultiSenseConfiguration::LightingConfiguration::ExternalConfig::FlashMode::SYNC_WITH_MAIN_STEREO, "SYNC_WITH_MAIN_STEREO"},
+    {MultiSenseConfiguration::LightingConfiguration::ExternalConfig::FlashMode::SYNC_WITH_AUX, "SYNC_WITH_AUXx"}
 })
 
 NLOHMANN_JSON_SERIALIZE_ENUM(MultiSenseInfo::DeviceInfo::HardwareRevision, {
@@ -273,7 +279,6 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfiguration::TimeConfiguration,
                                    ptp_enabled)
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfiguration::NetworkTransmissionConfiguration,
-                                   transmit_delay,
                                    packet_delay_enabled)
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfiguration::ImuConfiguration::OperatingMode,
@@ -286,13 +291,21 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfiguration::ImuConfiguration,
                                    samples_per_frame,
                                    modes)
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfiguration::LightingConfiguration,
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfiguration::LightingConfiguration::InternalConfig,
                                    intensity,
                                    flash)
 
+//NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfiguration::LightingConfiguration::ExternalConfig,
+//                                   intensity,
+//                                   flash,
+//                                   pulses_per_exposure,
+//                                   startup_time)
+//
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfiguration::LightingConfiguration,
+                                   internal)
+
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfiguration,
-                                   width,
-                                   height,
+                                   resolution,
                                    disparities,
                                    frames_per_second,
                                    stereo_config,
@@ -315,10 +328,10 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseStatus::CameraStatus,
                                    processing_pipeline_ok)
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseStatus::TemperatureStatus,
-                                   fpga_temperature_C,
-                                   left_imager_temperature_C,
-                                   right_imager_temperature_C,
-                                   power_supply_temperature_C)
+                                   fpga_temperature,
+                                   left_imager_temperature,
+                                   right_imager_temperature,
+                                   power_supply_temperature)
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseStatus::PowerStatus,
                                    input_voltage,
@@ -345,9 +358,9 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseStatus,
                                    time)
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseInfo::NetworkInfo,
-                                   ipv4_address,
-                                   ipv4_gateway,
-                                   ipv4_netmask)
+                                   ip_address,
+                                   gateway,
+                                   netmask)
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseInfo::DeviceInfo::PcbInfo,
                                    name,
@@ -384,8 +397,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseInfo::SensorVersion,
                                    fpga_dna)
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseInfo::SupportedOperatingMode,
-                                   width,
-                                   height,
+                                   resolution,
                                    disparities,
                                    supported_sources)
 

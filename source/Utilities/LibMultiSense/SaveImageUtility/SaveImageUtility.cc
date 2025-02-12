@@ -177,9 +177,9 @@ int main(int argc, char** argv)
         {
             std::cout << "Camera Time(ns): " << status->time.camera_time.count() << ", " <<
                          "System Ok: " << status->system_ok << ", " <<
-                         "FPGA Temp (C): " << status->temperature.fpga_temperature_C << ", " <<
-                         "Left Imager Temp (C): " << status->temperature.left_imager_temperature_C << ", " <<
-                         "Right Imager Temp (C): " << status->temperature.right_imager_temperature_C << ", " <<
+                         "FPGA Temp (C): " << status->temperature.fpga_temperature << ", " <<
+                         "Left Imager Temp (C): " << status->temperature.left_imager_temperature << ", " <<
+                         "Right Imager Temp (C): " << status->temperature.right_imager_temperature << ", " <<
                          "Input Voltage (V): " << status->power.input_voltage << ", " <<
                          "Input Current (A): " << status->power.input_current << ", " <<
                          "FPGA Power (W): " << status->power.fpga_power << " , " <<

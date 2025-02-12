@@ -86,29 +86,30 @@ crl::multisense::details::wire::VersionResponse create_version()
     return version;
 }
 
-crl::multisense::details::wire::SysDeviceModes create_device_modes(int64_t sources)
+crl::multisense::details::wire::SysDeviceModes create_device_modes(int64_t sources, int32_t imager_width, int32_t imager_height)
 {
     using namespace crl::multisense::details;
 
     wire::SysDeviceModes modes;
 
     wire::DeviceMode mode0;
-    mode0.width = 100;
-    mode0.height = 101;
+    mode0.width = imager_width;
+    mode0.height = imager_height;
+    mode0.height = imager_height;
     mode0.supportedDataSources = sources;
     mode0.disparities = 64;
 
     wire::DeviceMode mode1;
-    mode1.width = 1000;
-    mode1.height = 1001;
+    mode1.width = imager_width / 2;
+    mode1.height = imager_height / 2;
     mode1.supportedDataSources = sources;
     mode1.disparities = 128;
 
     wire::DeviceMode mode2;
-    mode2.width = 2000;
-    mode2.height = 2001;
+    mode2.width = 1234;
+    mode2.height = 456;
     mode2.supportedDataSources = sources;
-    mode2.disparities = 256;
+    mode2.disparities = 128;
 
     modes.modes.push_back(mode0);
     modes.modes.push_back(mode1);
@@ -172,8 +173,8 @@ multisense::MultiSenseInfo::DeviceInfo create_info(const std::string &name)
     info.pcb_info = {MultiSenseInfo::DeviceInfo::PcbInfo{name, 12345}};
     info.imager_name = name;
     info.imager_type = MultiSenseInfo::DeviceInfo::ImagerType::AR0239_COLOR;
-    info.imager_width = 1000;
-    info.imager_height = 1001;
+    info.imager_width = 1920;
+    info.imager_height = 1200;
     info.lens_name = name;
     info.nominal_stereo_baseline = 0.21;
     info.nominal_focal_length = 0.024;
@@ -301,9 +302,9 @@ void check_equal(const crl::multisense::details::wire::imu::Details &wire,
 void check_equal(const multisense::MultiSenseInfo::NetworkInfo &info0,
                  const multisense::MultiSenseInfo::NetworkInfo &info1)
 {
-    ASSERT_EQ(info0.ipv4_address, info1.ipv4_address);
-    ASSERT_EQ(info0.ipv4_gateway, info1.ipv4_gateway);
-    ASSERT_EQ(info0.ipv4_netmask, info1.ipv4_netmask);
+    ASSERT_EQ(info0.ip_address, info1.ip_address);
+    ASSERT_EQ(info0.gateway, info1.gateway);
+    ASSERT_EQ(info0.netmask, info1.netmask);
 }
 
 TEST(convert, wire_to_info)
@@ -341,18 +342,33 @@ TEST(convert, version)
 TEST(convert, device_modes)
 {
     using namespace crl::multisense::details;
+    using namespace multisense;
 
     const wire::IdType sources = wire::SOURCE_LUMA_LEFT | wire::SOURCE_LUMA_RECT_RIGHT | wire::SOURCE_DISPARITY;
 
-    const auto wire_modes = create_device_modes(sources);
-    const auto modes = convert(wire_modes);
+    constexpr uint32_t imager_width = 1920;
+    constexpr uint32_t imager_height = 1200;
+
+    const auto wire_modes = create_device_modes(sources, imager_width, imager_height);
+    const auto modes = convert(wire_modes, imager_width, imager_height);
 
     ASSERT_EQ(modes.size(), wire_modes.modes.size());
 
     for(size_t i = 0 ; i < modes.size() ; ++i)
     {
-        ASSERT_EQ(modes[i].width, wire_modes.modes[i].width);
-        ASSERT_EQ(modes[i].height, wire_modes.modes[i].height);
+        if (wire_modes.modes[i].width == imager_width && wire_modes.modes[i].height == imager_height)
+        {
+            ASSERT_EQ(modes[i].resolution, MultiSenseConfiguration::OperatingResolution::FULL_RESOLUTION);
+        }
+        else if (wire_modes.modes[i].width == imager_width / 2 && wire_modes.modes[i].height == imager_height / 2)
+        {
+            ASSERT_EQ(modes[i].resolution, MultiSenseConfiguration::OperatingResolution::QUARTER_RESOLUTION);
+        }
+        else
+        {
+            ASSERT_EQ(modes[i].resolution, MultiSenseConfiguration::OperatingResolution::UNSUPPORTED);
+        }
+
         ASSERT_EQ(modes[i].disparities, get_disparities(wire_modes.modes[i].disparities));
 
         const auto full_sources = convert_sources(modes[i].supported_sources);

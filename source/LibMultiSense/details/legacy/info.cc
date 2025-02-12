@@ -229,14 +229,16 @@ MultiSenseInfo::SensorVersion convert(const crl::multisense::details::wire::Vers
                                          response.fpgaDna};
 }
 
-std::vector<MultiSenseInfo::SupportedOperatingMode> convert(const crl::multisense::details::wire::SysDeviceModes &modes)
+std::vector<MultiSenseInfo::SupportedOperatingMode> convert(const crl::multisense::details::wire::SysDeviceModes &modes,
+                                                            uint32_t imager_width,
+                                                            uint32_t imager_height)
 {
     std::vector<MultiSenseInfo::SupportedOperatingMode> output;
     for (const auto &mode : modes.modes)
     {
         const auto full_sources = (static_cast<uint64_t>(mode.extendedDataSources)) << 32 | mode.supportedDataSources;
-        output.emplace_back(MultiSenseInfo::SupportedOperatingMode{mode.width,
-                                                                   mode.height,
+        output.emplace_back(MultiSenseInfo::SupportedOperatingMode{get_resolution(mode.width, mode.height,
+                                                                                  imager_width, imager_height),
                                                                    get_disparities(mode.disparities),
                                                                    convert_sources(full_sources)});
     }
@@ -284,7 +286,7 @@ MultiSenseInfo::NetworkInfo convert(const crl::multisense::details::wire::SysNet
 crl::multisense::details::wire::SysNetwork convert(const MultiSenseInfo::NetworkInfo &info)
 {
     using namespace crl::multisense::details;
-    return wire::SysNetwork{info.ipv4_address, info.ipv4_gateway, info.ipv4_netmask};
+    return wire::SysNetwork{info.ip_address, info.gateway, info.netmask};
 }
 
 }

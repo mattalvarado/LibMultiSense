@@ -63,7 +63,8 @@ enum class Status : uint8_t
     FAILED,
     UNSUPPORTED,
     EXCEPTION,
-    UNINITIALIZED
+    UNINITIALIZED,
+    INCOMPLETE_APPLICATION
 };
 
 ///
@@ -345,19 +346,18 @@ struct ImuSample
     };
 
     ///
-    /// @brief The acceleration in configured units. Depending on the IMU configuration of the sensor,
+    /// @brief The acceleration in units of Gs. Depending on the IMU configuration of the sensor,
     ///        this may be invalid (i.e. the MultiSense has separate accelerometer and gyroscope chips)
     ///
     std::optional<Measurement> accelerometer{};
     ///
-    /// @brief The rotational velocity in configured units. Depending on the IMU configuration of the sensor,
+    /// @brief The rotational velocity in degrees-per-second. Depending on the IMU configuration of the sensor,
     ///        this may be invalid (i.e. the MultiSense has separate accelerometer and gyroscope chips)
     ///
     std::optional<Measurement> gyroscope{};
     ///
-    /// @brief The measured magnetic field in configured units. Depending on the IMU configuration of the sensor,
+    /// @brief The measured magnetic field in milligauss. Depending on the IMU configuration of the sensor,
     ///        this may be invalid (i.e. the MultiSense has a separate magnetometer chip)
-    /// TODO (malvarado: verify units
     ///
     std::optional<Measurement> magnetometer{};
 
@@ -604,6 +604,26 @@ struct MultiSenseConfiguration
     };
 
     ///
+    /// @brief Operating resolutions for the MultiSense
+    ///
+    enum class OperatingResolution : uint8_t
+    {
+        ///
+        /// @brief default value to handle any unknown values
+        ///
+        UNSUPPORTED,
+        ///
+        /// @brief Operates at the native resolution of the camera's imager sensor
+        ///
+        FULL_RESOLUTION,
+        ///
+        /// @brief Operates at the 1/4 of resolution of the camera's imager sensor. 1/2 of the native width and 1/2
+        ///        of the native height
+        ///
+        QUARTER_RESOLUTION
+    };
+
+    ///
     /// @brief Predefined disparity pixel search windows. Larger values allows the camera to see objects
     ///        closer to the camera
     ///
@@ -640,14 +660,6 @@ struct MultiSenseConfiguration
     struct NetworkTransmissionConfiguration
     {
         ///
-        /// @brief The transmit delay between when a packet is ready to be sent from the MultiSense
-        ///        and when it's sent over the network. This can be used to avoid collisions between
-        ///        multiple MultiSense cameras connected to the same network. Note this will only work if
-        ///        the MultiSense's clocks are both synchronized with PTP
-        ///
-        std::chrono::milliseconds transmit_delay{0};
-
-        ///
         /// @brief Add a small delay between the transmission of each packet to hopefully interact
         ///        better with slower client machines, or more fragile networks
         ///
@@ -675,6 +687,10 @@ struct MultiSenseConfiguration
             ///
             bool enabled = false;
 
+            //
+            // TODO (malvarado): Pass value rather than index
+            //
+
             ///
             /// @brief The index of the specific IMU rate configuration specified in ImuSource rate
             ///        table
@@ -700,40 +716,84 @@ struct MultiSenseConfiguration
     };
 
     ///
-    /// @brief Lighting configuraton for the camera
+    /// @brief Lighting configuration for the camera
     ///
     struct LightingConfiguration
     {
         ///
-        /// @brief Different flash modes for the camera
+        /// @brief Lighting config for lights integrated into the MultiSense
         ///
-        enum class FlashMode : uint8_t
+        struct InternalConfig
         {
-            NONE,
-            SYNC_WITH_MAIN_STEREO,
-            SYNC_WITH_AUX
+            ///
+            /// @brief Lighting brightness ranging from 0 to 100.0. A value of 0 will turn off the LEDs
+            ///
+            float intensity = 0.0f;
+
+            ///
+            /// @brief Enable flashing of the light
+            ///
+            bool flash = false;
         };
 
         ///
-        /// @brief Lighting brightness ranging from 0 to 100.0. A value of 0 will turn off the LEDs
+        /// @brief Lighting config for lights driven by GPIO outputs from the MultiSense
         ///
-        float intensity = 0.0f;
+        struct ExternalConfig
+        {
+            ///
+            /// @brief Different flash modes for the camera
+            ///
+            enum class FlashMode : uint8_t
+            {
+                NONE,
+                SYNC_WITH_MAIN_STEREO,
+                SYNC_WITH_AUX
+            };
+
+            ///
+            /// @brief Lighting brightness ranging from 0 to 100.0. A value of 0 will turn off the LEDs
+            ///
+            float intensity = 0.0f;
+
+            ///
+            /// @brief Configure flash mode
+            ///
+            FlashMode flash = FlashMode::NONE;
+
+            ///
+            /// @brief The number of pulses of the light per single exposure.
+            ///        This is used to trigger the light or output signal multiple times after a
+            ///        single exposure. For values greater than 1, pulses will occur between the
+            ///        exposures, not during. This can be used to leverage human persistence of
+            ///        vision to make the light appear as though it is not flashing
+            ///
+            uint32_t pulses_per_exposure = 1;
+
+            ///
+            /// @brief The time it takes for the light to reach full brightness. This will be used to
+            ///        ensure the light is at full brightness when the image is exposed
+            ///
+            std::chrono::microseconds startup_time{0};
+        };
 
         ///
-        /// @brief Configure flash mode
+        /// @brief The internal lighting config. Will be nullopt if the camera does not
+        ///        support internal lighting controls
         ///
-        FlashMode flash = FlashMode::NONE;
+        std::optional<InternalConfig> internal = std::nullopt;
+
+        ///
+        /// @brief The external lighting config. Will be nullopt if the camera does not
+        ///        support internal lighting controls
+        ///
+        std::optional<ExternalConfig> external = std::nullopt;
     };
 
     ///
-    /// @brief The MultiSense operating width
+    /// @brief The operating resolution of the MultiSense
     ///
-    uint32_t width = 960;
-
-    ///
-    /// @brief The MultiSense operating height
-    ///
-    uint32_t height = 600;
+    OperatingResolution resolution = OperatingResolution::QUARTER_RESOLUTION;
 
     ///
     /// @brief The max number of pixels the MultiSense searches when computing the disparity output
@@ -779,7 +839,7 @@ struct MultiSenseConfiguration
     /// @brief The lighting configuration for the camera. If invalid, the camera does not support lighting
     ///        configuration
     ///
-    std::optional<LightingConfiguration> lighting_config = std::nullopt;
+    LightingConfiguration lighting_config{};
 };
 
 ///
@@ -835,22 +895,22 @@ struct MultiSenseStatus
         ///
         /// @brief Temperature of the FPGA  in Celsius
         ///
-        float fpga_temperature_C = 0.0f;
+        float fpga_temperature = 0.0f;
 
         ///
         /// @brief Temperature of the left imager in Celsius
         ///
-        float left_imager_temperature_C = 0.0f;
+        float left_imager_temperature = 0.0f;
 
         ///
         /// @brief Temperature of the right imager in Celsius
         ///
-        float right_imager_temperature_C = 0.0f;
+        float right_imager_temperature = 0.0f;
 
         ///
         /// @brief Temperature of the internal switching power supply in Celsius
         ///
-        float power_supply_temperature_C = 0.0f;
+        float power_supply_temperature = 0.0f;
     };
 
     struct PowerStatus
@@ -965,7 +1025,6 @@ struct MultiSenseStatus
 
 ///
 /// @brief Static status info for the MultiSense. Will not change during camera operation
-/// TODO (malvarado): Put device info in here
 ///
 struct MultiSenseInfo
 {
@@ -975,19 +1034,19 @@ struct MultiSenseInfo
     struct NetworkInfo
     {
         ///
-        /// @brief The IPv4 address of the camera (i.e. X.X.X.X)
+        /// @brief The ip address of the camera (i.e. X.X.X.X)
         ///
-        std::string ipv4_address = "10.66.171.21";
+        std::string ip_address = "10.66.171.21";
 
         ///
         /// @brief The gateway of the camera (i.e. X.X.X.X)
         ///
-        std::string ipv4_gateway = "10.66.171.1";
+        std::string gateway = "10.66.171.1";
 
         ///
         /// @brief The netmask of the camera (i.e. X.X.X.X)
         ///
-        std::string ipv4_netmask = "255.255.255.0";
+        std::string netmask = "255.255.255.0";
     };
 
     ///
@@ -1249,14 +1308,9 @@ struct MultiSenseInfo
     struct SupportedOperatingMode
     {
         ///
-        /// @brief Supported operating resolution width
+        /// @brief Supported operating resolution
         ///
-        uint32_t width = 0;
-
-        ///
-        /// @brief Supported operating resolution height
-        ///
-        uint32_t height = 0;
+        MultiSenseConfiguration::OperatingResolution resolution = MultiSenseConfiguration::OperatingResolution::QUARTER_RESOLUTION;
 
         ///
         /// @brief Supported operating disparity
@@ -1307,17 +1361,20 @@ struct MultiSenseInfo
         };
 
         ///
-        /// @brief The name of the IMU source
+        /// @brief The name of the IMU chip on the camera
         ///
         std::string name{};
 
         ///
         /// @brief The name of the IMU device for the source
+        /// TODO (malvarado) make this an enum (accel, gyro, mag) Update sample message too
         ///
         std::string device{};
 
         ///
         /// @brief The name of the units type it broadcasts
+        ///
+        /// TODO (malvarado) only use standard units (g's, degrees, milligaus)
         ///
         std::string units{};
 

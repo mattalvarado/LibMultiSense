@@ -377,7 +377,7 @@ Status LegacyChannel::set_configuration(const MultiSenseConfiguration &config)
     //
     const auto res_ack = wait_for_ack(m_message_assembler,
                                       m_socket,
-                                      convert<wire::CamSetResolution>(config),
+                                      convert_resolution(config, m_info.device.imager_width, m_info.device.imager_height),
                                       m_transmit_id++,
                                       m_current_mtu,
                                       m_config.receive_timeout);
@@ -457,14 +457,14 @@ Status LegacyChannel::set_configuration(const MultiSenseConfiguration &config)
     //
     // Set lighting controls if they are valid
     //
-    if (config.lighting_config)
+    if (config.lighting_config.internal || config.lighting_config.external)
     {
         //
         // Set the lighting controls
         //
         const auto lighting_ack = wait_for_ack(m_message_assembler,
                                                m_socket,
-                                               convert(config.lighting_config.value()),
+                                               convert(config.lighting_config),
                                                m_transmit_id++,
                                                m_current_mtu,
                                                m_config.receive_timeout);
@@ -496,44 +496,18 @@ Status LegacyChannel::set_configuration(const MultiSenseConfiguration &config)
     }
 
     //
-    // Only firmware >= 6.X supports a packet delay
+    // Set our packet delay
     //
-    if (MultiSenseInfo::Version{6, 0, 0} < m_info.version.firmware_version)
-    {
-        //
-        // Set our packet delay
-        //
-        const auto packet_ack = wait_for_ack(m_message_assembler,
-                                             m_socket,
-                                             convert<wire::SysPacketDelay>(config.network_config),
-                                             m_transmit_id++,
-                                             m_current_mtu,
-                                             m_config.receive_timeout);
+    const auto packet_ack = wait_for_ack(m_message_assembler,
+                                         m_socket,
+                                         convert<wire::SysPacketDelay>(config.network_config),
+                                         m_transmit_id++,
+                                         m_current_mtu,
+                                         m_config.receive_timeout);
 
-        if (!packet_ack || packet_ack->status != wire::Ack::Status_Ok)
-        {
-            return get_status(packet_ack->status);
-        }
-    }
-    else if (config.network_config.packet_delay_enabled)
+    if (!packet_ack || packet_ack->status != wire::Ack::Status_Ok)
     {
-        CRL_DEBUG("Warning: attempting to set a packet delay which is unsupported on the current camera firmware. "
-                  "Please update the camera firmware: https://docs.carnegierobotics.com/firmware/update.html \n");
-    }
-
-    //
-    // Set our transmit delay
-    //
-    const auto transmit_ack = wait_for_ack(m_message_assembler,
-                                           m_socket,
-                                           convert<wire::SysTransmitDelay>(config.network_config),
-                                           m_transmit_id++,
-                                           m_current_mtu,
-                                           m_config.receive_timeout);
-
-    if (!transmit_ack || transmit_ack->status != wire::Ack::Status_Ok)
-    {
-        return get_status(transmit_ack->status);
+        return get_status(packet_ack->status);
     }
 
     //
@@ -797,40 +771,23 @@ std::optional<MultiSenseConfiguration> LegacyChannel::query_configuration(bool h
                                                            m_current_mtu,
                                                            m_config.receive_timeout);
 
-    //
-    // Only firmware >= 6.X supports a packet delay
-    //
-    std::optional<wire::SysPacketDelay> packet_delay = std::nullopt;
-    if (m_info.version.firmware_version < MultiSenseInfo::Version{6, 0, 0})
-    {
-        packet_delay = wire::SysPacketDelay(false);
-    }
-    else
-    {
-        packet_delay = wait_for_data<wire::SysPacketDelay>(m_message_assembler,
-                                                           m_socket,
-                                                           wire::SysGetPacketDelay(),
-                                                           m_transmit_id++,
-                                                           m_current_mtu,
-                                                           m_config.receive_timeout);
-    }
+    const auto packet_delay = wait_for_data<wire::SysPacketDelay>(m_message_assembler,
+                                                                  m_socket,
+                                                                  wire::SysGetPacketDelay(),
+                                                                  m_transmit_id++,
+                                                                  m_current_mtu,
+                                                                  m_config.receive_timeout);
 
-    const auto transmit_delay = wait_for_data<wire::SysTransmitDelay>(m_message_assembler,
-                                                                      m_socket,
-                                                                      wire::SysGetTransmitDelay(),
-                                                                      m_transmit_id++,
-                                                                      m_current_mtu,
-                                                                      m_config.receive_timeout);
-
-    if (camera_config && packet_delay && transmit_delay)
+    if (camera_config && packet_delay)
     {
+        std::lock_guard<std::mutex> lock(m_mutex);
         return convert(camera_config.value(),
                        aux_config,
                        imu_config,
                        led_config,
                        packet_delay.value(),
-                       transmit_delay.value(),
-                       ptp_enabled);
+                       ptp_enabled,
+                       m_info.device);
     }
 
     CRL_DEBUG("Unable to query the camera's configuration\n");
@@ -919,7 +876,7 @@ std::optional<MultiSenseInfo> LegacyChannel::query_info()
 
     return MultiSenseInfo{device_info.value(),
                           convert(version.value()),
-                          convert(device_modes.value()),
+                          convert(device_modes.value(), device_info->imager_width, device_info->imager_height),
                           imu_info ? std::make_optional(convert(imu_info.value())) : std::nullopt,
                           convert(network_info.value())};
 }
