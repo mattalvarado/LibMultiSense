@@ -38,25 +38,19 @@
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN 1
 #endif
-
-#include <windows.h>
-#include <winsock2.h>
-#else
-#include <unistd.h>
-#include <arpa/inet.h> // htons
 #endif
 
 #include <chrono>
 #include <csignal>
-#include <fstream>
 #include <iostream>
-#include <thread>
 
 #include <nlohmann/json.hpp>
 
 #include <MultiSense/MultiSenseChannel.hh>
 #include <MultiSense/MultiSenseUtilities.hh>
 #include <MultiSense/MultiSenseSerialization.hh>
+
+#include "getopt/getopt.h"
 
 
 using json = nlohmann::json;

@@ -38,22 +38,14 @@
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN 1
 #endif
-
-#include <windows.h>
-#include <winsock2.h>
-#else
-#include <unistd.h>
-#include <arpa/inet.h> // htons
 #endif
 
-#include <chrono>
-#include <csignal>
 #include <iostream>
-#include <thread>
 
 #include <MultiSense/MultiSenseChannel.hh>
 #include <MultiSense/MultiSenseUtilities.hh>
 
+#include "getopt/getopt.h"
 
 namespace lms = multisense;
 

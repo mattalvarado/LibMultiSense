@@ -34,6 +34,8 @@
  *   2025-01-18, malvarado@carnegierobotics.com, IRAD, Created file.
  **/
 
+#include <algorithm>
+
 #include "details/legacy/configuration.hh"
 #include "details/legacy/utilities.hh"
 
