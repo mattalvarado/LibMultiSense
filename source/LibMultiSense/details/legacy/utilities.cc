@@ -64,8 +64,6 @@ bool is_image_source(const DataSource &source)
         default:
             return false;
     }
-
-    return false;
 }
 
 Status get_status(const crl::multisense::details::wire::Ack::AckStatus &status)
@@ -83,8 +81,6 @@ Status get_status(const crl::multisense::details::wire::Ack::AckStatus &status)
         case Ack::Status_Exception: {return Status::EXCEPTION;}
         default: {return Status::UNKNOWN;}
     }
-
-    return Status::UNKNOWN;
 }
 
 MultiSenseInfo::Version get_version(const crl::multisense::details::wire::VersionType &version)

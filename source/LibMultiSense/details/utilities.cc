@@ -140,8 +140,6 @@ std::string to_string(const Status &status)
         case Status::UNINITIALIZED: {return "UNINITIALIZED";}
         default: {return "UNKNOWN";}
     }
-
-    return "UNKNOWN";
 }
 
 
@@ -222,7 +220,8 @@ std::optional<Image> create_depth_image(const ImageFrame &frame,
         }
     }
 
-    auto data = std::make_shared<std::vector<uint8_t>>(disparity.width * disparity.height * bytes_per_pixel, 0);
+    auto data = std::make_shared<std::vector<uint8_t>>(disparity.width * disparity.height * bytes_per_pixel,
+                                                       static_cast<uint8_t>(0));
 
     //
     // MONO16 disparity images are quantized to 1/16th of a pixel

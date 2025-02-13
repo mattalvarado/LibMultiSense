@@ -100,7 +100,7 @@ bool header_valid(const std::vector<uint8_t> &raw_data)
     if (raw_data.size() < static_cast<int>(sizeof(wire::Header)))
     {
         CRL_DEBUG("undersized packet: %" PRIu64 "/ %" PRIu64 " bytes\n",
-                  raw_data.size(), static_cast<uint64_t>(sizeof(wire::Header)));
+                  static_cast<uint64_t>(raw_data.size()), static_cast<uint64_t>(sizeof(wire::Header)));
         return false;
     }
 
