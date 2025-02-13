@@ -508,7 +508,7 @@ Status LegacyChannel::set_configuration(const MultiSenseConfiguration &config)
     const auto errors = std::any_of(std::begin(responses), std::end(responses),
                                     [](const auto &e)
                                     {
-                                        return (e == Status::ERROR ||
+                                        return (e == Status::INTERNAL_ERROR ||
                                                 e == Status::FAILED ||
                                                 e == Status::EXCEPTION);
                                     });
@@ -516,7 +516,7 @@ Status LegacyChannel::set_configuration(const MultiSenseConfiguration &config)
     //
     // TODO (malvarado): Check equality
     //
-    const auto final_status = responses.empty() ? Status::OK : (errors ? Status::ERROR : Status::INCOMPLETE_APPLICATION);
+    const auto final_status = responses.empty() ? Status::OK : (errors ? Status::INTERNAL_ERROR : Status::INCOMPLETE_APPLICATION);
 
     //
     // Update our internal cached image config after we successfully set everything
@@ -530,7 +530,7 @@ Status LegacyChannel::set_configuration(const MultiSenseConfiguration &config)
         return final_status;
     }
 
-    return Status::ERROR;
+    return Status::INTERNAL_ERROR;
 }
 
 StereoCalibration LegacyChannel::get_calibration()
@@ -698,7 +698,7 @@ Status LegacyChannel::set_mtu(uint16_t mtu)
         CRL_DEBUG("Testing MTU of %u bytes failed."
                   " Please verify you can ping the MultiSense with a MTU of %u bytes at %s.\n",
                   mtu, mtu, inet_ntoa(m_socket.sensor_address->sin_addr));
-        return Status::ERROR;
+        return Status::INTERNAL_ERROR;
     }
 
     if (const auto ack = wait_for_ack(m_message_assembler,
@@ -741,7 +741,7 @@ Status LegacyChannel::set_mtu(const std::optional<uint16_t> &mtu)
                   "Please verify you can ping the MultiSense at %s\n", inet_ntoa(m_socket.sensor_address->sin_addr));
     }
 
-    return Status::ERROR;
+    return Status::INTERNAL_ERROR;
 }
 
 std::optional<MultiSenseConfiguration> LegacyChannel::query_configuration(bool has_aux_camera,

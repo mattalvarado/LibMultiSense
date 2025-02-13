@@ -142,7 +142,7 @@ int64_t publish_data(const NetworkSocket &socket, const std::vector<uint8_t> &da
 #pragma warning (disable : 4267)
 #endif
     sockaddr_in* raw_address = socket.sensor_address.get();
-    const auto ret = sendto(socket.sensor_socket, data.data(), data.size(), 0,
+    const auto ret = sendto(socket.sensor_socket, (char*) data.data(), data.size(), 0,
                                (struct sockaddr *) raw_address,
                                sizeof(*raw_address));
 #if defined(WIN32) && !defined(__MINGW64__)

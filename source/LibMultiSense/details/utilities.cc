@@ -132,7 +132,7 @@ std::string to_string(const Status &status)
     {
         case Status::OK: {return "OK";}
         case Status::TIMEOUT: {return "TIMEOUT";}
-        case Status::ERROR: {return "ERROR";}
+        case Status::INTERNAL_ERROR: {return "ERROR";}
         case Status::FAILED: {return "FAILED";}
         case Status::UNSUPPORTED: {return "UNSUPPORTED";}
         case Status::UNKNOWN: {return "UNKNOWN";}

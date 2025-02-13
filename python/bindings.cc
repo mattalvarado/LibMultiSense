@@ -80,7 +80,7 @@ PYBIND11_MODULE(libmultisense, m) {
     py::enum_<multisense::Status>(m, "Status")
         .value("OK", multisense::Status::OK)
         .value("TIMEOUT", multisense::Status::TIMEOUT)
-        .value("ERROR", multisense::Status::ERROR)
+        .value("INTERNAL_ERROR", multisense::Status::INTERNAL_ERROR)
         .value("FAILED", multisense::Status::FAILED)
         .value("UNSUPPORTED", multisense::Status::UNSUPPORTED)
         .value("UNKNOWN", multisense::Status::UNKNOWN)

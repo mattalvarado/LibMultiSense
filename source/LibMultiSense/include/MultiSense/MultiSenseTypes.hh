@@ -59,7 +59,7 @@ enum class Status : uint8_t
     UNKNOWN,
     OK,
     TIMEOUT,
-    ERROR,
+    INTERNAL_ERROR,
     FAILED,
     UNSUPPORTED,
     EXCEPTION,

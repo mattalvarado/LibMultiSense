@@ -76,7 +76,7 @@ Status get_status(const crl::multisense::details::wire::Ack::AckStatus &status)
     {
         case Ack::Status_Ok: {return Status::OK;}
         case Ack::Status_TimedOut: {return Status::TIMEOUT;}
-        case Ack::Status_Error: {return Status::ERROR;}
+        case Ack::Status_Error: {return Status::INTERNAL_ERROR;}
         case Ack::Status_Failed: {return Status::FAILED;}
         case Ack::Status_Unsupported: {return Status::UNSUPPORTED;}
         case Ack::Status_Unknown: {return Status::UNKNOWN;}

@@ -192,7 +192,7 @@ crl::multisense::details::wire::CamControl convert<crl::multisense::details::wir
     output.exposure = static_cast<uint32_t>(config.image_config.manual_exposure.exposure_time.count());
 
     output.autoExposure = config.image_config.auto_exposure_enabled;
-    output.autoExposureMax = config.image_config.auto_exposure.max_exposure_time.count();
+    output.autoExposureMax = static_cast<uint32_t>(config.image_config.auto_exposure.max_exposure_time.count());
     output.autoExposureDecay = config.image_config.auto_exposure.decay;
     output.autoExposureThresh = config.image_config.auto_exposure.target_threshold;
     output.autoExposureTargetIntensity = config.image_config.auto_exposure.target_intensity;
@@ -225,10 +225,10 @@ crl::multisense::details::wire::AuxCamControl convert(const MultiSenseConfigurat
     wire::AuxCamControl output;
 
     output.gain = config.image_config.manual_exposure.gain;
-    output.exposure = config.image_config.manual_exposure.exposure_time.count();
+    output.exposure = static_cast<uint32_t>(config.image_config.manual_exposure.exposure_time.count());
 
     output.autoExposure = config.image_config.auto_exposure_enabled;
-    output.autoExposureMax = config.image_config.auto_exposure.max_exposure_time.count();
+    output.autoExposureMax = static_cast<uint32_t>(config.image_config.auto_exposure.max_exposure_time.count());
     output.autoExposureDecay = config.image_config.auto_exposure.decay;
     output.autoExposureThresh = config.image_config.auto_exposure.target_threshold;
     output.autoExposureTargetIntensity = config.image_config.auto_exposure.target_intensity;
@@ -419,7 +419,7 @@ crl::multisense::details::wire::LedSet convert(const MultiSenseConfiguration::Li
 
         output.number_of_pulses = led.external->pulses_per_exposure;
         output.invert_pulse = false;
-        output.led_delay_us = led.external->startup_time.count();
+        output.led_delay_us = static_cast<uint32_t>(led.external->startup_time.count());
     }
 
     return output;

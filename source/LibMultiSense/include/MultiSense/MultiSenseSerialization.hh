@@ -124,7 +124,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(Status, {
     {Status::UNKNOWN, "UNKNOWN"},
     {Status::OK, "OK"},
     {Status::TIMEOUT, "TIMEOUT"},
-    {Status::ERROR, "ERROR"},
+    {Status::INTERNAL_ERROR, "INTERNAL_ERROR"},
     {Status::FAILED, "FAILED"},
     {Status::UNSUPPORTED, "UNSUPPORTED"},
     {Status::EXCEPTION, "EXCEPTION"},

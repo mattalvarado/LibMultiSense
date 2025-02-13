@@ -102,7 +102,7 @@ TEST(get_status, status)
 
     ASSERT_EQ(Status::OK, get_status(Ack::Status_Ok));
     ASSERT_EQ(Status::TIMEOUT, get_status(Ack::Status_TimedOut));
-    ASSERT_EQ(Status::ERROR, get_status(Ack::Status_Error));
+    ASSERT_EQ(Status::INTERNAL_ERROR, get_status(Ack::Status_Error));
     ASSERT_EQ(Status::FAILED, get_status(Ack::Status_Failed));
     ASSERT_EQ(Status::UNSUPPORTED, get_status(Ack::Status_Unsupported));
     ASSERT_EQ(Status::UNKNOWN, get_status(Ack::Status_Unknown));
