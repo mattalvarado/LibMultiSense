@@ -185,7 +185,7 @@ public:
 
         message & numberOfPcbs;
 
-        uint8_t num = std::min(numberOfPcbs, (uint8_t) MAX_PCBS);
+        uint8_t num = numberOfPcbs <= MAX_PCBS ? numberOfPcbs : MAX_PCBS;
         for(uint8_t i=0; i<num; i++)
             pcbs[i].serialize(message, version);
 

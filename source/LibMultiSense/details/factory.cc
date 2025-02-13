@@ -60,8 +60,6 @@ std::unique_ptr<Channel> Channel::create(const ChannelConfig &config,
             return nullptr;
         }
     }
-
-    return nullptr;
 }
 
 }
