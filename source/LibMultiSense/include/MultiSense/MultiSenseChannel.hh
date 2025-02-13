@@ -43,7 +43,7 @@
 
 namespace multisense {
 
-class Channel {
+class MULTISENSE_API Channel {
 public:
     ///
     /// @brief Identifiers for the different Channel implementations. Used for

@@ -1,6 +1,3 @@
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 set(MULTISENSE_HEADERS include/MultiSense/MultiSenseChannel.hh
                        include/MultiSense/MultiSenseTypes.hh
                        include/MultiSense/MultiSenseUtilities.hh)

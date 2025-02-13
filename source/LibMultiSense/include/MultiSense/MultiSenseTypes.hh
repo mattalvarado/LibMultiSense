@@ -50,6 +50,18 @@
 #include <opencv2/core/mat.hpp>
 #endif
 
+#if !defined(MULTISENSE_API)
+#if defined (_MSC_VER)
+#if defined (MultiSense_EXPORTS)
+#define MULTISENSE_API __declspec(dllexport)
+#else
+#define MULTISENSE_API __declspec(dllimport)
+#endif
+#else
+#define MULTISENSE_API
+#endif
+#endif
+
 
 namespace multisense
 {
@@ -96,7 +108,7 @@ enum class DataSource : uint16_t
     IMU
 };
 
-struct CameraCalibration
+struct MULTISENSE_API CameraCalibration
 {
     ///
     /// @brief Distortion type
@@ -136,7 +148,7 @@ struct CameraCalibration
     std::vector<float> D = {};
 };
 
-struct StereoCalibration
+struct MULTISENSE_API StereoCalibration
 {
     ///
     /// @brief Calibration information for the left camera
@@ -157,7 +169,7 @@ struct StereoCalibration
 ///
 /// @brief Represents a single image plus metadata
 ///
-struct Image
+struct MULTISENSE_API Image
 {
     ///
     /// @brief Pixel formats
@@ -264,7 +276,7 @@ struct Image
 ///
 /// @brief A frame containing multiple images (indexed by DataSource).
 ///
-struct ImageFrame
+struct MULTISENSE_API ImageFrame
 {
     ///
     /// @brief Add an image to the frame, keyed by the image's DataSource.
@@ -324,12 +336,12 @@ struct ImageFrame
 ///
 /// @brief A single IMU sample from the camera
 ///
-struct ImuSample
+struct MULTISENSE_API ImuSample
 {
     ///
     /// @brief A generic measurement for a 3-axis IMU
     ///
-    struct Measurement
+    struct MULTISENSE_API Measurement
     {
         ///
         /// @brief Measurement on the x-axis of the sensor
@@ -377,7 +389,7 @@ struct ImuSample
 ///
 /// @brief A collection of IMU samples from the camera
 ///
-struct ImuFrame
+struct MULTISENSE_API ImuFrame
 {
     ///
     /// @brief A batched collection of IMU samples
@@ -389,12 +401,12 @@ struct ImuFrame
 ///
 /// @brief Complete configuration object for configuring the MultiSense. Can be updated during camera operation
 ///
-struct MultiSenseConfiguration
+struct MULTISENSE_API MultiSenseConfiguration
 {
     ///
     /// @brief Stereo specific configuration
     ///
-    struct StereoConfiguration
+    struct MULTISENSE_API StereoConfiguration
     {
         ///
         ///
@@ -408,7 +420,7 @@ struct MultiSenseConfiguration
     ///
     /// @brief Manual exposure specific configuration
     ///
-    struct ManualExposureConfiguration
+    struct MULTISENSE_API ManualExposureConfiguration
     {
         ///
         /// @brief The desired electrical and digital gain used to brighten the image.
@@ -426,7 +438,7 @@ struct MultiSenseConfiguration
     ///
     /// @brief Auto-exposure Region-of-Interest (ROI) specific configuration
     ///
-    struct AutoExposureRoiConfiguration
+    struct MULTISENSE_API AutoExposureRoiConfiguration
     {
         ///
         /// @brief The x value of the top left corner of the ROI in the full resolution image. Note (0,0) is the top
@@ -451,7 +463,7 @@ struct MultiSenseConfiguration
     ///
     /// @brief Auto-exposure specific configuration
     ///
-    struct AutoExposureConfiguration
+    struct MULTISENSE_API AutoExposureConfiguration
     {
         ///
         /// @brief The max exposure time auto exposure algorithm can set in microseconds
@@ -494,7 +506,7 @@ struct MultiSenseConfiguration
     ///
     /// @brief Manual white balance specific configuration
     ///
-    struct ManualWhiteBalanceConfiguration
+    struct MULTISENSE_API ManualWhiteBalanceConfiguration
     {
         ///
         /// @brief The manual red white-balance setting
@@ -512,7 +524,7 @@ struct MultiSenseConfiguration
     ///
     /// @brief Auto white balance specific configuration
     ///
-    struct AutoWhiteBalanceConfiguration
+    struct MULTISENSE_API AutoWhiteBalanceConfiguration
     {
         ///
         /// @brief The decay rate used for auto-white-balance
@@ -530,7 +542,7 @@ struct MultiSenseConfiguration
     ///
     /// @brief Image specific configuration
     ///
-    struct ImageConfiguration
+    struct MULTISENSE_API ImageConfiguration
     {
         ///
         /// @brief Set the gamma correction for the image.
@@ -578,7 +590,7 @@ struct MultiSenseConfiguration
     ///
     /// @brief Image specific configuration for the Aux imager
     ///
-    struct AuxConfiguration
+    struct MULTISENSE_API AuxConfiguration
     {
         ///
         /// @brief Image configuration for the Aux imager
@@ -648,7 +660,7 @@ struct MultiSenseConfiguration
     ///
     /// @brief Configuration for time-based controls
     ///
-    struct TimeConfiguration
+    struct MULTISENSE_API TimeConfiguration
     {
         ///
         /// @brief Enable PTP sync on the camera
@@ -659,7 +671,7 @@ struct MultiSenseConfiguration
     ///
     /// @brief Configuration for transmitting packets from the MultiSense to the host
     ///
-    struct NetworkTransmissionConfiguration
+    struct MULTISENSE_API NetworkTransmissionConfiguration
     {
         ///
         /// @brief Add a small delay between the transmission of each packet to hopefully interact
@@ -671,13 +683,13 @@ struct MultiSenseConfiguration
     ///
     /// @brief Configuration for the IMU sensor
     ///
-    struct ImuConfiguration
+    struct MULTISENSE_API ImuConfiguration
     {
         ///
         /// @brief Configuration for a specific IMU operating mode. There are separate modes for each of the
         ///        IMU sensors (i.e. accelerometer, gyroscope, magnetometer)
         ///
-        struct OperatingMode
+        struct MULTISENSE_API OperatingMode
         {
             ///
             /// @brief The name of the specific IMU source corresponding to the ImuSource
@@ -721,12 +733,12 @@ struct MultiSenseConfiguration
     /// @brief Lighting configuration for the camera
     /// TODO (malvarado) Handle serialization explicitly since optionals of optionals are not supported
     ///
-    struct LightingConfiguration
+    struct MULTISENSE_API LightingConfiguration
     {
         ///
         /// @brief Lighting config for lights integrated into the MultiSense
         ///
-        struct InternalConfig
+        struct MULTISENSE_API InternalConfig
         {
             ///
             /// @brief Lighting brightness ranging from 0 to 100.0. A value of 0 will turn off the LEDs
@@ -742,7 +754,7 @@ struct MultiSenseConfiguration
         ///
         /// @brief Lighting config for lights driven by GPIO outputs from the MultiSense
         ///
-        struct ExternalConfig
+        struct MULTISENSE_API ExternalConfig
         {
             ///
             /// @brief Different flash modes for the camera
@@ -849,9 +861,9 @@ struct MultiSenseConfiguration
 /// @brief Consolidated status information which can be queried on demand from the MultiSense. Will change
 ///        during camera operation
 ///
-struct MultiSenseStatus
+struct MULTISENSE_API MultiSenseStatus
 {
-    struct PtpStatus
+    struct MULTISENSE_API PtpStatus
     {
         ///
         /// @brief Status of the grandmaster clock. true if synchronized to a non-local grandmaster OR if
@@ -880,7 +892,7 @@ struct MultiSenseStatus
         uint16_t steps_from_local_to_grandmaster = 0;
     };
 
-    struct CameraStatus
+    struct MULTISENSE_API CameraStatus
     {
         ///
         /// @brief True if the cameras are operating and currently streaming data
@@ -893,7 +905,7 @@ struct MultiSenseStatus
         bool processing_pipeline_ok = false;
     };
 
-    struct TemperatureStatus
+    struct MULTISENSE_API TemperatureStatus
     {
         ///
         /// @brief Temperature of the FPGA  in Celsius
@@ -916,7 +928,7 @@ struct MultiSenseStatus
         float power_supply_temperature = 0.0f;
     };
 
-    struct PowerStatus
+    struct MULTISENSE_API PowerStatus
     {
         ///
         /// @brief The current input voltage in volts
@@ -934,7 +946,7 @@ struct MultiSenseStatus
         float fpga_power = 0.0f;
     };
 
-    struct ClientNetworkStatus
+    struct MULTISENSE_API ClientNetworkStatus
     {
         ///
         /// @brief The total number of valid messages received from the client
@@ -952,7 +964,7 @@ struct MultiSenseStatus
         size_t invalid_packets = 0;
     };
 
-    struct TimeStatus
+    struct MULTISENSE_API TimeStatus
     {
         ///
         /// @brief The camera's system time when the status message request was received
@@ -1029,12 +1041,12 @@ struct MultiSenseStatus
 ///
 /// @brief Static status info for the MultiSense. Will not change during camera operation
 ///
-struct MultiSenseInfo
+struct MULTISENSE_API MultiSenseInfo
 {
     ///
     /// @brief The network configuration for the MultiSense
     ///
-    struct NetworkInfo
+    struct MULTISENSE_API NetworkInfo
     {
         ///
         /// @brief The ip address of the camera (i.e. X.X.X.X)
@@ -1057,12 +1069,12 @@ struct MultiSenseInfo
     ///        the MultiSense offers, and provides debug information to the Carnegie Robotics' team.
     ///        The DeviceInfo can only be set at the factory
     ///
-    struct DeviceInfo
+    struct MULTISENSE_API DeviceInfo
     {
         ///
         /// @brief Info for the PCBs contained in the unit
         ///
-        struct PcbInfo
+        struct MULTISENSE_API PcbInfo
         {
             std::string name;
             uint32_t revision;
@@ -1236,7 +1248,7 @@ struct MultiSenseInfo
     /// @brief Convenience wrapper for a version number
     ///        See https://semver.org/
     ///
-    struct Version
+    struct MULTISENSE_API Version
     {
         ///
         /// @brief Major version number
@@ -1275,7 +1287,7 @@ struct MultiSenseInfo
     ///
     /// @brief Version information for the MultiSense
     ///
-    struct SensorVersion
+    struct MULTISENSE_API SensorVersion
     {
         ///
         /// @brief The date the firmware running on the camera was built
@@ -1306,7 +1318,7 @@ struct MultiSenseInfo
     ///
     /// @brief A valid operating mode for the MultiSense
     ///
-    struct SupportedOperatingMode
+    struct MULTISENSE_API SupportedOperatingMode
     {
         ///
         /// @brief Supported operating resolution
@@ -1327,12 +1339,12 @@ struct MultiSenseInfo
     ///
     /// @brief Info about the available IMu configurations
     ///
-    struct ImuSource
+    struct MULTISENSE_API ImuSource
     {
         ///
         /// @brief A sample rate, and what impact it has on bandwidth
         ///
-        struct Rate
+        struct MULTISENSE_API Rate
         {
             ///
             /// @brief The sample rate for the sensor in Hz
@@ -1348,7 +1360,7 @@ struct MultiSenseInfo
         ///
         /// @brief The range for each sensor along with the corresponding sampling resolution
         ///
-        struct Range
+        struct MULTISENSE_API Range
         {
             ///
             /// @brief The max value the sensor can return. This value is +/- units for the given source

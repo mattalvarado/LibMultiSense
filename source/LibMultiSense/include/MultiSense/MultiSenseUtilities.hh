@@ -54,7 +54,7 @@ namespace multisense
 #pragma pack(push, 1)
 
 template<typename Color>
-struct Point
+struct MULTISENSE_API Point
 {
     float x = 0;
     float y = 0;
@@ -63,7 +63,7 @@ struct Point
 };
 
 template<>
-struct Point<void>
+struct MULTISENSE_API Point<void>
 {
     float x = 0;
     float y = 0;
@@ -71,7 +71,7 @@ struct Point<void>
 };
 
 template<typename Color = void>
-struct PointCloud
+struct MULTISENSE_API PointCloud
 {
     std::vector<Point<Color>> cloud;
 };
