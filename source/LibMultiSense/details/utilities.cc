@@ -34,8 +34,6 @@
  *   2025-01-15, malvarado@carnegierobotics.com, IRAD, Created file.
  **/
 
-#include <arpa/inet.h>
-
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
