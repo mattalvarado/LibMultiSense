@@ -189,7 +189,7 @@ crl::multisense::details::wire::CamControl convert<crl::multisense::details::wir
 
     output.framesPerSecond = config.frames_per_second;
     output.gain = config.image_config.manual_exposure.gain;
-    output.exposure = config.image_config.manual_exposure.exposure_time.count();
+    output.exposure = static_cast<uint32_t>(config.image_config.manual_exposure.exposure_time.count());
 
     output.autoExposure = config.image_config.auto_exposure_enabled;
     output.autoExposureMax = config.image_config.auto_exposure.max_exposure_time.count();
