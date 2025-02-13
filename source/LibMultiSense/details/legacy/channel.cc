@@ -48,6 +48,7 @@
 
 #include <cstring>
 #include <iostream>
+#include <inttypes.h>
 
 #include <utility/Exception.hh>
 #include <wire/Protocol.hh>
@@ -159,7 +160,7 @@ Status LegacyChannel::start_streams(const std::vector<DataSource> &sources)
     {
         if (ack->status != wire::Ack::Status_Ok)
         {
-            CRL_DEBUG("Start streams ack invalid: %i\n", ack->status);
+            CRL_DEBUG("Start streams ack invalid: %" PRIi32 "\n", ack->status);
             return get_status(ack->status);
         }
 
@@ -196,7 +197,7 @@ Status LegacyChannel::stop_streams(const std::vector<DataSource> &sources)
     {
         if (ack->status != wire::Ack::Status_Ok)
         {
-            CRL_DEBUG("Start streams ack invalid: %i\n", ack->status);
+            CRL_DEBUG("Start streams ack invalid: %" PRIi32 "\n", ack->status);
             return get_status(ack->status);
         }
 
@@ -279,7 +280,7 @@ Status LegacyChannel::connect(const ChannelConfig &config)
                                                    {
                                                        if (!this->m_message_assembler.process_packet(data))
                                                        {
-                                                           CRL_DEBUG("Processing packet of %li bytes failed\n", data.size());
+                                                           CRL_DEBUG("Processing packet of %" PRIu64 " bytes failed\n", data.size());
                                                        }
                                                    });
     //
@@ -694,8 +695,8 @@ Status LegacyChannel::set_mtu(uint16_t mtu)
                                                                       m_current_mtu,
                                                                       m_config.receive_timeout); !test_mtu)
     {
-        CRL_DEBUG("Testing MTU of %u bytes failed."
-                  " Please verify you can ping the MultiSense with a MTU of %u bytes at %s.\n",
+        CRL_DEBUG("Testing MTU of %" PRIu16 " bytes failed."
+                  " Please verify you can ping the MultiSense with a MTU of %" PRIu16 " bytes at %s.\n",
                   mtu, mtu, inet_ntoa(m_socket.sensor_address->sin_addr));
         return Status::INTERNAL_ERROR;
     }
@@ -709,7 +710,7 @@ Status LegacyChannel::set_mtu(uint16_t mtu)
     {
         if (ack->status != wire::Ack::Status_Ok)
         {
-            CRL_DEBUG("Unable to set MTU to %u bytes: %i\n", mtu, ack->status);
+            CRL_DEBUG("Unable to set MTU to %" PRIu16 " bytes: %i\n", mtu, ack->status);
             return get_status(ack->status);
         }
     }
@@ -732,7 +733,7 @@ Status LegacyChannel::set_mtu(const std::optional<uint16_t> &mtu)
         {
             if (const auto status = set_mtu(value); status == Status::OK)
             {
-                CRL_DEBUG("Auto-setting MTU to %u bytes \n", value);
+                CRL_DEBUG("Auto-setting MTU to %" PRIu16 " bytes \n", value);
                 return status;
             }
         }
@@ -923,7 +924,7 @@ void LegacyChannel::image_callback(std::shared_ptr<const std::vector<uint8_t>> d
     const auto meta = m_meta_cache.find(wire_image.frameId);
     if (meta == std::end(m_meta_cache))
     {
-        CRL_DEBUG("Missing corresponding meta for frame_id %li\n", wire_image.frameId);
+        CRL_DEBUG("Missing corresponding meta for frame_id %" PRIu64 "\n", wire_image.frameId);
         return;
     }
 
@@ -939,7 +940,7 @@ void LegacyChannel::image_callback(std::shared_ptr<const std::vector<uint8_t>> d
     {
         case 8: {pixel_format = Image::PixelFormat::MONO8; break;}
         case 16: {pixel_format = Image::PixelFormat::MONO16; break;}
-        default: {CRL_DEBUG("Unknown pixel format %d\n", wire_image.bitsPerPixel);}
+        default: {CRL_DEBUG("Unknown pixel format %" PRIu32 "\n", wire_image.bitsPerPixel);}
     }
 
     const auto source = convert_sources(static_cast<uint64_t>(wire_image.sourceExtended) << 32 | wire_image.source);
@@ -991,7 +992,7 @@ void LegacyChannel::disparity_callback(std::shared_ptr<const std::vector<uint8_t
     const auto meta = m_meta_cache.find(wire_image.frameId);
     if (meta == std::end(m_meta_cache))
     {
-        CRL_DEBUG("Missing corresponding meta for frame_id %li\n", wire_image.frameId);
+        CRL_DEBUG("Missing corresponding meta for frame_id %" PRIu64 "\n", wire_image.frameId);
         return;
     }
 
@@ -1007,7 +1008,7 @@ void LegacyChannel::disparity_callback(std::shared_ptr<const std::vector<uint8_t
     {
         case 8: {pixel_format = Image::PixelFormat::MONO8; break;}
         case 16: {pixel_format = Image::PixelFormat::MONO16; break;}
-        default: {CRL_DEBUG("Unknown pixel format %d\n", wire::Disparity::API_BITS_PER_PIXEL);}
+        default: {CRL_DEBUG("Unknown pixel format %" PRIu8 "\n", wire::Disparity::API_BITS_PER_PIXEL);}
     }
 
     const auto source = DataSource::LEFT_DISPARITY_RAW;

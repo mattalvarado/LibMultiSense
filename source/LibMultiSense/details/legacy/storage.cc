@@ -64,6 +64,7 @@ BufferPool::BufferPool(const BufferPoolConfig &config):
             }
             catch(const std::exception &e)
             {
+                (void) e;
                 CRL_DEBUG("Failed to allocate small buffer. Retrying\n");
             }
         }
@@ -82,6 +83,7 @@ BufferPool::BufferPool(const BufferPoolConfig &config):
             }
             catch(const std::exception &e)
             {
+                (void) e;
                 CRL_DEBUG("Failed to allocate large buffer\n");
             }
         }

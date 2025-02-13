@@ -34,6 +34,7 @@
  *   2025-01-08, malvarado@carnegierobotics.com, IRAD, Created file.
  **/
 
+#include <inttypes.h>
 #include <limits>
 
 #include <utility/BufferStream.hh>
@@ -98,7 +99,7 @@ bool header_valid(const std::vector<uint8_t> &raw_data)
 
     if (raw_data.size() < static_cast<int>(sizeof(wire::Header)))
     {
-        CRL_DEBUG("undersized packet: %lu/%lu bytes\n", raw_data.size(), sizeof(wire::Header));
+        CRL_DEBUG("undersized packet: %" PRIu64 "/ %" PRIu64 " bytes\n", raw_data.size(), sizeof(wire::Header));
         return false;
     }
 
@@ -337,7 +338,7 @@ MessageAssembler::get_buffer(uint32_t message_size, std::deque<int64_t> ordered_
 
     if (message_size > buffer_config.large_buffer_size)
     {
-        CRL_DEBUG("No buffers large enough to fit a message of %d bytes\n", message_size);
+        CRL_DEBUG("No buffers large enough to fit a message of %" PRIu32 " bytes\n", message_size);
         return std::make_tuple(nullptr, std::move(ordered_messages));
     }
 
