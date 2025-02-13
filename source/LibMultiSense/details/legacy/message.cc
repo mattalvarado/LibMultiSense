@@ -99,7 +99,8 @@ bool header_valid(const std::vector<uint8_t> &raw_data)
 
     if (raw_data.size() < static_cast<int>(sizeof(wire::Header)))
     {
-        CRL_DEBUG("undersized packet: %" PRIu64 "/ %" PRIu64 " bytes\n", raw_data.size(), sizeof(wire::Header));
+        CRL_DEBUG("undersized packet: %" PRIu64 "/ %" PRIu64 " bytes\n",
+                  raw_data.size(), static_cast<uint64_t>(sizeof(wire::Header)));
         return false;
     }
 
@@ -391,7 +392,7 @@ bool MessageAssembler::write_data(InternalMessage &message, const std::vector<ui
         wire::Disparity::assembler(stream,
                                    raw_data.data() + sizeof(wire::Header),
                                    header.byteOffset,
-                                   bytes_to_write);
+                                   static_cast<uint32_t>(bytes_to_write));
     }
     else
     {

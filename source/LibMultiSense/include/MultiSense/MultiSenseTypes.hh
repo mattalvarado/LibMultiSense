@@ -1229,8 +1229,6 @@ struct MultiSenseInfo
                 default:
                     return false;
             }
-
-            return false;
         }
     };
 

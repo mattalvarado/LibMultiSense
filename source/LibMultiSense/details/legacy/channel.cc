@@ -280,7 +280,8 @@ Status LegacyChannel::connect(const ChannelConfig &config)
                                                    {
                                                        if (!this->m_message_assembler.process_packet(data))
                                                        {
-                                                           CRL_DEBUG("Processing packet of %" PRIu64 " bytes failed\n", data.size());
+                                                           CRL_DEBUG("Processing packet of %" PRIu64 " bytes failed\n", 
+                                                                     static_cast<uint64_t>(data.size()));
                                                        }
                                                    });
     //
