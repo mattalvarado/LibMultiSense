@@ -217,7 +217,7 @@ std::optional<PointCloud<Color>> create_color_pointcloud(const ImageFrame &frame
                 //
                 const size_t color_index = color.get().image_data_offset +
                                            (h * color.get().width * color_step) +
-                                           ((w - (color_disparity_scale * d)) * color_step);
+                                           static_cast<size_t>((w - (color_disparity_scale * d)) * color_step);
 
                 const Color color_pixel = *reinterpret_cast<const Color*>(color.get().raw_data->data() + color_index);
 

@@ -43,12 +43,10 @@ jobs:
       run: |
           cmake -B ${{github.workspace}}/build -DBUILD_LEGACY_API=OFF -DBUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
           cmake --build build -j "$(nproc)"
-          cmake --install build
     - id: build-debug
       run: |
           cmake -B ${{github.workspace}}/build -DBUILD_LEGACY_API=OFF -DBUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Debug
           cmake --build build -j "$(nproc)"
-          cmake --install build
 
   buildwindows:
     name: build for windows
