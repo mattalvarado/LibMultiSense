@@ -68,22 +68,22 @@ void usage(const char *name)
     exit(1);
 }
 
-lms::StereoCalibration update_calibration(lms::StereoCalibration cal, double new_focal_length)
+lms::StereoCalibration update_calibration(lms::StereoCalibration cal, float new_focal_length)
 {
     std::cout << "Updating focal length from " << cal.left.P[0][0] << " to " << new_focal_length << std::endl;
 
     cal.left.P[0][0] = new_focal_length;
     cal.left.P[1][1] = new_focal_length;
 
-    const double right_tx = cal.right.P[0][3] / cal.right.P[0][0];
+    const float right_tx = cal.right.P[0][3] / cal.right.P[0][0];
     cal.right.P[0][0] = new_focal_length;
     cal.right.P[1][1] = new_focal_length;
     cal.right.P[0][3] = new_focal_length * right_tx;
 
     if (cal.aux)
     {
-        const double aux_tx = cal.aux->P[0][3] / cal.aux->P[0][0];
-        const double aux_ty = cal.aux->P[1][3] / cal.aux->P[1][1];
+        const float aux_tx = cal.aux->P[0][3] / cal.aux->P[0][0];
+        const float aux_ty = cal.aux->P[1][3] / cal.aux->P[1][1];
 
         cal.aux->P[0][0] = new_focal_length;
         cal.aux->P[1][1] = new_focal_length;
@@ -100,7 +100,7 @@ int main(int argc, char** argv)
 {
     std::string ip_address = "10.66.171.21";
     int16_t mtu = 1500;
-    std::optional<double> rectified_focal_length = std::nullopt;
+    std::optional<float> rectified_focal_length = std::nullopt;
     bool set = false;
 
     int c;
@@ -109,8 +109,8 @@ int main(int argc, char** argv)
         switch(c)
         {
             case 'a': ip_address = std::string(optarg); break;
-            case 'm': mtu = atoi(optarg); break;
-            case 'r': rectified_focal_length = std::stod(optarg); break;
+            case 'm': mtu = static_cast<uint16_t>(atoi(optarg)); break;
+            case 'r': rectified_focal_length = std::stof(optarg); break;
             case 's': set = true; break;
             default: usage(*argv); break;
         }

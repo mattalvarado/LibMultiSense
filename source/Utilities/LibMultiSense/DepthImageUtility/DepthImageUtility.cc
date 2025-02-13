@@ -72,7 +72,7 @@ void usage(const char *name)
 #ifdef WIN32
 BOOL WINAPI signal_handler(DWORD dwCtrlType)
 {
-    (void) dwCtrlType:
+    (void) dwCtrlType;
     done = true;
     return TRUE;
 }
@@ -103,7 +103,7 @@ int main(int argc, char** argv)
         switch(c)
         {
             case 'a': ip_address = std::string(optarg); break;
-            case 'm': mtu = atoi(optarg); break;
+            case 'm': mtu = static_cast<uint16_t>(atoi(optarg)); break;
             default: usage(*argv); break;
         }
     }
