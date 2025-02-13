@@ -81,13 +81,13 @@ struct PointCloud
 ///
 /// @brief Convert a status object to a user readable string
 ///
-std::string to_string(const Status &status);
+MULTISENSE_API std::string to_string(const Status &status);
 
 ///
 /// @brief Write a image to a specific path on disk. The type of serialization is determined by the
 ///        input path
 ///
-bool write_image(const Image &image, const std::filesystem::path &path);
+MULTISENSE_API bool write_image(const Image &image, const std::filesystem::path &path);
 
 ///
 /// @brief Create a depth image from a image frame
@@ -95,19 +95,19 @@ bool write_image(const Image &image, const std::filesystem::path &path);
 /// @param depth_format Supported formats include MONO16 and FLOAT32. Note MONO16 will be quantized to millimeters)
 /// @param invalid_value The value to set invalid depth measurements to. (i.e. points where disparity = 0)
 ///
-std::optional<Image> create_depth_image(const ImageFrame &frame,
-                                        const Image::PixelFormat &depth_format,
-                                        const DataSource &disparity_source = DataSource::LEFT_DISPARITY_RAW,
-                                        int32_t invalid_value = 65535);
+MULTISENSE_API std::optional<Image> create_depth_image(const ImageFrame &frame,
+                                                       const Image::PixelFormat &depth_format,
+                                                       const DataSource &disparity_source = DataSource::LEFT_DISPARITY_RAW,
+                                                       int32_t invalid_value = 65535);
 
 ///
 /// @brief Create a point cloud from a image frame and a color source.
 ///
 template<typename Color>
-std::optional<PointCloud<Color>> create_color_pointcloud(const ImageFrame &frame,
-                                                         double max_range,
-                                                         const DataSource &color_source = DataSource::UNKNOWN,
-                                                         const DataSource &disparity_source = DataSource::LEFT_DISPARITY_RAW)
+MULTISENSE_API std::optional<PointCloud<Color>> create_color_pointcloud(const ImageFrame &frame,
+                                                                        double max_range,
+                                                                        const DataSource &color_source = DataSource::UNKNOWN,
+                                                                        const DataSource &disparity_source = DataSource::LEFT_DISPARITY_RAW)
 {
     Image placeholder{};
     std::reference_wrapper<const Image> disparity = std::cref(placeholder);
@@ -230,15 +230,15 @@ std::optional<PointCloud<Color>> create_color_pointcloud(const ImageFrame &frame
     return output;
 }
 
-std::optional<PointCloud<void>> create_pointcloud(const ImageFrame &frame,
-                                                  double max_range,
-                                                  const DataSource &disparity_source = DataSource::LEFT_DISPARITY_RAW);
+MULTISENSE_API std::optional<PointCloud<void>> create_pointcloud(const ImageFrame &frame,
+                                                                 double max_range,
+                                                                 const DataSource &disparity_source = DataSource::LEFT_DISPARITY_RAW);
 
 ///
 /// @brief Write a point cloud to a ASCII ply file
 ///
 template <typename Color>
-bool write_pointcloud_ply(const PointCloud<Color> &point_cloud, const std::filesystem::path &path)
+MULTISENSE_API bool write_pointcloud_ply(const PointCloud<Color> &point_cloud, const std::filesystem::path &path)
 {
     std::stringstream ss;
 
