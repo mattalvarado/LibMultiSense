@@ -317,11 +317,10 @@ Status LegacyChannel::connect(const ChannelConfig &config)
 
     //
     // Update our cached multisense configuration
-    // TODO (malvarado): Query the PTP status from the camera
     //
-    if (auto config = query_configuration(m_info.device.has_aux_camera(), m_info.imu.has_value(), false); config)
+    if (auto cam_config = query_configuration(m_info.device.has_aux_camera(), m_info.imu.has_value(), false); cam_config)
     {
-        m_multisense_config = std::move(config.value());
+        m_multisense_config = std::move(cam_config.value());
     }
     else
     {
@@ -514,7 +513,7 @@ Status LegacyChannel::set_configuration(const MultiSenseConfiguration &config)
                                     });
 
     //
-    // TODO (malvarado): Check equality
+    // TODO (malvarado): Check equality of structs
     //
     const auto final_status = responses.empty() ? Status::OK : (errors ? Status::INTERNAL_ERROR : Status::INCOMPLETE_APPLICATION);
 
@@ -928,10 +927,12 @@ void LegacyChannel::image_callback(std::shared_ptr<const std::vector<uint8_t>> d
         return;
     }
 
-    const system_clock::time_point capture_time{seconds{meta->second.timeSeconds} +
-                                                microseconds{meta->second.timeMicroSeconds}};
+    const nanoseconds capture_time{seconds{meta->second.timeSeconds} +
+                                  microseconds{meta->second.timeMicroSeconds}};
 
-    const system_clock::time_point ptp_capture_time{nanoseconds{meta->second.ptpNanoSeconds}};
+    const TimeT capture_time_point{capture_time};
+
+    const TimeT ptp_capture_time_point{nanoseconds{meta->second.ptpNanoSeconds}};
 
     Image::PixelFormat pixel_format = Image::PixelFormat::UNKNOWN;
     switch (wire_image.bitsPerPixel)
@@ -968,16 +969,16 @@ void LegacyChannel::image_callback(std::shared_ptr<const std::vector<uint8_t>> d
                 pixel_format,
                 wire_image.width,
                 wire_image.height,
-                capture_time,
-                ptp_capture_time,
+                capture_time_point,
+                ptp_capture_time_point,
                 source.front(),
                 scale_calibration(select_calibration(cal, source.front()), cal_x_scale, cal_y_scale)};
 
     handle_and_dispatch(std::move(image),
                         wire_image.frameId,
                         scale_calibration(cal, cal_x_scale, cal_y_scale),
-                        capture_time,
-                        ptp_capture_time);
+                        capture_time_point,
+                        ptp_capture_time_point);
 }
 
 void LegacyChannel::disparity_callback(std::shared_ptr<const std::vector<uint8_t>> data)
@@ -994,10 +995,12 @@ void LegacyChannel::disparity_callback(std::shared_ptr<const std::vector<uint8_t
         return;
     }
 
-    const system_clock::time_point capture_time{seconds{meta->second.timeSeconds} +
-                                                microseconds{meta->second.timeMicroSeconds}};
+    const nanoseconds capture_time{seconds{meta->second.timeSeconds} +
+                                  microseconds{meta->second.timeMicroSeconds}};
 
-    const system_clock::time_point ptp_capture_time{nanoseconds{meta->second.ptpNanoSeconds}};
+    const TimeT capture_time_point{capture_time};
+
+    const TimeT ptp_capture_time_point{nanoseconds{meta->second.ptpNanoSeconds}};
 
     Image::PixelFormat pixel_format = Image::PixelFormat::UNKNOWN;
     switch (wire::Disparity::API_BITS_PER_PIXEL)
@@ -1034,16 +1037,16 @@ void LegacyChannel::disparity_callback(std::shared_ptr<const std::vector<uint8_t
                 pixel_format,
                 wire_image.width,
                 wire_image.height,
-                capture_time,
-                ptp_capture_time,
+                capture_time_point,
+                ptp_capture_time_point,
                 source,
                 scale_calibration(select_calibration(cal, source), cal_x_scale, cal_y_scale)};
 
     handle_and_dispatch(std::move(image),
                         wire_image.frameId,
                         scale_calibration(cal, cal_x_scale, cal_y_scale),
-                        capture_time,
-                        ptp_capture_time);
+                        capture_time_point,
+                        ptp_capture_time_point);
 
 }
 
@@ -1061,7 +1064,6 @@ void LegacyChannel::imu_callback(std::shared_ptr<const std::vector<uint8_t>> dat
 
     for (const auto &wire_sample : wire_imu.samples)
     {
-        using TimeT = std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds>;
         const TimeT camera_time{std::chrono::nanoseconds{wire_sample.timeNanoSeconds}};
         const TimeT ptp_time{std::chrono::nanoseconds{wire_sample.ptpNanoSeconds}};
 
@@ -1099,8 +1101,8 @@ void LegacyChannel::imu_callback(std::shared_ptr<const std::vector<uint8_t>> dat
 void LegacyChannel::handle_and_dispatch(Image image,
                                         int64_t frame_id,
                                         const StereoCalibration &calibration,
-                                        const std::chrono::system_clock::time_point &capture_time,
-                                        const std::chrono::system_clock::time_point &ptp_capture_time)
+                                        const TimeT &capture_time,
+                                        const TimeT &ptp_capture_time)
 {
     //
     // Create a new frame if one does not exist, or add the input image to the corresponding frame

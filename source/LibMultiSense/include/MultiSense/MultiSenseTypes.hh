@@ -54,6 +54,8 @@
 namespace multisense
 {
 
+using TimeT = std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds>;
+
 enum class Status : uint8_t
 {
     UNKNOWN,
@@ -203,13 +205,13 @@ struct Image
     /// @brief The timestamp associated with the image based on the camera's clock. Starts at 0
     ///        on boot
     ///
-    std::chrono::system_clock::time_point camera_timestamp{};
+    TimeT camera_timestamp{};
 
     ///
     /// @brief The timestamp associated with the image based using the camera's clock which is potentially PTP
     ///        synchronized with a remote PTP master
     ///
-    std::chrono::system_clock::time_point ptp_timestamp{};
+    TimeT ptp_timestamp{};
 
     ///
     /// @brief The camera data source which this image corresponds to
@@ -311,12 +313,12 @@ struct ImageFrame
     ///
     /// @brief The MultiSeense timestamp associated with the frame
     ///
-    std::chrono::system_clock::time_point frame_time{};
+    TimeT frame_time{};
 
     ///
     /// @brief The MultiSeense ptp timestamp associated with the frame
     ///
-    std::chrono::system_clock::time_point ptp_frame_time{};
+    TimeT ptp_frame_time{};
 };
 
 ///
@@ -364,12 +366,12 @@ struct ImuSample
     ///
     /// @brief The MultiSeense timestamp associated with the frame
     ///
-    std::chrono::system_clock::time_point sample_time{};
+    TimeT sample_time{};
 
     ///
     /// @brief The  MultiSeense ptp timestamp associated with the frame
     ///
-    std::chrono::system_clock::time_point ptp_sample_time{};
+    TimeT ptp_sample_time{};
 };
 
 ///
@@ -982,7 +984,7 @@ struct MultiSenseStatus
         /// @brief Apply the time offset to a camera timestamps to camera timestamp from the reference clock of
         ///        the camera into reference clock of the host
         ///
-        std::chrono::system_clock::time_point apply_offset_to_host(const std::chrono::system_clock::time_point &input_camera_time) const
+        TimeT apply_offset_to_host(const TimeT &input_camera_time) const
         {
             return input_camera_time + std::chrono::duration_cast<std::chrono::system_clock::duration>(offset_to_host());
         }
