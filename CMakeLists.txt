@@ -59,6 +59,14 @@ if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif ()
 
 #
+# The new API requires C++17
+#
+if (NOT BUILD_LEGACY_API)
+    set(CMAKE_CXX_STANDARD 17)
+    set(CMAKE_CXX_STANDARD_REQUIRED ON)
+endif()
+
+#
 # Check if the compiler supports constexpr
 #
 check_cxx_source_compiles (
