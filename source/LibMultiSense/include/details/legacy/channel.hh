@@ -187,12 +187,12 @@ public:
     ///
     /// @brief Get the current MultiSense configuration
     ///
-    MultiSenseConfiguration get_configuration() final override;
+    MultiSenseConfig get_configuration() final override;
 
     ///
     /// @brief Get set the current MultiSense configuration
     ///
-    Status set_configuration(const MultiSenseConfiguration &config) final override;
+    Status set_configuration(const MultiSenseConfig &config) final override;
 
     ///
     /// @brief Get the current stereo calibration. The output calibration will correspond to the full-resolution
@@ -243,7 +243,7 @@ private:
     ///
     /// @brief Query the full configuration
     ///
-    std::optional<MultiSenseConfiguration> query_configuration(bool has_aux_camera, bool has_imu, bool ptp_enabled);
+    std::optional<MultiSenseConfig> query_configuration(bool has_aux_camera, bool has_imu, bool ptp_enabled);
 
     ///
     /// @brief Query the calibration from the camera
@@ -342,7 +342,7 @@ private:
     ///
     /// @brief The current cached MultiSense configuration stored for convenience
     ///
-    MultiSenseConfiguration m_multisense_config;
+    MultiSenseConfig m_multisense_config;
 
     ///
     /// @brief The current set of active data streams the MultiSense is transmitting.

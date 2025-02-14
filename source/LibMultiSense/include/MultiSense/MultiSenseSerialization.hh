@@ -161,22 +161,22 @@ NLOHMANN_JSON_SERIALIZE_ENUM(CameraCalibration::DistortionType, {
     {CameraCalibration::DistortionType::RATIONAL_POLYNOMIAL, "RATIONAL_POLYNOMIAL"}
 })
 
-NLOHMANN_JSON_SERIALIZE_ENUM(MultiSenseConfiguration::OperatingResolution, {
-    {MultiSenseConfiguration::OperatingResolution::UNSUPPORTED, "UNSUPPORTED"},
-    {MultiSenseConfiguration::OperatingResolution::FULL_RESOLUTION, "FULL_RESOLUTION"},
-    {MultiSenseConfiguration::OperatingResolution::QUARTER_RESOLUTION, "QUARTER_RESOLUTION"}
+NLOHMANN_JSON_SERIALIZE_ENUM(MultiSenseConfig::OperatingResolution, {
+    {MultiSenseConfig::OperatingResolution::UNSUPPORTED, "UNSUPPORTED"},
+    {MultiSenseConfig::OperatingResolution::FULL_RESOLUTION, "FULL_RESOLUTION"},
+    {MultiSenseConfig::OperatingResolution::QUARTER_RESOLUTION, "QUARTER_RESOLUTION"}
 })
 
-NLOHMANN_JSON_SERIALIZE_ENUM(MultiSenseConfiguration::MaxDisparities, {
-    {MultiSenseConfiguration::MaxDisparities::D64, "D64"},
-    {MultiSenseConfiguration::MaxDisparities::D128, "D128"},
-    {MultiSenseConfiguration::MaxDisparities::D256, "D256"}
+NLOHMANN_JSON_SERIALIZE_ENUM(MultiSenseConfig::MaxDisparities, {
+    {MultiSenseConfig::MaxDisparities::D64, "D64"},
+    {MultiSenseConfig::MaxDisparities::D128, "D128"},
+    {MultiSenseConfig::MaxDisparities::D256, "D256"}
 })
 
-NLOHMANN_JSON_SERIALIZE_ENUM(MultiSenseConfiguration::LightingConfiguration::ExternalConfig::FlashMode, {
-    {MultiSenseConfiguration::LightingConfiguration::ExternalConfig::FlashMode::NONE, "NONE"},
-    {MultiSenseConfiguration::LightingConfiguration::ExternalConfig::FlashMode::SYNC_WITH_MAIN_STEREO, "SYNC_WITH_MAIN_STEREO"},
-    {MultiSenseConfiguration::LightingConfiguration::ExternalConfig::FlashMode::SYNC_WITH_AUX, "SYNC_WITH_AUXx"}
+NLOHMANN_JSON_SERIALIZE_ENUM(MultiSenseConfig::LightingConfig::ExternalConfig::FlashMode, {
+    {MultiSenseConfig::LightingConfig::ExternalConfig::FlashMode::NONE, "NONE"},
+    {MultiSenseConfig::LightingConfig::ExternalConfig::FlashMode::SYNC_WITH_MAIN_STEREO, "SYNC_WITH_MAIN_STEREO"},
+    {MultiSenseConfig::LightingConfig::ExternalConfig::FlashMode::SYNC_WITH_AUX, "SYNC_WITH_AUXx"}
 })
 
 NLOHMANN_JSON_SERIALIZE_ENUM(MultiSenseInfo::DeviceInfo::HardwareRevision, {
@@ -231,20 +231,20 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(StereoCalibration,
                                    right,
                                    aux)
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfiguration::StereoConfiguration,
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfig::StereoConfig,
                                    postfilter_strength)
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfiguration::ManualExposureConfiguration,
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfig::ManualExposureConfig,
                                    gain,
                                    exposure_time)
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfiguration::AutoExposureRoiConfiguration,
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfig::AutoExposureRoiConfig,
                                    top_left_x_position,
                                    top_left_y_position,
                                    width,
                                    height)
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfiguration::AutoExposureConfiguration,
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfig::AutoExposureConfig,
                                    max_exposure_time,
                                    decay,
                                    target_intensity,
@@ -252,15 +252,15 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfiguration::AutoExposureConfigur
                                    max_gain,
                                    roi)
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfiguration::ManualWhiteBalanceConfiguration,
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfig::ManualWhiteBalanceConfig,
                                    red,
                                    blue)
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfiguration::AutoWhiteBalanceConfiguration,
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfig::AutoWhiteBalanceConfig,
                                    decay,
                                    threshold)
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfiguration::ImageConfiguration,
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfig::ImageConfig,
                                    gamma,
                                    hdr_enabled,
                                    auto_exposure_enabled,
@@ -270,42 +270,42 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfiguration::ImageConfiguration,
                                    manual_white_balance,
                                    auto_white_balance)
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfiguration::AuxConfiguration,
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfig::AuxConfig,
                                    image_config,
                                    sharpening_enabled,
                                    sharpening_percentage,
                                    sharpening_limit)
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfiguration::TimeConfiguration,
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfig::TimeConfig,
                                    ptp_enabled)
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfiguration::NetworkTransmissionConfiguration,
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfig::NetworkTransmissionConfig,
                                    packet_delay_enabled)
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfiguration::ImuConfiguration::OperatingMode,
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfig::ImuConfig::OperatingMode,
                                    name,
                                    enabled,
                                    rate_index,
                                    range_index)
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfiguration::ImuConfiguration,
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfig::ImuConfig,
                                    samples_per_frame,
                                    modes)
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfiguration::LightingConfiguration::InternalConfig,
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfig::LightingConfig::InternalConfig,
                                    intensity,
                                    flash)
 
-//NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfiguration::LightingConfiguration::ExternalConfig,
+//NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfig::LightingConfig::ExternalConfig,
 //                                   intensity,
 //                                   flash,
 //                                   pulses_per_exposure,
 //                                   startup_time)
 //
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfiguration::LightingConfiguration,
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfig::LightingConfig,
                                    internal)
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfiguration,
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfig,
                                    resolution,
                                    disparities,
                                    frames_per_second,
@@ -424,7 +424,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseInfo,
                                    imu,
                                    network)
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Channel::ReceiveBufferConfiguration,
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Channel::ReceiveBufferConfig,
                                    num_small_buffers,
                                    small_buffer_size,
                                    num_large_buffers,

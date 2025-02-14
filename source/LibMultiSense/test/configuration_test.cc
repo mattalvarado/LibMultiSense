@@ -40,27 +40,27 @@
 
 using namespace multisense::legacy;
 
-multisense::MultiSenseConfiguration create_valid_config(const multisense::MultiSenseConfiguration::OperatingResolution &res)
+multisense::MultiSenseConfig create_valid_config(const multisense::MultiSenseConfig::OperatingResolution &res)
 {
     using namespace multisense;
     using namespace std::chrono_literals;
 
-    MultiSenseConfiguration::StereoConfiguration stereo_config{0.8};
+    MultiSenseConfig::StereoConfig stereo_config{0.8};
 
-    MultiSenseConfiguration::ManualExposureConfiguration manual_exposure{2.0, 500us};
+    MultiSenseConfig::ManualExposureConfig manual_exposure{2.0, 500us};
 
-    MultiSenseConfiguration::AutoExposureConfiguration auto_exposure{600us,
+    MultiSenseConfig::AutoExposureConfig auto_exposure{600us,
                                                                      6,
                                                                      0.6,
                                                                      0.95,
                                                                      3.0,
                                                                      {10, 20, 400, 300}};
 
-    MultiSenseConfiguration::ManualWhiteBalanceConfiguration manual_white_balance{2.2, 3.3};
+    MultiSenseConfig::ManualWhiteBalanceConfig manual_white_balance{2.2, 3.3};
 
-    MultiSenseConfiguration::AutoWhiteBalanceConfiguration auto_white_balance{4, 0.7};
+    MultiSenseConfig::AutoWhiteBalanceConfig auto_white_balance{4, 0.7};
 
-    MultiSenseConfiguration::ImageConfiguration image_config{1.2,
+    MultiSenseConfig::ImageConfig image_config{1.2,
                                                              true,
                                                              false,
                                                              manual_exposure,
@@ -69,14 +69,14 @@ multisense::MultiSenseConfiguration create_valid_config(const multisense::MultiS
                                                              manual_white_balance,
                                                              auto_white_balance};
 
-    MultiSenseConfiguration::AuxConfiguration aux_config{image_config, true, 10.0, 80};
+    MultiSenseConfig::AuxConfig aux_config{image_config, true, 10.0, 80};
 
-    MultiSenseConfiguration::TimeConfiguration time{true};
+    MultiSenseConfig::TimeConfig time{true};
 
-    MultiSenseConfiguration::NetworkTransmissionConfiguration network{true};
+    MultiSenseConfig::NetworkTransmissionConfig network{true};
 
-    return MultiSenseConfiguration{res,
-                                   MultiSenseConfiguration::MaxDisparities::D256,
+    return MultiSenseConfig{res,
+                                   MultiSenseConfig::MaxDisparities::D256,
                                    11.0,
                                    stereo_config,
                                    image_config,
@@ -222,7 +222,7 @@ crl::multisense::details::wire::LedStatus create_valid_lighting_wire_config()
     return config;
 }
 
-void check_equal(const multisense::MultiSenseConfiguration &config,
+void check_equal(const multisense::MultiSenseConfig &config,
                  const crl::multisense::details::wire::CamSetResolution &res,
                  uint32_t imager_width,
                  uint32_t imager_height)
@@ -231,19 +231,19 @@ void check_equal(const multisense::MultiSenseConfiguration &config,
 
     switch (config.resolution)
     {
-        case MultiSenseConfiguration::OperatingResolution::FULL_RESOLUTION:
+        case MultiSenseConfig::OperatingResolution::FULL_RESOLUTION:
         {
             ASSERT_EQ(imager_width, res.width);
             ASSERT_EQ(imager_height, res.height);
             break;
         }
-        case MultiSenseConfiguration::OperatingResolution::QUARTER_RESOLUTION:
+        case MultiSenseConfig::OperatingResolution::QUARTER_RESOLUTION:
         {
             ASSERT_DOUBLE_EQ(imager_width * 0.5, static_cast<double>(res.width));
             ASSERT_DOUBLE_EQ(imager_height * 0.5, static_cast<double>(res.height));
             break;
         }
-        case MultiSenseConfiguration::OperatingResolution::UNSUPPORTED:
+        case MultiSenseConfig::OperatingResolution::UNSUPPORTED:
         {
             ASSERT_NE(imager_width, res.width);
             ASSERT_NE(imager_height, res.height);
@@ -255,9 +255,9 @@ void check_equal(const multisense::MultiSenseConfiguration &config,
 
     switch(config.disparities)
     {
-        case MultiSenseConfiguration::MaxDisparities::D64: {ASSERT_EQ(64, res.disparities); break;}
-        case MultiSenseConfiguration::MaxDisparities::D128: {ASSERT_EQ(128, res.disparities); break;}
-        case MultiSenseConfiguration::MaxDisparities::D256: {ASSERT_EQ(256, res.disparities); break;}
+        case MultiSenseConfig::MaxDisparities::D64: {ASSERT_EQ(64, res.disparities); break;}
+        case MultiSenseConfig::MaxDisparities::D128: {ASSERT_EQ(128, res.disparities); break;}
+        case MultiSenseConfig::MaxDisparities::D256: {ASSERT_EQ(256, res.disparities); break;}
     }
 }
 
@@ -291,7 +291,7 @@ void check_equal(const ConfigT &config,
     ASSERT_EQ(config.gamma, control.gamma);
 }
 
-void check_equal(const multisense::MultiSenseConfiguration &config,
+void check_equal(const multisense::MultiSenseConfig &config,
                  const crl::multisense::details::wire::CamControl &control)
 {
     using namespace multisense;
@@ -303,7 +303,7 @@ void check_equal(const multisense::MultiSenseConfiguration &config,
     ASSERT_FLOAT_EQ(config.stereo_config.postfilter_strength, control.stereoPostFilterStrength);
 }
 
-void check_equal(const multisense::MultiSenseConfiguration &config,
+void check_equal(const multisense::MultiSenseConfig &config,
                  const crl::multisense::details::wire::AuxCamControl &control)
 {
     using namespace multisense;
@@ -317,7 +317,7 @@ void check_equal(const multisense::MultiSenseConfiguration &config,
     ASSERT_FLOAT_EQ(config.aux_config->sharpening_limit, control.sharpeningLimit);
 }
 
-void check_equal(const multisense::MultiSenseConfiguration &config,
+void check_equal(const multisense::MultiSenseConfig &config,
                  const crl::multisense::details::wire::CamConfig &wire_config,
                  uint32_t imager_width,
                  uint32_t imager_height)
@@ -327,19 +327,19 @@ void check_equal(const multisense::MultiSenseConfiguration &config,
     ASSERT_FLOAT_EQ(config.stereo_config.postfilter_strength, wire_config.stereoPostFilterStrength);
     switch (config.resolution)
     {
-        case MultiSenseConfiguration::OperatingResolution::FULL_RESOLUTION:
+        case MultiSenseConfig::OperatingResolution::FULL_RESOLUTION:
         {
             ASSERT_EQ(imager_width, wire_config.width);
             ASSERT_EQ(imager_height, wire_config.height);
             break;
         }
-        case MultiSenseConfiguration::OperatingResolution::QUARTER_RESOLUTION:
+        case MultiSenseConfig::OperatingResolution::QUARTER_RESOLUTION:
         {
             ASSERT_DOUBLE_EQ(imager_width * 0.5, static_cast<double>(wire_config.width));
             ASSERT_DOUBLE_EQ(imager_height * 0.5, static_cast<double>(wire_config.height));
             break;
         }
-        case MultiSenseConfiguration::OperatingResolution::UNSUPPORTED:
+        case MultiSenseConfig::OperatingResolution::UNSUPPORTED:
         {
             ASSERT_NE(imager_width, wire_config.width);
             ASSERT_NE(imager_height, wire_config.height);
@@ -351,9 +351,9 @@ void check_equal(const multisense::MultiSenseConfiguration &config,
 
     switch(config.disparities)
     {
-        case MultiSenseConfiguration::MaxDisparities::D64: {ASSERT_EQ(64, wire_config.disparities); break;}
-        case MultiSenseConfiguration::MaxDisparities::D128: {ASSERT_EQ(128, wire_config.disparities); break;}
-        case MultiSenseConfiguration::MaxDisparities::D256: {ASSERT_EQ(256, wire_config.disparities); break;}
+        case MultiSenseConfig::MaxDisparities::D64: {ASSERT_EQ(64, wire_config.disparities); break;}
+        case MultiSenseConfig::MaxDisparities::D128: {ASSERT_EQ(128, wire_config.disparities); break;}
+        case MultiSenseConfig::MaxDisparities::D256: {ASSERT_EQ(256, wire_config.disparities); break;}
     }
 
     ASSERT_EQ(config.frames_per_second, wire_config.framesPerSecond);
@@ -361,7 +361,7 @@ void check_equal(const multisense::MultiSenseConfiguration &config,
     check_equal(config.image_config, wire_config);
 }
 
-void check_equal(const multisense::MultiSenseConfiguration::AuxConfiguration &config,
+void check_equal(const multisense::MultiSenseConfig::AuxConfig &config,
                  const crl::multisense::details::wire::AuxCamConfig &wire_config)
 {
     check_equal(config.image_config, wire_config);
@@ -371,7 +371,7 @@ void check_equal(const multisense::MultiSenseConfiguration::AuxConfiguration &co
     ASSERT_FLOAT_EQ(config.sharpening_limit, wire_config.sharpeningLimit);
 }
 
-void check_equal(const multisense::MultiSenseConfiguration::ImuConfiguration &config,
+void check_equal(const multisense::MultiSenseConfig::ImuConfig &config,
                  const crl::multisense::details::wire::ImuConfig &wire_config)
 {
     using namespace crl::multisense::details;
@@ -388,7 +388,7 @@ void check_equal(const multisense::MultiSenseConfiguration::ImuConfiguration &co
     }
 }
 
-void check_equal(const multisense::MultiSenseConfiguration::LightingConfiguration &config,
+void check_equal(const multisense::MultiSenseConfig::LightingConfig &config,
                  const crl::multisense::details::wire::LedStatus &wire)
 {
     using namespace multisense;
@@ -411,19 +411,19 @@ void check_equal(const multisense::MultiSenseConfiguration::LightingConfiguratio
 
         switch (config.external->flash)
         {
-            case MultiSenseConfiguration::LightingConfiguration::ExternalConfig::FlashMode::NONE:
+            case MultiSenseConfig::LightingConfig::ExternalConfig::FlashMode::NONE:
             {
                 ASSERT_EQ(wire.flash, 0);
                 ASSERT_EQ(wire.rolling_shutter_led, 0);
                 break;
             }
-            case MultiSenseConfiguration::LightingConfiguration::ExternalConfig::FlashMode::SYNC_WITH_MAIN_STEREO:
+            case MultiSenseConfig::LightingConfig::ExternalConfig::FlashMode::SYNC_WITH_MAIN_STEREO:
             {
                 ASSERT_EQ(wire.flash, 1);
                 ASSERT_EQ(wire.rolling_shutter_led, 0);
                 break;
             }
-            case MultiSenseConfiguration::LightingConfiguration::ExternalConfig::FlashMode::SYNC_WITH_AUX:
+            case MultiSenseConfig::LightingConfig::ExternalConfig::FlashMode::SYNC_WITH_AUX:
             {
                 ASSERT_EQ(wire.flash, 1);
                 ASSERT_EQ(wire.rolling_shutter_led, 1);
@@ -433,7 +433,7 @@ void check_equal(const multisense::MultiSenseConfiguration::LightingConfiguratio
     }
 }
 
-void check_equal(const multisense::MultiSenseConfiguration::LightingConfiguration &config,
+void check_equal(const multisense::MultiSenseConfig::LightingConfig &config,
                  const crl::multisense::details::wire::LedSet &wire)
 {
     using namespace crl::multisense::details;
@@ -467,19 +467,19 @@ void check_equal(const multisense::MultiSenseConfiguration::LightingConfiguratio
 
         switch (config.external->flash)
         {
-            case MultiSenseConfiguration::LightingConfiguration::ExternalConfig::FlashMode::NONE:
+            case MultiSenseConfig::LightingConfig::ExternalConfig::FlashMode::NONE:
             {
                 ASSERT_EQ(wire.flash, 0);
                 ASSERT_EQ(wire.rolling_shutter_led, 0);
                 break;
             }
-            case MultiSenseConfiguration::LightingConfiguration::ExternalConfig::FlashMode::SYNC_WITH_MAIN_STEREO:
+            case MultiSenseConfig::LightingConfig::ExternalConfig::FlashMode::SYNC_WITH_MAIN_STEREO:
             {
                 ASSERT_EQ(wire.flash, 1);
                 ASSERT_EQ(wire.rolling_shutter_led, 0);
                 break;
             }
-            case MultiSenseConfiguration::LightingConfiguration::ExternalConfig::FlashMode::SYNC_WITH_AUX:
+            case MultiSenseConfig::LightingConfig::ExternalConfig::FlashMode::SYNC_WITH_AUX:
             {
                 ASSERT_EQ(wire.flash, 1);
                 ASSERT_EQ(wire.rolling_shutter_led, 1);
@@ -489,7 +489,7 @@ void check_equal(const multisense::MultiSenseConfiguration::LightingConfiguratio
     }
 }
 
-void check_equal(const multisense::MultiSenseConfiguration::NetworkTransmissionConfiguration &config,
+void check_equal(const multisense::MultiSenseConfig::NetworkTransmissionConfig &config,
                  const crl::multisense::details::wire::SysPacketDelay &packet_delay)
 {
     ASSERT_EQ(config.packet_delay_enabled, packet_delay.enable);
@@ -500,7 +500,7 @@ TEST(convert, cam_resolution_full_res)
     using namespace crl::multisense::details;
     using namespace multisense;
 
-    const auto config = create_valid_config(MultiSenseConfiguration::OperatingResolution::FULL_RESOLUTION);
+    const auto config = create_valid_config(MultiSenseConfig::OperatingResolution::FULL_RESOLUTION);
 
     const auto wire_resolution = convert_resolution(config, 1920, 1200);
 
@@ -512,7 +512,7 @@ TEST(convert, cam_resolution_quarter_res)
     using namespace crl::multisense::details;
     using namespace multisense;
 
-    const auto config = create_valid_config(MultiSenseConfiguration::OperatingResolution::QUARTER_RESOLUTION);
+    const auto config = create_valid_config(MultiSenseConfig::OperatingResolution::QUARTER_RESOLUTION);
 
     const auto wire_resolution = convert_resolution(config, 1920, 1200);
 
@@ -524,7 +524,7 @@ TEST(convert, cam_control)
     using namespace crl::multisense::details;
     using namespace multisense;
 
-    const auto config = create_valid_config(MultiSenseConfiguration::OperatingResolution::QUARTER_RESOLUTION);
+    const auto config = create_valid_config(MultiSenseConfig::OperatingResolution::QUARTER_RESOLUTION);
 
     const auto cam_control = convert<wire::CamControl>(config);
 
@@ -536,7 +536,7 @@ TEST(convert, aux_cam_control)
     using namespace crl::multisense::details;
     using namespace multisense;
 
-    const auto config = create_valid_config(MultiSenseConfiguration::OperatingResolution::QUARTER_RESOLUTION);
+    const auto config = create_valid_config(MultiSenseConfig::OperatingResolution::QUARTER_RESOLUTION);
 
     ASSERT_TRUE(static_cast<bool>(config.aux_config));
 

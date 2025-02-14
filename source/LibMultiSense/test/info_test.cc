@@ -358,15 +358,15 @@ TEST(convert, device_modes)
     {
         if (wire_modes.modes[i].width == imager_width && wire_modes.modes[i].height == imager_height)
         {
-            ASSERT_EQ(modes[i].resolution, MultiSenseConfiguration::OperatingResolution::FULL_RESOLUTION);
+            ASSERT_EQ(modes[i].resolution, MultiSenseConfig::OperatingResolution::FULL_RESOLUTION);
         }
         else if (wire_modes.modes[i].width == imager_width / 2 && wire_modes.modes[i].height == imager_height / 2)
         {
-            ASSERT_EQ(modes[i].resolution, MultiSenseConfiguration::OperatingResolution::QUARTER_RESOLUTION);
+            ASSERT_EQ(modes[i].resolution, MultiSenseConfig::OperatingResolution::QUARTER_RESOLUTION);
         }
         else
         {
-            ASSERT_EQ(modes[i].resolution, MultiSenseConfiguration::OperatingResolution::UNSUPPORTED);
+            ASSERT_EQ(modes[i].resolution, MultiSenseConfig::OperatingResolution::UNSUPPORTED);
         }
 
         ASSERT_EQ(modes[i].disparities, get_disparities(wire_modes.modes[i].disparities));

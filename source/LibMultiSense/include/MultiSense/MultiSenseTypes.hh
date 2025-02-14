@@ -397,12 +397,12 @@ struct ImuFrame
 ///
 /// @brief Complete configuration object for configuring the MultiSense. Can be updated during camera operation
 ///
-struct MultiSenseConfiguration
+struct MultiSenseConfig
 {
     ///
     /// @brief Stereo specific configuration
     ///
-    struct StereoConfiguration
+    struct StereoConfig
     {
         ///
         ///
@@ -416,7 +416,7 @@ struct MultiSenseConfiguration
     ///
     /// @brief Manual exposure specific configuration
     ///
-    struct ManualExposureConfiguration
+    struct ManualExposureConfig
     {
         ///
         /// @brief The desired electrical and digital gain used to brighten the image.
@@ -434,7 +434,7 @@ struct MultiSenseConfiguration
     ///
     /// @brief Auto-exposure Region-of-Interest (ROI) specific configuration
     ///
-    struct AutoExposureRoiConfiguration
+    struct AutoExposureRoiConfig
     {
         ///
         /// @brief The x value of the top left corner of the ROI in the full resolution image. Note (0,0) is the top
@@ -459,7 +459,7 @@ struct MultiSenseConfiguration
     ///
     /// @brief Auto-exposure specific configuration
     ///
-    struct AutoExposureConfiguration
+    struct AutoExposureConfig
     {
         ///
         /// @brief The max exposure time auto exposure algorithm can set in microseconds
@@ -496,13 +496,13 @@ struct MultiSenseConfiguration
         /// @brief The auto exposure region-of-interest used to restrict the portion of the image which the
         ///        auto exposure algorithm is run on
         ///
-        AutoExposureRoiConfiguration roi;
+        AutoExposureRoiConfig roi;
     };
 
     ///
     /// @brief Manual white balance specific configuration
     ///
-    struct ManualWhiteBalanceConfiguration
+    struct ManualWhiteBalanceConfig
     {
         ///
         /// @brief The manual red white-balance setting
@@ -520,7 +520,7 @@ struct MultiSenseConfiguration
     ///
     /// @brief Auto white balance specific configuration
     ///
-    struct AutoWhiteBalanceConfiguration
+    struct AutoWhiteBalanceConfig
     {
         ///
         /// @brief The decay rate used for auto-white-balance
@@ -538,7 +538,7 @@ struct MultiSenseConfiguration
     ///
     /// @brief Image specific configuration
     ///
-    struct ImageConfiguration
+    struct ImageConfig
     {
         ///
         /// @brief Set the gamma correction for the image.
@@ -560,12 +560,12 @@ struct MultiSenseConfiguration
         ///
         /// @brief The exposure config to use if auto exposure is disabled
         ///
-        ManualExposureConfiguration manual_exposure;
+        ManualExposureConfig manual_exposure;
 
         ///
         /// @brief The exposure config to use if auto exposure is enabled
         ///
-        AutoExposureConfiguration auto_exposure;
+        AutoExposureConfig auto_exposure;
 
         ///
         /// @brief Enable or disable auto white balance
@@ -575,23 +575,23 @@ struct MultiSenseConfiguration
         ///
         /// @brief The white balance parameters to use if auto white balance is disabled
         ///
-        ManualWhiteBalanceConfiguration manual_white_balance;
+        ManualWhiteBalanceConfig manual_white_balance;
 
         ///
         /// @brief The white balance parameters to use if auto white balance is enabled
         ///
-        AutoWhiteBalanceConfiguration auto_white_balance;
+        AutoWhiteBalanceConfig auto_white_balance;
     };
 
     ///
     /// @brief Image specific configuration for the Aux imager
     ///
-    struct AuxConfiguration
+    struct AuxConfig
     {
         ///
         /// @brief Image configuration for the Aux imager
         ///
-        ImageConfiguration image_config;
+        ImageConfig image_config;
 
         ///
         /// @brief Enable sharpening
@@ -654,9 +654,9 @@ struct MultiSenseConfiguration
     };
 
     ///
-    /// @brief Configuration for time-based controls
+    /// @brief Config for time-based controls
     ///
-    struct TimeConfiguration
+    struct TimeConfig
     {
         ///
         /// @brief Enable PTP sync on the camera
@@ -665,9 +665,9 @@ struct MultiSenseConfiguration
     };
 
     ///
-    /// @brief Configuration for transmitting packets from the MultiSense to the host
+    /// @brief Config for transmitting packets from the MultiSense to the host
     ///
-    struct NetworkTransmissionConfiguration
+    struct NetworkTransmissionConfig
     {
         ///
         /// @brief Add a small delay between the transmission of each packet to hopefully interact
@@ -677,12 +677,12 @@ struct MultiSenseConfiguration
     };
 
     ///
-    /// @brief Configuration for the IMU sensor
+    /// @brief Config for the IMU sensor
     ///
-    struct ImuConfiguration
+    struct ImuConfig
     {
         ///
-        /// @brief Configuration for a specific IMU operating mode. There are separate modes for each of the
+        /// @brief Config for a specific IMU operating mode. There are separate modes for each of the
         ///        IMU sensors (i.e. accelerometer, gyroscope, magnetometer)
         ///
         struct OperatingMode
@@ -729,7 +729,7 @@ struct MultiSenseConfiguration
     /// @brief Lighting configuration for the camera
     /// TODO (malvarado) Handle serialization explicitly since optionals of optionals are not supported
     ///
-    struct LightingConfiguration
+    struct LightingConfig
     {
         ///
         /// @brief Lighting config for lights integrated into the MultiSense
@@ -819,38 +819,38 @@ struct MultiSenseConfiguration
     ///
     /// @brief The stereo configuration to use
     ///
-    StereoConfiguration stereo_config;
+    StereoConfig stereo_config;
 
     ///
     /// @brief The image configuration to use for the main stereo pair
     ///
-    ImageConfiguration image_config;
+    ImageConfig image_config;
 
     ///
     /// @brief The image configuration to use for the aux camera if present
     ///
-    std::optional<AuxConfiguration> aux_config = std::nullopt;
+    std::optional<AuxConfig> aux_config = std::nullopt;
 
     ///
-    /// @brief Configuration for the MultiSense time-sync options
+    /// @brief Config for the MultiSense time-sync options
     ///
-    TimeConfiguration time_config;
+    TimeConfig time_config;
 
     ///
-    /// @brief Configuration to control network transmission settings
+    /// @brief Config to control network transmission settings
     ///
-    NetworkTransmissionConfiguration network_config;
+    NetworkTransmissionConfig network_config;
 
     ///
     /// @brief The imu configuration to use for the camera. Will be invalid if sensor does not contain an IMU
     ///
-    std::optional<ImuConfiguration> imu_config = std::nullopt;
+    std::optional<ImuConfig> imu_config = std::nullopt;
 
     ///
     /// @brief The lighting configuration for the camera. If invalid, the camera does not support lighting
     ///        configuration
     ///
-    LightingConfiguration lighting_config{};
+    LightingConfig lighting_config{};
 };
 
 ///
@@ -1319,12 +1319,12 @@ struct MultiSenseInfo
         ///
         /// @brief Supported operating resolution
         ///
-        MultiSenseConfiguration::OperatingResolution resolution = MultiSenseConfiguration::OperatingResolution::QUARTER_RESOLUTION;
+        MultiSenseConfig::OperatingResolution resolution = MultiSenseConfig::OperatingResolution::QUARTER_RESOLUTION;
 
         ///
         /// @brief Supported operating disparity
         ///
-        MultiSenseConfiguration::MaxDisparities disparities = MultiSenseConfiguration::MaxDisparities::D256;
+        MultiSenseConfig::MaxDisparities disparities = MultiSenseConfig::MaxDisparities::D256;
 
         ///
         /// @brief Data sources supported at that mode

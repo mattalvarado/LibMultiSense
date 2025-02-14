@@ -62,7 +62,7 @@ public:
     ///        incoming camera data. For those implementations specify configurations for
     ///        both small and large buffers
     ///
-    struct ReceiveBufferConfiguration
+    struct ReceiveBufferConfig
     {
         ///
         /// @brief The number of small buffers to preallocate for receiving small MultiSense messages
@@ -114,10 +114,10 @@ public:
         std::optional<std::string> interface = std::nullopt;
 
         ///
-        /// @brief Configuration for the number and size of internal buffers used to receive data without
+        /// @brief Config for the number and size of internal buffers used to receive data without
         ///        recurring memory allocations. May only be valid for certain implementations
         ///
-        ReceiveBufferConfiguration receive_buffer_configuration{};
+        ReceiveBufferConfig receive_buffer_configuration{};
     };
 
     ///
@@ -197,12 +197,12 @@ public:
     ///
     /// @brief Get the current MultiSense configuration
     ///
-    virtual MultiSenseConfiguration get_configuration() = 0;
+    virtual MultiSenseConfig get_configuration() = 0;
 
     ///
     /// @brief Get set the current MultiSense configuration
     ///
-    virtual Status set_configuration(const MultiSenseConfiguration &config) = 0;
+    virtual Status set_configuration(const MultiSenseConfig &config) = 0;
 
     ///
     /// @brief Get the current stereo calibration. The output calibration will correspond to the full-resolution

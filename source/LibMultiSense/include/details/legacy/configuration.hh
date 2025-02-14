@@ -59,14 +59,14 @@ namespace multisense {
 namespace legacy {
 
 ///
-/// @brief Convert a wire AuxCameraConfiuration to our AuxConfiguration API
+/// @brief Convert a wire AuxCameraConfiuration to our AuxConfig API
 ///
-MultiSenseConfiguration::AuxConfiguration convert(const crl::multisense::details::wire::AuxCamConfig &aux_config);
+MultiSenseConfig::AuxConfig convert(const crl::multisense::details::wire::AuxCamConfig &aux_config);
 
 ///
-/// @brief Convert wire objects to our MultiSenseConfiguration
+/// @brief Convert wire objects to our MultiSenseConfig
 ///
-MultiSenseConfiguration convert(const crl::multisense::details::wire::CamConfig &config,
+MultiSenseConfig convert(const crl::multisense::details::wire::CamConfig &config,
                                 const std::optional<crl::multisense::details::wire::AuxCamConfig> &aux_config,
                                 const std::optional<crl::multisense::details::wire::ImuConfig> &imu_config,
                                 const std::optional<crl::multisense::details::wire::LedStatus> &led_config,
@@ -75,62 +75,62 @@ MultiSenseConfiguration convert(const crl::multisense::details::wire::CamConfig 
                                 const MultiSenseInfo::DeviceInfo &info);
 
 ///
-/// @brief Generic conversions between the MultiSenseConfiguration config object an MultiSense wire types
+/// @brief Generic conversions between the MultiSenseConfig config object an MultiSense wire types
 ///
 template <typename T>
-T convert(const MultiSenseConfiguration &config);
+T convert(const MultiSenseConfig &config);
 
 ///
-/// @brief Convert a AuxConfiguration object to a wire AuxControl message
+/// @brief Convert a AuxConfig object to a wire AuxControl message
 ///
-crl::multisense::details::wire::AuxCamControl convert(const MultiSenseConfiguration::AuxConfiguration &config);
+crl::multisense::details::wire::AuxCamControl convert(const MultiSenseConfig::AuxConfig &config);
 
 ///
-/// @brief Convert a TimeConfiguration object to a wire message
+/// @brief Convert a TimeConfig object to a wire message
 ///
-crl::multisense::details::wire::SysSetPtp convert(const MultiSenseConfiguration::TimeConfiguration &config);
+crl::multisense::details::wire::SysSetPtp convert(const MultiSenseConfig::TimeConfig &config);
 
 ///
-/// @brief Convert a ImuConfig object to a wire ImuConfiguration message
+/// @brief Convert a ImuConfig object to a wire ImuConfig message
 ///
-MultiSenseConfiguration::ImuConfiguration convert(const crl::multisense::details::wire::ImuConfig &imu);
+MultiSenseConfig::ImuConfig convert(const crl::multisense::details::wire::ImuConfig &imu);
 
 ///
-/// @brief Convert a ImuConfiguration object to a wire message
+/// @brief Convert a ImuConfig object to a wire message
 ///
-crl::multisense::details::wire::ImuConfig convert(const MultiSenseConfiguration::ImuConfiguration &imu,
+crl::multisense::details::wire::ImuConfig convert(const MultiSenseConfig::ImuConfig &imu,
                                                   uint32_t max_samples_per_message);
 
 ///
 /// @brief Convert a wire lighting config to a API lighting config
 ///
-MultiSenseConfiguration::LightingConfiguration convert(const crl::multisense::details::wire::LedStatus &led,
+MultiSenseConfig::LightingConfig convert(const crl::multisense::details::wire::LedStatus &led,
                                                        const MultiSenseInfo::DeviceInfo::LightingType &type);
 
 ///
 /// @brief Convert a API lighting config to a wire lighting config
 ///
-crl::multisense::details::wire::LedSet convert (const MultiSenseConfiguration::LightingConfiguration &led);
+crl::multisense::details::wire::LedSet convert (const MultiSenseConfig::LightingConfig &led);
 
 ///
 /// @brief Create a API transmission config object from wire types
 ///
-MultiSenseConfiguration::NetworkTransmissionConfiguration
+MultiSenseConfig::NetworkTransmissionConfig
     convert(const crl::multisense::details::wire::SysPacketDelay &packet);
 
 ///
 /// @brief Convert the current configuration to a wire resolution message
 ///
-crl::multisense::details::wire::CamSetResolution convert_resolution(const MultiSenseConfiguration &config,
+crl::multisense::details::wire::CamSetResolution convert_resolution(const MultiSenseConfig &config,
                                                                     uint32_t imager_width,
                                                                     uint32_t imager_height);
 
 ///
-/// @brief Generic conversions between the MultiSenseConfiguration::NetworkTransmissionConfiguration config
+/// @brief Generic conversions between the MultiSenseConfig::NetworkTransmissionConfig config
 ///        object an MultiSense wire types
 ///
 template <typename T>
-T convert(const MultiSenseConfiguration::NetworkTransmissionConfiguration &config);
+T convert(const MultiSenseConfig::NetworkTransmissionConfig &config);
 
 }
 }

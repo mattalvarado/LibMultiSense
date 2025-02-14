@@ -42,40 +42,40 @@
 namespace multisense {
 namespace legacy {
 
-MultiSenseConfiguration convert(const crl::multisense::details::wire::CamConfig &config,
-                                const std::optional<crl::multisense::details::wire::AuxCamConfig> &aux_config,
-                                const std::optional<crl::multisense::details::wire::ImuConfig> &imu_config,
-                                const std::optional<crl::multisense::details::wire::LedStatus> &led_config,
-                                const crl::multisense::details::wire::SysPacketDelay &packet_delay,
-                                bool ptp_enabled,
-                                const MultiSenseInfo::DeviceInfo &info)
+MultiSenseConfig convert(const crl::multisense::details::wire::CamConfig &config,
+                         const std::optional<crl::multisense::details::wire::AuxCamConfig> &aux_config,
+                         const std::optional<crl::multisense::details::wire::ImuConfig> &imu_config,
+                         const std::optional<crl::multisense::details::wire::LedStatus> &led_config,
+                         const crl::multisense::details::wire::SysPacketDelay &packet_delay,
+                         bool ptp_enabled,
+                         const MultiSenseInfo::DeviceInfo &info)
 {
     using namespace crl::multisense::details;
 
-    using ms_config = MultiSenseConfiguration;
+    using ms_config = MultiSenseConfig;
 
-    ms_config::StereoConfiguration stereo{config.stereoPostFilterStrength};
+    ms_config::StereoConfig stereo{config.stereoPostFilterStrength};
 
-    ms_config::ManualExposureConfiguration manual_exposure{config.gain,
+    ms_config::ManualExposureConfig manual_exposure{config.gain,
                                                            std::chrono::microseconds{config.exposure}};
 
-    ms_config::AutoExposureRoiConfiguration auto_exposure_roi{config.autoExposureRoiX,
+    ms_config::AutoExposureRoiConfig auto_exposure_roi{config.autoExposureRoiX,
                                                               config.autoExposureRoiY,
                                                               config.autoExposureRoiWidth,
                                                               config.autoExposureRoiHeight};
 
-    ms_config::AutoExposureConfiguration auto_exposure{std::chrono::microseconds{config.autoExposureMax},
+    ms_config::AutoExposureConfig auto_exposure{std::chrono::microseconds{config.autoExposureMax},
                                                        config.autoExposureDecay,
                                                        config.autoExposureTargetIntensity,
                                                        config.autoExposureThresh,
                                                        config.gainMax,
                                                        std::move(auto_exposure_roi)};
 
-    ms_config::ManualWhiteBalanceConfiguration manual_white_balance{config.whiteBalanceRed, config.whiteBalanceBlue};
-    ms_config::AutoWhiteBalanceConfiguration auto_white_balance{config.autoWhiteBalanceDecay,
+    ms_config::ManualWhiteBalanceConfig manual_white_balance{config.whiteBalanceRed, config.whiteBalanceBlue};
+    ms_config::AutoWhiteBalanceConfig auto_white_balance{config.autoWhiteBalanceDecay,
                                                                 config.autoWhiteBalanceThresh};
 
-    ms_config::ImageConfiguration image{config.gamma,
+    ms_config::ImageConfig image{config.gamma,
                                         config.hdrEnabled,
                                         (config.autoExposure != 0),
                                         std::move(manual_exposure),
@@ -84,44 +84,44 @@ MultiSenseConfiguration convert(const crl::multisense::details::wire::CamConfig 
                                         std::move(manual_white_balance),
                                         std::move(auto_white_balance)};
 
-    return MultiSenseConfiguration{get_resolution(config.width, config.height, info.imager_width, info.imager_height),
+    return MultiSenseConfig{get_resolution(config.width, config.height, info.imager_width, info.imager_height),
                                    get_disparities(config.disparities),
                                    config.framesPerSecond,
                                    std::move(stereo),
                                    std::move(image),
                                    (aux_config ? std::make_optional(convert(aux_config.value())) : std::nullopt),
-                                   ms_config::TimeConfiguration{ptp_enabled},
+                                   ms_config::TimeConfig{ptp_enabled},
                                    convert(packet_delay),
                                    imu_config ? std::make_optional(convert(imu_config.value())) : std::nullopt,
                                    (led_config && led_config->available) ? convert(led_config.value(), info.lighting_type) :
-                                       MultiSenseConfiguration::LightingConfiguration{}};
+                                       MultiSenseConfig::LightingConfig{}};
 }
 
-MultiSenseConfiguration::AuxConfiguration convert(const crl::multisense::details::wire::AuxCamConfig &config)
+MultiSenseConfig::AuxConfig convert(const crl::multisense::details::wire::AuxCamConfig &config)
 {
     using namespace crl::multisense::details;
-    using ms_config = MultiSenseConfiguration;
+    using ms_config = MultiSenseConfig;
 
-    ms_config::ManualExposureConfiguration manual_exposure{config.gain,
+    ms_config::ManualExposureConfig manual_exposure{config.gain,
                                                            std::chrono::microseconds{config.exposure}};
 
-    ms_config::AutoExposureRoiConfiguration auto_exposure_roi{config.autoExposureRoiX,
+    ms_config::AutoExposureRoiConfig auto_exposure_roi{config.autoExposureRoiX,
                                                               config.autoExposureRoiY,
                                                               config.autoExposureRoiWidth,
                                                               config.autoExposureRoiHeight};
 
-    ms_config::AutoExposureConfiguration auto_exposure{std::chrono::microseconds{config.autoExposureMax},
+    ms_config::AutoExposureConfig auto_exposure{std::chrono::microseconds{config.autoExposureMax},
                                                        config.autoExposureDecay,
                                                        config.autoExposureTargetIntensity,
                                                        config.autoExposureThresh,
                                                        config.gainMax,
                                                        std::move(auto_exposure_roi)};
 
-    ms_config::ManualWhiteBalanceConfiguration manual_white_balance{config.whiteBalanceRed, config.whiteBalanceBlue};
-    ms_config::AutoWhiteBalanceConfiguration auto_white_balance{config.autoWhiteBalanceDecay,
+    ms_config::ManualWhiteBalanceConfig manual_white_balance{config.whiteBalanceRed, config.whiteBalanceBlue};
+    ms_config::AutoWhiteBalanceConfig auto_white_balance{config.autoWhiteBalanceDecay,
                                                                 config.autoWhiteBalanceThresh};
 
-    ms_config::ImageConfiguration image{config.gamma,
+    ms_config::ImageConfig image{config.gamma,
                                         config.hdrEnabled,
                                         (config.autoExposure != 0),
                                         std::move(manual_exposure),
@@ -130,13 +130,13 @@ MultiSenseConfiguration::AuxConfiguration convert(const crl::multisense::details
                                         std::move(manual_white_balance),
                                         std::move(auto_white_balance)};
 
-    return ms_config::AuxConfiguration{std::move(image),
+    return ms_config::AuxConfig{std::move(image),
                                        config.sharpeningEnable,
                                        config.sharpeningPercentage,
                                        config.sharpeningLimit};
 }
 
-crl::multisense::details::wire::CamSetResolution convert_resolution(const MultiSenseConfiguration &config,
+crl::multisense::details::wire::CamSetResolution convert_resolution(const MultiSenseConfig &config,
                                                                     uint32_t imager_width,
                                                                     uint32_t imager_height)
 {
@@ -146,9 +146,9 @@ crl::multisense::details::wire::CamSetResolution convert_resolution(const MultiS
 
     switch(config.disparities)
     {
-        case MultiSenseConfiguration::MaxDisparities::D64: {disparities = 64; break;}
-        case MultiSenseConfiguration::MaxDisparities::D128: {disparities = 128; break;}
-        case MultiSenseConfiguration::MaxDisparities::D256: {disparities = 256; break;}
+        case MultiSenseConfig::MaxDisparities::D64: {disparities = 64; break;}
+        case MultiSenseConfig::MaxDisparities::D128: {disparities = 128; break;}
+        case MultiSenseConfig::MaxDisparities::D256: {disparities = 256; break;}
     }
 
     auto width = imager_width;
@@ -156,19 +156,19 @@ crl::multisense::details::wire::CamSetResolution convert_resolution(const MultiS
 
     switch (config.resolution)
     {
-        case MultiSenseConfiguration::OperatingResolution::FULL_RESOLUTION:
+        case MultiSenseConfig::OperatingResolution::FULL_RESOLUTION:
         {
             width = imager_width;
             height = imager_height;
             break;
         }
-        case MultiSenseConfiguration::OperatingResolution::QUARTER_RESOLUTION:
+        case MultiSenseConfig::OperatingResolution::QUARTER_RESOLUTION:
         {
             width = static_cast<uint32_t>(static_cast<double>(imager_width) * 0.5);
             height = static_cast<uint32_t>(static_cast<double>(imager_height) * 0.5);
             break;
         }
-        case MultiSenseConfiguration::OperatingResolution::UNSUPPORTED:
+        case MultiSenseConfig::OperatingResolution::UNSUPPORTED:
         default:
         {
             CRL_EXCEPTION("Unsupported operating resolution\n");
@@ -181,7 +181,7 @@ crl::multisense::details::wire::CamSetResolution convert_resolution(const MultiS
 }
 
 template <>
-crl::multisense::details::wire::CamControl convert<crl::multisense::details::wire::CamControl>(const MultiSenseConfiguration &config)
+crl::multisense::details::wire::CamControl convert<crl::multisense::details::wire::CamControl>(const MultiSenseConfig &config)
 {
     using namespace crl::multisense::details;
 
@@ -218,7 +218,7 @@ crl::multisense::details::wire::CamControl convert<crl::multisense::details::wir
     return output;
 }
 
-crl::multisense::details::wire::AuxCamControl convert(const MultiSenseConfiguration::AuxConfiguration &config)
+crl::multisense::details::wire::AuxCamControl convert(const MultiSenseConfig::AuxConfig &config)
 {
     using namespace crl::multisense::details;
 
@@ -260,7 +260,7 @@ crl::multisense::details::wire::AuxCamControl convert(const MultiSenseConfigurat
     return output;
 }
 
-crl::multisense::details::wire::SysSetPtp convert(const MultiSenseConfiguration::TimeConfiguration &config)
+crl::multisense::details::wire::SysSetPtp convert(const MultiSenseConfig::TimeConfig &config)
 {
     using namespace crl::multisense::details;
 
@@ -270,24 +270,24 @@ crl::multisense::details::wire::SysSetPtp convert(const MultiSenseConfiguration:
     return output;
 }
 
-MultiSenseConfiguration::ImuConfiguration convert(const crl::multisense::details::wire::ImuConfig &imu)
+MultiSenseConfig::ImuConfig convert(const crl::multisense::details::wire::ImuConfig &imu)
 {
     using namespace crl::multisense::details;
-    using ImuConfiguration = MultiSenseConfiguration::ImuConfiguration;
+    using ImuConfig = MultiSenseConfig::ImuConfig;
 
-    std::vector<ImuConfiguration::OperatingMode> modes;
+    std::vector<ImuConfig::OperatingMode> modes;
     for (const auto &element : imu.configs)
     {
-        modes.emplace_back(ImuConfiguration::OperatingMode{element.name,
-                                                           static_cast<bool>(element.flags & wire::imu::Config::FLAGS_ENABLED),
-                                                           element.rateTableIndex,
-                                                           element.rangeTableIndex});
+        modes.emplace_back(ImuConfig::OperatingMode{element.name,
+                                                    static_cast<bool>(element.flags & wire::imu::Config::FLAGS_ENABLED),
+                                                    element.rateTableIndex,
+                                                    element.rangeTableIndex});
     }
 
-    return ImuConfiguration{imu.samplesPerMessage, std::move(modes)};
+    return ImuConfig{imu.samplesPerMessage, std::move(modes)};
 }
 
-crl::multisense::details::wire::ImuConfig convert(const MultiSenseConfiguration::ImuConfiguration &imu,
+crl::multisense::details::wire::ImuConfig convert(const MultiSenseConfig::ImuConfig &imu,
                                                   uint32_t max_samples_per_message)
 {
     using namespace crl::multisense::details;
@@ -314,10 +314,10 @@ crl::multisense::details::wire::ImuConfig convert(const MultiSenseConfiguration:
     return output;
 }
 
-MultiSenseConfiguration::LightingConfiguration convert(const crl::multisense::details::wire::LedStatus &led,
-                                                       const MultiSenseInfo::DeviceInfo::LightingType &type)
+MultiSenseConfig::LightingConfig convert(const crl::multisense::details::wire::LedStatus &led,
+                                         const MultiSenseInfo::DeviceInfo::LightingType &type)
 {
-    using lighting = MultiSenseConfiguration::LightingConfiguration;
+    using lighting = MultiSenseConfig::LightingConfig;
 
     const auto intensity = static_cast<float>(led.intensity[0]) * 100.0f / 255.0f;
 
@@ -354,10 +354,10 @@ MultiSenseConfiguration::LightingConfiguration convert(const crl::multisense::de
         default: {CRL_EXCEPTION("Unsupported lighting type\n");}
     }
 
-    return MultiSenseConfiguration::LightingConfiguration{std::move(internal), std::move(external)};
+    return MultiSenseConfig::LightingConfig{std::move(internal), std::move(external)};
 }
 
-crl::multisense::details::wire::LedSet convert(const MultiSenseConfiguration::LightingConfiguration &led)
+crl::multisense::details::wire::LedSet convert(const MultiSenseConfig::LightingConfig &led)
 {
     using namespace crl::multisense::details;
 
@@ -393,19 +393,19 @@ crl::multisense::details::wire::LedSet convert(const MultiSenseConfiguration::Li
 
         switch (led.external->flash)
         {
-            case MultiSenseConfiguration::LightingConfiguration::ExternalConfig::FlashMode::NONE:
+            case MultiSenseConfig::LightingConfig::ExternalConfig::FlashMode::NONE:
             {
                 output.flash = 0;
                 output.rolling_shutter_led = 0;
                 break;
             }
-            case MultiSenseConfiguration::LightingConfiguration::ExternalConfig::FlashMode::SYNC_WITH_MAIN_STEREO:
+            case MultiSenseConfig::LightingConfig::ExternalConfig::FlashMode::SYNC_WITH_MAIN_STEREO:
             {
                 output.flash = 1;
                 output.rolling_shutter_led = 0;
                 break;
             }
-            case MultiSenseConfiguration::LightingConfiguration::ExternalConfig::FlashMode::SYNC_WITH_AUX:
+            case MultiSenseConfig::LightingConfig::ExternalConfig::FlashMode::SYNC_WITH_AUX:
             {
                 output.flash = 1;
                 output.rolling_shutter_led = 1;
@@ -425,14 +425,14 @@ crl::multisense::details::wire::LedSet convert(const MultiSenseConfiguration::Li
     return output;
 }
 
-MultiSenseConfiguration::NetworkTransmissionConfiguration
+MultiSenseConfig::NetworkTransmissionConfig
     convert(const crl::multisense::details::wire::SysPacketDelay &packet)
 {
-    return MultiSenseConfiguration::NetworkTransmissionConfiguration{ packet.enable};
+    return MultiSenseConfig::NetworkTransmissionConfig{ packet.enable};
 }
 
 template <>
-crl::multisense::details::wire::SysPacketDelay convert(const MultiSenseConfiguration::NetworkTransmissionConfiguration &config)
+crl::multisense::details::wire::SysPacketDelay convert(const MultiSenseConfig::NetworkTransmissionConfig &config)
 {
     using namespace crl::multisense::details;
 

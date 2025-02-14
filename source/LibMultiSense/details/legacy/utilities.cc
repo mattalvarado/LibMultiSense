@@ -88,13 +88,13 @@ MultiSenseInfo::Version get_version(const crl::multisense::details::wire::Versio
     return MultiSenseInfo::Version{static_cast<uint32_t>(version >> 8), static_cast<uint32_t>(version & 0xFF), 0};
 }
 
-MultiSenseConfiguration::OperatingResolution get_resolution(uint32_t width,
+MultiSenseConfig::OperatingResolution get_resolution(uint32_t width,
                                                             uint32_t height,
                                                             uint32_t imager_width,
                                                             uint32_t imager_height)
 {
-    MultiSenseConfiguration::OperatingResolution resolution =
-        MultiSenseConfiguration::OperatingResolution::FULL_RESOLUTION;
+    MultiSenseConfig::OperatingResolution resolution =
+        MultiSenseConfig::OperatingResolution::FULL_RESOLUTION;
 
     const double x_scalar = static_cast<double>(width) / static_cast<double>(imager_width);
     const double y_scalar = static_cast<double>(height) / static_cast<double>(imager_height);
@@ -102,28 +102,28 @@ MultiSenseConfiguration::OperatingResolution get_resolution(uint32_t width,
 
     if (std::abs(x_scalar - 1) < 1e-6 && std::abs(y_scalar - 1) < 1e-6)
     {
-        resolution = MultiSenseConfiguration::OperatingResolution::FULL_RESOLUTION;
+        resolution = MultiSenseConfig::OperatingResolution::FULL_RESOLUTION;
     }
     else if (std::abs(x_scalar - 0.5) < 1e-6 && std::abs(y_scalar - 0.5) < 1e-6)
     {
-        resolution = MultiSenseConfiguration::OperatingResolution::QUARTER_RESOLUTION;
+        resolution = MultiSenseConfig::OperatingResolution::QUARTER_RESOLUTION;
     }
     else
     {
-        resolution = MultiSenseConfiguration::OperatingResolution::UNSUPPORTED;
+        resolution = MultiSenseConfig::OperatingResolution::UNSUPPORTED;
     }
 
     return resolution;
 }
 
-MultiSenseConfiguration::MaxDisparities get_disparities(size_t disparity)
+MultiSenseConfig::MaxDisparities get_disparities(size_t disparity)
 {
-    auto disparities = MultiSenseConfiguration::MaxDisparities::D256;
+    auto disparities = MultiSenseConfig::MaxDisparities::D256;
     switch (disparity)
     {
-        case 64: {disparities = MultiSenseConfiguration::MaxDisparities::D64; break;}
-        case 128: {disparities = MultiSenseConfiguration::MaxDisparities::D128; break;}
-        case 256: {disparities = MultiSenseConfiguration::MaxDisparities::D256; break;}
+        case 64: {disparities = MultiSenseConfig::MaxDisparities::D64; break;}
+        case 128: {disparities = MultiSenseConfig::MaxDisparities::D128; break;}
+        case 256: {disparities = MultiSenseConfig::MaxDisparities::D256; break;}
         default: {CRL_EXCEPTION("Unsupported disparity value %d", disparity);}
     }
 

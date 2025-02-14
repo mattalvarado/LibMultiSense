@@ -91,7 +91,7 @@ MultiSenseInfo::Version get_version(const crl::multisense::details::wire::Versio
 ///
 /// @brief Get the operating resolution based on the current width/height and the native imager width height
 ///
-MultiSenseConfiguration::OperatingResolution get_resolution(uint32_t width,
+MultiSenseConfig::OperatingResolution get_resolution(uint32_t width,
                                                             uint32_t height,
                                                             uint32_t imager_width,
                                                             uint32_t imager_height);
@@ -99,7 +99,7 @@ MultiSenseConfiguration::OperatingResolution get_resolution(uint32_t width,
 ///
 /// @brief Convert a disparity integer to a fixed disparity setting
 ///
-MultiSenseConfiguration::MaxDisparities get_disparities(size_t disparity);
+MultiSenseConfig::MaxDisparities get_disparities(size_t disparity);
 
 ///
 /// @brief Convert wire sources to a vector of DataSources

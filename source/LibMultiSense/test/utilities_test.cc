@@ -69,9 +69,9 @@ TEST(get_disparities, basic)
 {
     using namespace multisense;
 
-    ASSERT_EQ(get_disparities(64), multisense::MultiSenseConfiguration::MaxDisparities::D64);
-    ASSERT_EQ(get_disparities(128), multisense::MultiSenseConfiguration::MaxDisparities::D128);
-    ASSERT_EQ(get_disparities(256), multisense::MultiSenseConfiguration::MaxDisparities::D256);
+    ASSERT_EQ(get_disparities(64), multisense::MultiSenseConfig::MaxDisparities::D64);
+    ASSERT_EQ(get_disparities(128), multisense::MultiSenseConfig::MaxDisparities::D128);
+    ASSERT_EQ(get_disparities(256), multisense::MultiSenseConfig::MaxDisparities::D256);
     EXPECT_THROW(get_disparities(1), std::exception);
 }
 

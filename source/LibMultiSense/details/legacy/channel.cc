@@ -371,14 +371,14 @@ std::optional<ImuFrame> LegacyChannel::get_next_imu_frame()
     return m_imu_frame_notifier.wait(m_config.receive_timeout);
 }
 
-MultiSenseConfiguration LegacyChannel::get_configuration()
+MultiSenseConfig LegacyChannel::get_configuration()
 {
     std::lock_guard<std::mutex> lock(m_mutex);
 
     return m_multisense_config;
 }
 
-Status LegacyChannel::set_configuration(const MultiSenseConfiguration &config)
+Status LegacyChannel::set_configuration(const MultiSenseConfig &config)
 {
     using namespace crl::multisense::details;
 
@@ -745,9 +745,9 @@ Status LegacyChannel::set_mtu(const std::optional<uint16_t> &mtu)
     return Status::INTERNAL_ERROR;
 }
 
-std::optional<MultiSenseConfiguration> LegacyChannel::query_configuration(bool has_aux_camera,
-                                                                          bool has_imu,
-                                                                          bool ptp_enabled)
+std::optional<MultiSenseConfig> LegacyChannel::query_configuration(bool has_aux_camera,
+                                                                   bool has_imu,
+                                                                   bool ptp_enabled)
 {
     using namespace crl::multisense::details;
 
