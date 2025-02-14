@@ -67,12 +67,12 @@ MultiSenseConfig::AuxConfig convert(const crl::multisense::details::wire::AuxCam
 /// @brief Convert wire objects to our MultiSenseConfig
 ///
 MultiSenseConfig convert(const crl::multisense::details::wire::CamConfig &config,
-                                const std::optional<crl::multisense::details::wire::AuxCamConfig> &aux_config,
-                                const std::optional<crl::multisense::details::wire::ImuConfig> &imu_config,
-                                const std::optional<crl::multisense::details::wire::LedStatus> &led_config,
-                                const crl::multisense::details::wire::SysPacketDelay &packet_delay,
-                                bool ptp_enabled,
-                                const MultiSenseInfo::DeviceInfo &info);
+                         const std::optional<crl::multisense::details::wire::AuxCamConfig> &aux_config,
+                         const std::optional<crl::multisense::details::wire::ImuConfig> &imu_config,
+                         const std::optional<crl::multisense::details::wire::LedStatus> &led_config,
+                         const crl::multisense::details::wire::SysPacketDelay &packet_delay,
+                         bool ptp_enabled,
+                         const MultiSenseInfo::DeviceInfo &info);
 
 ///
 /// @brief Generic conversions between the MultiSenseConfig config object an MultiSense wire types
@@ -105,7 +105,7 @@ crl::multisense::details::wire::ImuConfig convert(const MultiSenseConfig::ImuCon
 /// @brief Convert a wire lighting config to a API lighting config
 ///
 MultiSenseConfig::LightingConfig convert(const crl::multisense::details::wire::LedStatus &led,
-                                                       const MultiSenseInfo::DeviceInfo::LightingType &type);
+                                         const MultiSenseInfo::DeviceInfo::LightingType &type);
 
 ///
 /// @brief Convert a API lighting config to a wire lighting config

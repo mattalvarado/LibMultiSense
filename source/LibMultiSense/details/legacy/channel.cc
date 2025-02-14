@@ -459,14 +459,14 @@ Status LegacyChannel::set_configuration(const MultiSenseConfig &config)
     //
     // Set lighting controls if they are valid
     //
-    if (config.lighting_config.internal || config.lighting_config.external)
+    if (config.lighting_config)
     {
         //
         // Set the lighting controls
         //
         const auto lighting_ack = wait_for_ack(m_message_assembler,
                                                m_socket,
-                                               convert(config.lighting_config),
+                                               convert(config.lighting_config.value()),
                                                m_transmit_id++,
                                                m_current_mtu,
                                                m_config.receive_timeout);

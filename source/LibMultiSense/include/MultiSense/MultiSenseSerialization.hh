@@ -46,12 +46,12 @@ namespace nlohmann
     template <>
     struct adl_serializer<std::chrono::microseconds>
     {
-        static void to_json(json& j, const std::chrono::microseconds& d)
+        static void to_json(json& j, const std::chrono::microseconds &d)
         {
             j = d.count();
         }
 
-        static void from_json(const json& j, std::chrono::microseconds& d)
+        static void from_json(const json& j, std::chrono::microseconds &d)
         {
             d = std::chrono::microseconds(j.get<std::chrono::microseconds::rep>());
         }
@@ -60,12 +60,12 @@ namespace nlohmann
     template <>
     struct adl_serializer<std::chrono::milliseconds>
     {
-        static void to_json(json& j, const std::chrono::milliseconds& d)
+        static void to_json(json& j, const std::chrono::milliseconds &d)
         {
             j = d.count();
         }
 
-        static void from_json(const json& j, std::chrono::milliseconds& d)
+        static void from_json(const json& j, std::chrono::milliseconds &d)
         {
             d = std::chrono::milliseconds(j.get<std::chrono::milliseconds::rep>());
         }
@@ -74,12 +74,12 @@ namespace nlohmann
     template <>
     struct adl_serializer<std::chrono::nanoseconds>
     {
-        static void to_json(json& j, const std::chrono::nanoseconds& d)
+        static void to_json(json& j, const std::chrono::nanoseconds &d)
         {
             j = d.count();
         }
 
-        static void from_json(const json& j, std::chrono::nanoseconds& d)
+        static void from_json(const json& j, std::chrono::nanoseconds &d)
         {
             d = std::chrono::nanoseconds(j.get<std::chrono::nanoseconds::rep>());
         }
@@ -91,7 +91,7 @@ namespace nlohmann
     template <typename T>
     struct adl_serializer<std::optional<T>>
     {
-        static void to_json(json& j, const std::optional<T>& opt)
+        static void to_json(json& j, const std::optional<T> &opt)
         {
             if (opt.has_value())
             {
@@ -103,7 +103,7 @@ namespace nlohmann
             }
         }
 
-        static void from_json(const json& j, std::optional<T>& opt)
+        static void from_json(const json& j, std::optional<T> &opt)
         {
             if (j.is_null())
             {
@@ -115,6 +115,7 @@ namespace nlohmann
             }
         }
     };
+
 }
 
 namespace multisense
@@ -296,14 +297,72 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfig::LightingConfig::InternalCon
                                    intensity,
                                    flash)
 
-//NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfig::LightingConfig::ExternalConfig,
-//                                   intensity,
-//                                   flash,
-//                                   pulses_per_exposure,
-//                                   startup_time)
-//
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfig::LightingConfig,
-                                   internal)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfig::LightingConfig::ExternalConfig,
+                                   intensity,
+                                   flash,
+                                   pulses_per_exposure,
+                                   startup_time)
+}
+
+namespace nlohmann
+{
+    ///
+    /// @brief Define a custom serialize for the lighting config since nlohmann json cannot handle
+    ///        serializing optional structs of optionals
+    ///
+    template <>
+    struct adl_serializer<multisense::MultiSenseConfig::LightingConfig>
+    {
+        static void to_json(json& j, const multisense::MultiSenseConfig::LightingConfig &val)
+        {
+            if (val.internal.has_value())
+            {
+                j["internal"] =  *val.internal;
+            }
+            else
+            {
+                j["internal"] =  nullptr;
+            }
+
+            if (val.external.has_value())
+            {
+                j["external"] =  *val.internal;
+            }
+            else
+            {
+                j["external"] =  nullptr;
+            }
+        }
+
+        static void from_json(const json& j, multisense::MultiSenseConfig::LightingConfig &val)
+        {
+            if (j["internal"].is_null())
+            {
+                val.internal = std::nullopt;
+            }
+            else
+            {
+                multisense::MultiSenseConfig::LightingConfig::InternalConfig internal;
+                j.at("internal").get_to(internal);
+                val.internal = internal;
+            }
+
+            if (j["external"].is_null())
+            {
+                val.external = std::nullopt;
+            }
+            else
+            {
+                multisense::MultiSenseConfig::LightingConfig::ExternalConfig external;
+                j.at("external").get_to(external);
+                val.external = external;
+            }
+        }
+    };
+}
+
+namespace multisense
+{
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfig,
                                    resolution,

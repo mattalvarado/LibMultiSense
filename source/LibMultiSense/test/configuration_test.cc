@@ -616,8 +616,7 @@ TEST(convert, cam_config_invalid_led)
                                 false,
                                 create_device_info(1920, 1200));
 
-    ASSERT_FALSE(static_cast<bool>(config.lighting_config.internal));
-    ASSERT_FALSE(static_cast<bool>(config.lighting_config.external));
+    ASSERT_FALSE(static_cast<bool>(config.lighting_config));
 
     check_equal(config, wire_config, 1920, 1200);
     check_equal(config.network_config, packet_config);
@@ -640,8 +639,7 @@ TEST(convert, cam_config_valid_led_but_no_ligths)
                                 false,
                                 create_device_info(1920, 1200));
 
-    ASSERT_FALSE(static_cast<bool>(config.lighting_config.internal));
-    ASSERT_FALSE(static_cast<bool>(config.lighting_config.external));
+    ASSERT_FALSE(static_cast<bool>(config.lighting_config));
 
     check_equal(config, wire_config, 1920, 1200);
     check_equal(config.network_config, packet_config);

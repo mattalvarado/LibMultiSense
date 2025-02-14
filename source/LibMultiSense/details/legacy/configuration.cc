@@ -93,8 +93,8 @@ MultiSenseConfig convert(const crl::multisense::details::wire::CamConfig &config
                                    ms_config::TimeConfig{ptp_enabled},
                                    convert(packet_delay),
                                    imu_config ? std::make_optional(convert(imu_config.value())) : std::nullopt,
-                                   (led_config && led_config->available) ? convert(led_config.value(), info.lighting_type) :
-                                       MultiSenseConfig::LightingConfig{}};
+                                   (led_config && led_config->available) ? std::make_optional(convert(led_config.value(), info.lighting_type)) :
+                                       std::nullopt};
 }
 
 MultiSenseConfig::AuxConfig convert(const crl::multisense::details::wire::AuxCamConfig &config)

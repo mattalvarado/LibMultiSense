@@ -850,7 +850,7 @@ struct MultiSenseConfig
     /// @brief The lighting configuration for the camera. If invalid, the camera does not support lighting
     ///        configuration
     ///
-    LightingConfig lighting_config{};
+    std::optional<LightingConfig> lighting_config{};
 };
 
 ///
