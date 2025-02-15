@@ -205,7 +205,18 @@ crl::multisense::details::wire::SysDeviceInfo convert(const MultiSenseInfo::Devi
     output.imagerHeight = info.imager_height;
 
     output.lensName = info.lens_name;
-    //TODO (malvarado): Handle lens_type
+
+    switch (info.lens_type)
+    {
+        case MultiSenseInfo::DeviceInfo::LensType::UNKNOWN:
+            { output.lensType = 0; break;}
+        case MultiSenseInfo::DeviceInfo::LensType::STANDARD:
+            { output.lensType = wire::SysDeviceInfo::LENS_TYPE_STANDARD; break;}
+        case MultiSenseInfo::DeviceInfo::LensType::FISHEYE:
+            { output.lensType = wire::SysDeviceInfo::LENS_TYPE_FISHEYE; break;}
+        default: { output.lensType = 0;}
+    }
+
     output.nominalBaseline = info.nominal_stereo_baseline;
     output.nominalFocalLength = info.nominal_focal_length;
     output.nominalRelativeAperture = info.nominal_relative_aperture;;
