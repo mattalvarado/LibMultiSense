@@ -34,6 +34,8 @@
  *   2025-01-13, malvarado@carnegierobotics.com, IRAD, Created file.
  **/
 
+#include <algorithm>
+
 #include "details/legacy/utilities.hh"
 
 namespace multisense{
