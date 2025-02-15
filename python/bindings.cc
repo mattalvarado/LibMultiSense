@@ -40,6 +40,7 @@
 #include <pybind11/chrono.h>
 #include <pybind11/functional.h>
 #include <pybind11/numpy.h>
+#include <pybind11/operators.h>
 #include <pybind11/stl.h>
 
 #include <MultiSense/MultiSenseChannel.hh>
@@ -224,6 +225,7 @@ PYBIND11_MODULE(libmultisense, m) {
     py::class_<multisense::ImuRate>(m, "ImuRate")
         .def(py::init<>())
         PYBIND11_JSON_SUPPORT(multisense::ImuRate)
+        .def(py::self == py::self)
         .def_readwrite("sample_rate", &multisense::ImuRate::sample_rate)
         .def_readwrite("bandwith_cutoff", &multisense::ImuRate::bandwith_cutoff);
 
@@ -231,6 +233,7 @@ PYBIND11_MODULE(libmultisense, m) {
     py::class_<multisense::ImuRange>(m, "ImuRange")
         .def(py::init<>())
         PYBIND11_JSON_SUPPORT(multisense::ImuRange)
+        .def(py::self == py::self)
         .def_readwrite("range", &multisense::ImuRange::range)
         .def_readwrite("resolution", &multisense::ImuRange::resolution);
 
@@ -239,12 +242,14 @@ PYBIND11_MODULE(libmultisense, m) {
     py::class_<multisense::MultiSenseConfig::StereoConfig>(m, "StereoConfig")
         .def(py::init<>())
         PYBIND11_JSON_SUPPORT(multisense::MultiSenseConfig::StereoConfig)
+        .def(py::self == py::self)
         .def_readwrite("postfilter_strength", &multisense::MultiSenseConfig::StereoConfig::postfilter_strength);
 
     // MultiSenseConfig::ManualExposureConfig
     py::class_<multisense::MultiSenseConfig::ManualExposureConfig>(m, "ManualExposureConfig")
         .def(py::init<>())
         PYBIND11_JSON_SUPPORT(multisense::MultiSenseConfig::ManualExposureConfig)
+        .def(py::self == py::self)
         .def_readwrite("gain", &multisense::MultiSenseConfig::ManualExposureConfig::gain)
         .def_readwrite("exposure_time", &multisense::MultiSenseConfig::ManualExposureConfig::exposure_time);
 
@@ -252,6 +257,7 @@ PYBIND11_MODULE(libmultisense, m) {
     py::class_<multisense::MultiSenseConfig::AutoExposureRoiConfig>(m, "AutoExposureRoiConfig")
         .def(py::init<>())
         PYBIND11_JSON_SUPPORT(multisense::MultiSenseConfig::AutoExposureRoiConfig)
+        .def(py::self == py::self)
         .def_readwrite("top_left_x_position", &multisense::MultiSenseConfig::AutoExposureRoiConfig::top_left_x_position)
         .def_readwrite("top_left_y_position", &multisense::MultiSenseConfig::AutoExposureRoiConfig::top_left_y_position)
         .def_readwrite("width", &multisense::MultiSenseConfig::AutoExposureRoiConfig::width)
@@ -261,6 +267,7 @@ PYBIND11_MODULE(libmultisense, m) {
     py::class_<multisense::MultiSenseConfig::AutoExposureConfig>(m, "AutoExposureConfig")
         .def(py::init<>())
         PYBIND11_JSON_SUPPORT(multisense::MultiSenseConfig::AutoExposureConfig)
+        .def(py::self == py::self)
         .def_readwrite("max_exposure_time", &multisense::MultiSenseConfig::AutoExposureConfig::max_exposure_time)
         .def_readwrite("decay", &multisense::MultiSenseConfig::AutoExposureConfig::decay)
         .def_readwrite("target_intensity", &multisense::MultiSenseConfig::AutoExposureConfig::target_intensity)
@@ -271,6 +278,7 @@ PYBIND11_MODULE(libmultisense, m) {
     py::class_<multisense::MultiSenseConfig::ManualWhiteBalanceConfig>(m, "ManualWhiteBalanceConfig")
         .def(py::init<>())
         PYBIND11_JSON_SUPPORT(multisense::MultiSenseConfig::ManualWhiteBalanceConfig)
+        .def(py::self == py::self)
         .def_readwrite("red", &multisense::MultiSenseConfig::ManualWhiteBalanceConfig::red)
         .def_readwrite("blue", &multisense::MultiSenseConfig::ManualWhiteBalanceConfig::blue);
 
@@ -278,6 +286,7 @@ PYBIND11_MODULE(libmultisense, m) {
     py::class_<multisense::MultiSenseConfig::AutoWhiteBalanceConfig>(m, "AutoWhiteBalanceConfig")
         .def(py::init<>())
         PYBIND11_JSON_SUPPORT(multisense::MultiSenseConfig::AutoWhiteBalanceConfig)
+        .def(py::self == py::self)
         .def_readwrite("decay", &multisense::MultiSenseConfig::AutoWhiteBalanceConfig::decay)
         .def_readwrite("threshold", &multisense::MultiSenseConfig::AutoWhiteBalanceConfig::threshold);
 
@@ -285,6 +294,7 @@ PYBIND11_MODULE(libmultisense, m) {
     py::class_<multisense::MultiSenseConfig::ImageConfig>(m, "ImageConfig")
         .def(py::init<>())
         PYBIND11_JSON_SUPPORT(multisense::MultiSenseConfig::ImageConfig)
+        .def(py::self == py::self)
         .def_readwrite("gamma", &multisense::MultiSenseConfig::ImageConfig::gamma)
         .def_readwrite("auto_exposure_enabled", &multisense::MultiSenseConfig::ImageConfig::auto_exposure_enabled)
         .def_readwrite("manual_exposure", &multisense::MultiSenseConfig::ImageConfig::manual_exposure)
@@ -297,6 +307,7 @@ PYBIND11_MODULE(libmultisense, m) {
     py::class_<multisense::MultiSenseConfig::AuxConfig>(m, "AuxConfig")
         .def(py::init<>())
         PYBIND11_JSON_SUPPORT(multisense::MultiSenseConfig::AuxConfig)
+        .def(py::self == py::self)
         .def_readwrite("image_config", &multisense::MultiSenseConfig::AuxConfig::image_config)
         .def_readwrite("sharpening_enabled", &multisense::MultiSenseConfig::AuxConfig::sharpening_enabled)
         .def_readwrite("sharpening_percentage", &multisense::MultiSenseConfig::AuxConfig::sharpening_percentage)
@@ -318,18 +329,21 @@ PYBIND11_MODULE(libmultisense, m) {
     py::class_<multisense::MultiSenseConfig::TimeConfig>(m, "TimeConfig")
         .def(py::init<>())
         PYBIND11_JSON_SUPPORT(multisense::MultiSenseConfig::TimeConfig)
+        .def(py::self == py::self)
         .def_readwrite("ptp_enabled", &multisense::MultiSenseConfig::TimeConfig::ptp_enabled);
 
     // MultiSenseConfig::NetworkTransmissionConfig
     py::class_<multisense::MultiSenseConfig::NetworkTransmissionConfig>(m, "NetworkTransmissionConfig")
         .def(py::init<>())
         PYBIND11_JSON_SUPPORT(multisense::MultiSenseConfig::NetworkTransmissionConfig)
+        .def(py::self == py::self)
         .def_readwrite("packet_delay_enabled", &multisense::MultiSenseConfig::NetworkTransmissionConfig::packet_delay_enabled);
 
     // MultiSenseConfig::ImuConfig::OperatingMode
     py::class_<multisense::MultiSenseConfig::ImuConfig::OperatingMode>(m, "ImuOperatingMode")
         .def(py::init<>())
         PYBIND11_JSON_SUPPORT(multisense::MultiSenseConfig::ImuConfig::OperatingMode)
+        .def(py::self == py::self)
         .def_readwrite("enabled", &multisense::MultiSenseConfig::ImuConfig::OperatingMode::enabled)
         .def_readwrite("rate", &multisense::MultiSenseConfig::ImuConfig::OperatingMode::rate)
         .def_readwrite("range", &multisense::MultiSenseConfig::ImuConfig::OperatingMode::range);
@@ -338,6 +352,7 @@ PYBIND11_MODULE(libmultisense, m) {
     py::class_<multisense::MultiSenseConfig::ImuConfig>(m, "ImuConfig")
         .def(py::init<>())
         PYBIND11_JSON_SUPPORT(multisense::MultiSenseConfig::ImuConfig)
+        .def(py::self == py::self)
         .def_readwrite("samples_per_frame", &multisense::MultiSenseConfig::ImuConfig::samples_per_frame)
         .def_readwrite("accelerometer", &multisense::MultiSenseConfig::ImuConfig::accelerometer)
         .def_readwrite("gyroscope", &multisense::MultiSenseConfig::ImuConfig::gyroscope)
@@ -353,6 +368,7 @@ PYBIND11_MODULE(libmultisense, m) {
     py::class_<multisense::MultiSenseConfig::LightingConfig::InternalConfig>(m, "LightingConfigInternalConfig")
         .def(py::init<>())
         PYBIND11_JSON_SUPPORT(multisense::MultiSenseConfig::LightingConfig::InternalConfig)
+        .def(py::self == py::self)
         .def_readwrite("intensity", &multisense::MultiSenseConfig::LightingConfig::InternalConfig::intensity)
         .def_readwrite("flash", &multisense::MultiSenseConfig::LightingConfig::InternalConfig::flash);
 
@@ -360,6 +376,7 @@ PYBIND11_MODULE(libmultisense, m) {
     py::class_<multisense::MultiSenseConfig::LightingConfig::ExternalConfig>(m, "LightingConfigExternalConfig")
         .def(py::init<>())
         PYBIND11_JSON_SUPPORT(multisense::MultiSenseConfig::LightingConfig::ExternalConfig)
+        .def(py::self == py::self)
         .def_readwrite("intensity", &multisense::MultiSenseConfig::LightingConfig::ExternalConfig::intensity)
         .def_readwrite("flash", &multisense::MultiSenseConfig::LightingConfig::ExternalConfig::flash)
         .def_readwrite("pulses_per_exposure", &multisense::MultiSenseConfig::LightingConfig::ExternalConfig::pulses_per_exposure)
@@ -369,6 +386,8 @@ PYBIND11_MODULE(libmultisense, m) {
     py::class_<multisense::MultiSenseConfig::LightingConfig>(m, "LightingConfig")
         .def(py::init<>())
         PYBIND11_JSON_SUPPORT(multisense::MultiSenseConfig::LightingConfig)
+        .def(py::self == py::self)
+        .def(py::self == py::self)
         .def_readwrite("internal", &multisense::MultiSenseConfig::LightingConfig::internal)
         .def_readwrite("external", &multisense::MultiSenseConfig::LightingConfig::external);
 
@@ -376,6 +395,7 @@ PYBIND11_MODULE(libmultisense, m) {
     py::class_<multisense::MultiSenseConfig>(m, "MultiSenseConfig")
         .def(py::init<>())
         PYBIND11_JSON_SUPPORT(multisense::MultiSenseConfig)
+        .def(py::self == py::self)
         .def_readwrite("resolution", &multisense::MultiSenseConfig::resolution)
         .def_readwrite("disparities", &multisense::MultiSenseConfig::disparities)
         .def_readwrite("frames_per_second", &multisense::MultiSenseConfig::frames_per_second)

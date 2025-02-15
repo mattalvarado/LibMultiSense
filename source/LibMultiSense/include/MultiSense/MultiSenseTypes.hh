@@ -407,6 +407,14 @@ struct ImuRate
     /// @brief The bandwith cutoff for a given IMU mode in Hz
     ///
     float bandwith_cutoff = 0.0f;
+
+    ///
+    /// @brief Equality operator
+    ///
+    bool operator==(const ImuRate &rhs) const
+    {
+        return sample_rate == rhs.sample_rate && bandwith_cutoff == rhs.bandwith_cutoff;
+    }
 };
 
 ///
@@ -423,6 +431,14 @@ struct ImuRange
     /// @brief The min resolution the sensor can return. In units per LSB
     ///
     float resolution = 0.0f;
+
+    ///
+    /// @brief Equality operator
+    ///
+    bool operator==(const ImuRange &rhs) const
+    {
+        return range == rhs.range && resolution == rhs.resolution;
+    }
 };
 
 
@@ -437,12 +453,19 @@ struct MultiSenseConfig
     struct StereoConfig
     {
         ///
-        ///
         /// @brief This is used to filter low confidence stereo data before it is sent to the
         ///        host. Larger numbers indicate more aggressive filtering.
         ///        Valid range is [0, 1.0]
         ///
         float postfilter_strength = 0.85f;
+
+        ///
+        /// @brief Equality operator
+        ///
+        bool operator==(const StereoConfig &rhs) const
+        {
+            return postfilter_strength == rhs.postfilter_strength;
+        }
     };
 
     ///
@@ -461,6 +484,14 @@ struct MultiSenseConfig
         ///        Valid range is [0, 33000]
         ///
         std::chrono::microseconds exposure_time{10000};
+
+        ///
+        /// @brief Equality operator
+        ///
+        bool operator==(const ManualExposureConfig &rhs) const
+        {
+           return gain == rhs.gain && exposure_time == rhs.exposure_time;
+        }
     };
 
     ///
@@ -486,6 +517,17 @@ struct MultiSenseConfig
         /// @brief The height of the ROI in the full resolution image. A value of 0 disables the ROI
         ///
         uint16_t height = 0;
+
+        ///
+        /// @brief Equality operator
+        ///
+        bool operator==(const AutoExposureRoiConfig &rhs) const
+        {
+            return top_left_x_position == rhs.top_left_x_position &&
+                   top_left_y_position == rhs.top_left_y_position &&
+                   width == rhs.width &&
+                   height == rhs.height;
+        }
     };
 
     ///
@@ -533,6 +575,19 @@ struct MultiSenseConfig
         ///        auto exposure algorithm is run on
         ///
         AutoExposureRoiConfig roi;
+
+        ///
+        /// @brief Equality operator
+        ///
+        bool operator==(const AutoExposureConfig &rhs) const
+        {
+            return max_exposure_time == rhs.max_exposure_time &&
+                   decay == rhs.decay &&
+                   target_intensity == rhs.target_intensity &&
+                   target_threshold == rhs.target_threshold &&
+                   max_gain == rhs.max_gain &&
+                   roi == rhs.roi;
+        }
     };
 
     ///
@@ -551,6 +606,14 @@ struct MultiSenseConfig
         ///        Valid range is [0.25, 4]
         ///
         float blue = 1.0f;
+
+        ///
+        /// @brief Equality operator
+        ///
+        bool operator==(const ManualWhiteBalanceConfig &rhs) const
+        {
+            return red == rhs.red && blue == rhs.blue;
+        }
     };
 
     ///
@@ -569,6 +632,14 @@ struct MultiSenseConfig
         ///        Valid range [0.0, 1.0]
         ///
         float threshold = 0.5f;
+
+        ///
+        /// @brief Equality operator
+        ///
+        bool operator==(const AutoWhiteBalanceConfig &rhs) const
+        {
+            return decay == rhs.decay && threshold == rhs.threshold;
+        }
     };
 
     ///
@@ -611,6 +682,20 @@ struct MultiSenseConfig
         /// @brief The white balance parameters to use if auto white balance is enabled
         ///
         AutoWhiteBalanceConfig auto_white_balance;
+
+        ///
+        /// @brief Equality operator
+        ///
+        bool operator==(const ImageConfig& rhs) const
+        {
+            return gamma == rhs.gamma &&
+                   auto_exposure_enabled == rhs.auto_exposure_enabled &&
+                   manual_exposure == rhs.manual_exposure &&
+                   auto_exposure == rhs.auto_exposure &&
+                   auto_white_balance_enabled == rhs.auto_white_balance_enabled &&
+                   manual_white_balance == rhs.manual_white_balance &&
+                   auto_white_balance == rhs.auto_white_balance;
+        }
     };
 
     ///
@@ -641,6 +726,17 @@ struct MultiSenseConfig
         ///         the sharpening percentage, while still maintaining a large gain.
         ///
         uint8_t sharpening_limit = 100;
+
+        ///
+        /// @brief Equality operator
+        ///
+        bool operator==(const AuxConfig &rhs) const
+        {
+            return image_config == rhs.image_config &&
+                   sharpening_enabled == rhs.sharpening_enabled &&
+                   sharpening_percentage == rhs.sharpening_percentage &&
+                   sharpening_limit == rhs.sharpening_limit;
+        }
     };
 
     ///
@@ -692,6 +788,14 @@ struct MultiSenseConfig
         /// @brief Enable PTP sync on the camera
         ///
         bool ptp_enabled = false;
+
+        ///
+        /// @brief Equality operator
+        ///
+        bool operator==(const TimeConfig &rhs) const
+        {
+           return ptp_enabled == rhs.ptp_enabled;
+        }
     };
 
     ///
@@ -704,6 +808,14 @@ struct MultiSenseConfig
         ///        better with slower client machines, or more fragile networks
         ///
         bool packet_delay_enabled = false;
+
+        ///
+        /// @brief Equality operator
+        ///
+        bool operator==(const NetworkTransmissionConfig &rhs) const
+        {
+            return packet_delay_enabled == rhs.packet_delay_enabled;
+        }
     };
 
     ///
@@ -732,6 +844,14 @@ struct MultiSenseConfig
             /// @brief The specific IMU range configuration specified in ImuInfo::Source
             ///
             ImuRange range{};
+
+            ///
+            /// @brief Equality operator
+            ///
+            bool operator==(const OperatingMode &rhs) const
+            {
+                return enabled == rhs.enabled && rate == rhs.rate && range == rhs.range;
+            }
         };
 
         ///
@@ -753,6 +873,17 @@ struct MultiSenseConfig
         /// @brief Configuration for the onboard magnetometer
         ///
         std::optional<OperatingMode> magnetometer = std::nullopt;
+
+        ///
+        /// @brief Equality operator
+        ///
+        bool operator==(const ImuConfig &rhs) const
+        {
+            return samples_per_frame == rhs.samples_per_frame &&
+                   accelerometer == rhs.accelerometer &&
+                   gyroscope == rhs.gyroscope &&
+                   magnetometer == rhs.magnetometer;
+        }
     };
 
     ///
@@ -774,6 +905,14 @@ struct MultiSenseConfig
             /// @brief Enable flashing of the light
             ///
             bool flash = false;
+
+            ///
+            /// @brief Equality operator
+            ///
+            bool operator==(const InternalConfig &rhs) const
+            {
+                 return intensity == rhs.intensity && flash == rhs.flash;
+            }
         };
 
         ///
@@ -815,6 +954,17 @@ struct MultiSenseConfig
             ///        ensure the light is at full brightness when the image is exposed
             ///
             std::chrono::microseconds startup_time{0};
+
+            ///
+            /// @brief Equality operator
+            ///
+            bool operator==(const ExternalConfig &rhs) const
+            {
+                return intensity == rhs.intensity &&
+                       flash == rhs.flash &&
+                       pulses_per_exposure == rhs.pulses_per_exposure &&
+                       startup_time == rhs.startup_time;
+            }
         };
 
         ///
@@ -828,6 +978,14 @@ struct MultiSenseConfig
         ///        support internal lighting controls
         ///
         std::optional<ExternalConfig> external = std::nullopt;
+
+        ///
+        /// @brief Equality operator
+        ///
+        bool operator==(const LightingConfig &rhs) const
+        {
+             return internal == rhs.internal && external == rhs.external;
+        }
     };
 
     ///
@@ -880,6 +1038,23 @@ struct MultiSenseConfig
     ///        configuration
     ///
     std::optional<LightingConfig> lighting_config{};
+
+    ///
+    /// @brief Equality operator
+    ///
+    bool operator==(const MultiSenseConfig &rhs) const
+    {
+        return resolution == rhs.resolution &&
+               disparities == rhs.disparities &&
+               frames_per_second == rhs.frames_per_second &&
+               stereo_config == rhs.stereo_config &&
+               image_config == rhs.image_config &&
+               aux_config == rhs.aux_config &&
+               time_config == rhs.time_config &&
+               network_config == rhs.network_config &&
+               imu_config == rhs.imu_config &&
+               lighting_config == rhs.lighting_config;
+    }
 };
 
 ///

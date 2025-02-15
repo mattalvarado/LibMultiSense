@@ -516,10 +516,10 @@ Status LegacyChannel::set_configuration(const MultiSenseConfig &config)
                                                 e == Status::EXCEPTION);
                                     });
 
-    //
-    // TODO (malvarado): Check equality of structs
-    //
-    const auto final_status = responses.empty() ? Status::OK : (errors ? Status::INTERNAL_ERROR : Status::INCOMPLETE_APPLICATION);
+    if (errors)
+    {
+        return Status::INTERNAL_ERROR;
+    }
 
     //
     // Update our internal cached image config after we successfully set everything
@@ -530,7 +530,17 @@ Status LegacyChannel::set_configuration(const MultiSenseConfig &config)
                                                     ptp_enabled); new_config)
     {
         m_multisense_config = new_config.value();
-        return final_status;
+
+        //
+        // If our input does not match our queried output it means the camera does not support one of
+        // our configuration settings
+        //
+        if (config == new_config.value())
+        {
+            return Status::OK;
+        }
+
+        return Status::INCOMPLETE_APPLICATION;
     }
 
     return Status::INTERNAL_ERROR;

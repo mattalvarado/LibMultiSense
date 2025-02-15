@@ -566,6 +566,25 @@ void check_equal(const multisense::MultiSenseConfig::NetworkTransmissionConfig &
     ASSERT_EQ(config.packet_delay_enabled, packet_delay.enable);
 }
 
+TEST(equality, equal)
+{
+    using namespace multisense;
+
+    const auto config = create_valid_config(MultiSenseConfig::OperatingResolution::FULL_RESOLUTION);
+
+    ASSERT_TRUE(config == config);
+}
+
+TEST(equality, not_equal)
+{
+    using namespace multisense;
+
+    const auto config = create_valid_config(MultiSenseConfig::OperatingResolution::FULL_RESOLUTION);
+    const auto config_quarter = create_valid_config(MultiSenseConfig::OperatingResolution::QUARTER_RESOLUTION);
+
+    ASSERT_FALSE(config == config_quarter);
+}
+
 TEST(convert, cam_resolution_full_res)
 {
     using namespace crl::multisense::details;
