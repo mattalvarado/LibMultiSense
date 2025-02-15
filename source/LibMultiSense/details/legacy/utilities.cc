@@ -224,7 +224,7 @@ ImuSample add_wire_sample(ImuSample sample, const crl::multisense::details::wire
     return sample;
 }
 
-size_t get_rate_index(const std::vector<ImuRate> &rates, const ImuRate &rate)
+uint32_t get_rate_index(const std::vector<ImuRate> &rates, const ImuRate &rate)
 {
     return std::distance(std::begin(rates),
                          std::find_if(std::begin(rates), std::end(rates),
@@ -235,7 +235,7 @@ size_t get_rate_index(const std::vector<ImuRate> &rates, const ImuRate &rate)
                                       }));
 }
 
-size_t get_range_index(const std::vector<ImuRange> &ranges, const ImuRange &range)
+uint32_t get_range_index(const std::vector<ImuRange> &ranges, const ImuRange &range)
 {
     return std::distance(std::begin(ranges),
                          std::find_if(std::begin(ranges), std::end(ranges),
