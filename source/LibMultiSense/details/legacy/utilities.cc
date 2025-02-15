@@ -224,5 +224,27 @@ ImuSample add_wire_sample(ImuSample sample, const crl::multisense::details::wire
     return sample;
 }
 
+size_t get_rate_index(const std::vector<ImuRate> &rates, const ImuRate &rate)
+{
+    return std::distance(std::begin(rates),
+                         std::find_if(std::begin(rates), std::end(rates),
+                                      [&rate](const auto &e)
+                                      {
+                                          return (std::abs(e.sample_rate - rate.sample_rate) < 1e-6 &&
+                                                  std::abs(e.bandwith_cutoff - rate.bandwith_cutoff) < 1e-6);
+                                      }));
+}
+
+size_t get_range_index(const std::vector<ImuRange> &ranges, const ImuRange &range)
+{
+    return std::distance(std::begin(ranges),
+                         std::find_if(std::begin(ranges), std::end(ranges),
+                                      [&range](const auto &e)
+                                      {
+                                          return (std::abs(e.range - range.range) < 1e-6 &&
+                                                  std::abs(e.resolution - range.resolution) < 1e-6);
+                                      }));
+}
+
 }
 }

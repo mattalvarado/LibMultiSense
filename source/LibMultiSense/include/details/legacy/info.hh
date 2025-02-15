@@ -74,14 +74,14 @@ std::vector<MultiSenseInfo::SupportedOperatingMode> convert(const crl::multisens
                                                             uint32_t imager_height);
 
 ///
-/// @brief Convert details for a specific imu operating mode to a API ImuSource
+/// @brief Convert details for a specific imu operating mode to a API ImuInfo::Source
 ///
-MultiSenseInfo::ImuSource convert(const crl::multisense::details::wire::imu::Details &details);
+MultiSenseInfo::ImuInfo::Source convert(const crl::multisense::details::wire::imu::Details &details);
 
 ///
-/// @brief Convert a wire ImuInfo to a vector of API ImuSource
+/// @brief Convert a wire ImuInfo to a API ImuInfo
 ///
-std::vector<MultiSenseInfo::ImuSource> convert(const crl::multisense::details::wire::ImuInfo &modes);
+MultiSenseInfo::ImuInfo convert(const crl::multisense::details::wire::ImuInfo &modes);
 
 ///
 /// @brief Convert a wire message into a API NetworkInfo

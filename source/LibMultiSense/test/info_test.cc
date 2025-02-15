@@ -139,7 +139,7 @@ crl::multisense::details::wire::ImuInfo create_imu_info()
     range0.resolution = 0.2f;
 
     wire::imu::Details detail0;
-    detail0.name = "test0";
+    detail0.name = "accelerometer";
     detail0.device = "device0";
     detail0.units = "units0";
 
@@ -148,7 +148,7 @@ crl::multisense::details::wire::ImuInfo create_imu_info()
     detail0.ranges.push_back(range0);
 
     wire::imu::Details detail1;
-    detail1.name = "test1";
+    detail1.name = "gyroscope";
     detail1.device = "device1";
     detail1.units = "units1";
 
@@ -278,11 +278,10 @@ void check_equal(const crl::multisense::details::wire::SysDeviceInfo &wire,
 }
 
 void check_equal(const crl::multisense::details::wire::imu::Details &wire,
-                 const multisense::MultiSenseInfo::ImuSource &info)
+                 const multisense::MultiSenseInfo::ImuInfo::Source &info)
 {
     ASSERT_EQ(wire.name, info.name);
     ASSERT_EQ(wire.device, info.device);
-    ASSERT_EQ(wire.units, info.units);
 
     ASSERT_EQ(wire.rates.size(), info.rates.size());
     for (size_t i = 0 ; i < info.rates.size() ; ++i)
@@ -384,11 +383,26 @@ TEST(convert, imu_source)
     const auto wire_info = create_imu_info();
     const auto info = convert(wire_info);
 
-    ASSERT_EQ(wire_info.details.size(), info.size());
-
-    for (size_t i = 0 ; i < info.size() ; ++i)
+    for (size_t i = 0 ; i < wire_info.details.size() ; ++i)
     {
-        check_equal(wire_info.details[i], info[i]);
+        const auto &detail = wire_info.details[i];
+
+        if (info.accelerometer && info.accelerometer->name == detail.name)
+        {
+            check_equal(detail, info.accelerometer.value());
+        }
+        else if (info.gyroscope && info.gyroscope->name == detail.name)
+        {
+            check_equal(detail, info.gyroscope.value());
+        }
+        else if (info.magnetometer && info.magnetometer->name == detail.name)
+        {
+            check_equal(detail, info.magnetometer.value());
+        }
+        else
+        {
+            ASSERT_TRUE(false);
+        }
     }
 }
 

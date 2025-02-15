@@ -50,24 +50,23 @@ multisense::MultiSenseConfig create_valid_config(const multisense::MultiSenseCon
     MultiSenseConfig::ManualExposureConfig manual_exposure{2.0, 500us};
 
     MultiSenseConfig::AutoExposureConfig auto_exposure{600us,
-                                                                     6,
-                                                                     0.6,
-                                                                     0.95,
-                                                                     3.0,
-                                                                     {10, 20, 400, 300}};
+                                                       6,
+                                                       0.6,
+                                                       0.95,
+                                                       3.0,
+                                                       {10, 20, 400, 300}};
 
     MultiSenseConfig::ManualWhiteBalanceConfig manual_white_balance{2.2, 3.3};
 
     MultiSenseConfig::AutoWhiteBalanceConfig auto_white_balance{4, 0.7};
 
     MultiSenseConfig::ImageConfig image_config{1.2,
-                                                             true,
-                                                             false,
-                                                             manual_exposure,
-                                                             auto_exposure,
-                                                             true,
-                                                             manual_white_balance,
-                                                             auto_white_balance};
+                                               false,
+                                               manual_exposure,
+                                               auto_exposure,
+                                               true,
+                                               manual_white_balance,
+                                               auto_white_balance};
 
     MultiSenseConfig::AuxConfig aux_config{image_config, true, 10.0, 80};
 
@@ -76,17 +75,16 @@ multisense::MultiSenseConfig create_valid_config(const multisense::MultiSenseCon
     MultiSenseConfig::NetworkTransmissionConfig network{true};
 
     return MultiSenseConfig{res,
-                                   MultiSenseConfig::MaxDisparities::D256,
-                                   11.0,
-                                   stereo_config,
-                                   image_config,
-                                   aux_config,
-                                   time,
-                                   network,
-                                   std::nullopt,
-                                   std::nullopt};
+                            MultiSenseConfig::MaxDisparities::D256,
+                            11.0,
+                            stereo_config,
+                            image_config,
+                            aux_config,
+                            time,
+                            network,
+                            std::nullopt,
+                            std::nullopt};
 }
-
 
 multisense::MultiSenseInfo::DeviceInfo create_device_info(uint32_t imager_width, uint32_t imager_height)
 {
@@ -97,6 +95,24 @@ multisense::MultiSenseInfo::DeviceInfo create_device_info(uint32_t imager_width,
     info.lighting_type = multisense::MultiSenseInfo::DeviceInfo::LightingType::EXTERNAL;
 
     return info;
+}
+
+multisense::MultiSenseInfo::ImuInfo create_imu_info()
+{
+    using namespace multisense;
+
+    std::vector<ImuRate> accel_rates{{1.0f, 2.0f}, {3.0f, 4.4f}, {5.5f, 6.7f}};
+    std::vector<ImuRange> accel_ranges{{1.1f, 3.0f}, {3.1f, 4.5f}, {5.6f, 6.8f}};
+
+    std::vector<ImuRate> gyro_rates{{1.1f, 2.1f}, {3.1f, 5.4f}, {5.6f, 7.7f}};
+    std::vector<ImuRange> gyro_ranges{{2.1f, 3.1f}, {4.1f, 5.5f}, {6.6f, 7.8f}};
+
+    std::vector<ImuRate> mag_rates{{2.1f, 3.1f}, {4.1f, 6.4f}, {6.6f, 8.7f}};
+    std::vector<ImuRange> mag_ranges{{3.1f, 4.1f}, {5.1f, 5.6f}, {6.7f, 8.8f}};
+
+    return MultiSenseInfo::ImuInfo{MultiSenseInfo::ImuInfo::Source{"accelerometer", "bmi160", accel_rates, accel_ranges},
+                                   MultiSenseInfo::ImuInfo::Source{"gyroscope", "bmi160", gyro_rates, gyro_ranges},
+                                   MultiSenseInfo::ImuInfo::Source{"magnetometer", "bmi160", mag_rates, mag_ranges}};
 }
 
 
@@ -130,7 +146,6 @@ crl::multisense::details::wire::CamConfig create_valid_wire_config()
     config.autoWhiteBalanceThresh = 0.7;
 
     config.gamma = 1.2;
-    config.hdrEnabled = true;
 
     return config;
 }
@@ -186,17 +201,22 @@ crl::multisense::details::wire::ImuConfig create_valid_imu_wire_config()
     config.storeSettingsInFlash = false;
     config.samplesPerMessage = 300;
 
-    config.configs.resize(2);
+    config.configs.resize(3);
 
-    config.configs[0].name = "test0";
+    config.configs[0].name = "accelerometer";
     config.configs[0].flags = 0;
-    config.configs[0].rateTableIndex = 5;
-    config.configs[0].rangeTableIndex = 2;
+    config.configs[0].rateTableIndex = 1;
+    config.configs[0].rangeTableIndex = 0;
 
-    config.configs[1].name = "test1";
+    config.configs[1].name = "gyroscope";
     config.configs[1].flags = 1;
-    config.configs[1].rateTableIndex = 6;
-    config.configs[1].rangeTableIndex = 3;
+    config.configs[1].rateTableIndex = 0;
+    config.configs[1].rangeTableIndex = 1;
+
+    config.configs[2].name = "magnetometer";
+    config.configs[2].flags = 1;
+    config.configs[2].rateTableIndex = 1;
+    config.configs[2].rangeTableIndex = 1;
 
     return config;
 }
@@ -287,7 +307,6 @@ void check_equal(const ConfigT &config,
     ASSERT_EQ(config.auto_white_balance.decay, control.autoWhiteBalanceDecay);
     ASSERT_EQ(config.auto_white_balance.threshold, control.autoWhiteBalanceThresh);
 
-    ASSERT_EQ(config.hdr_enabled, control.hdrEnabled);
     ASSERT_EQ(config.gamma, control.gamma);
 }
 
@@ -371,20 +390,72 @@ void check_equal(const multisense::MultiSenseConfig::AuxConfig &config,
     ASSERT_FLOAT_EQ(config.sharpening_limit, wire_config.sharpeningLimit);
 }
 
+void check_equal(const multisense::ImuRate &rate0,
+                 const multisense::ImuRate &rate1)
+{
+    ASSERT_FLOAT_EQ(rate0.sample_rate, rate1.sample_rate);
+    ASSERT_FLOAT_EQ(rate0.bandwith_cutoff, rate1.bandwith_cutoff);
+}
+
+void check_equal(const multisense::ImuRange &range0,
+                 const multisense::ImuRange &range1)
+{
+    ASSERT_FLOAT_EQ(range0.range, range1.range);
+    ASSERT_FLOAT_EQ(range0.resolution, range1.resolution);
+}
+
 void check_equal(const multisense::MultiSenseConfig::ImuConfig &config,
-                 const crl::multisense::details::wire::ImuConfig &wire_config)
+                 const crl::multisense::details::wire::ImuConfig &wire_config,
+                 const multisense::MultiSenseInfo::ImuInfo &imu_info)
 {
     using namespace crl::multisense::details;
 
     ASSERT_EQ(config.samples_per_frame, wire_config.samplesPerMessage);
-    ASSERT_EQ(config.modes.size(), wire_config.configs.size());
 
-    for (size_t i = 0 ; i < config.modes.size() ; ++i)
+    ASSERT_EQ(static_cast<bool>(imu_info.accelerometer), static_cast<bool>(config.accelerometer));
+    ASSERT_EQ(static_cast<bool>(imu_info.gyroscope), static_cast<bool>(config.gyroscope));
+    ASSERT_EQ(static_cast<bool>(imu_info.magnetometer), static_cast<bool>(config.magnetometer));
+
+    ASSERT_GT(wire_config.configs.size(), 2);
+
+    for (size_t i = 0 ; i < wire_config.configs.size() ; ++i)
     {
-        ASSERT_EQ(config.modes[i].name, wire_config.configs[i].name);
-        ASSERT_EQ(config.modes[i].enabled, static_cast<bool>(wire_config.configs[i].flags & wire::imu::Config::FLAGS_ENABLED));
-        ASSERT_EQ(config.modes[i].rate_index, wire_config.configs[i].rateTableIndex);
-        ASSERT_EQ(config.modes[i].range_index, wire_config.configs[i].rangeTableIndex);
+        const auto &wire = wire_config.configs[i];
+
+        if (imu_info.accelerometer && wire.name == imu_info.accelerometer->name)
+        {
+            const auto rate = imu_info.accelerometer->rates[wire.rateTableIndex];
+            const auto range = imu_info.accelerometer->ranges[wire.rangeTableIndex];
+
+            ASSERT_EQ(config.accelerometer->enabled, static_cast<bool>(wire.flags & wire::imu::Config::FLAGS_ENABLED));
+
+            check_equal(config.accelerometer->rate, rate);
+            check_equal(config.accelerometer->range, range);
+        }
+        else if (imu_info.gyroscope && wire.name == imu_info.gyroscope->name)
+        {
+            const auto rate = imu_info.gyroscope->rates[wire.rateTableIndex];
+            const auto range = imu_info.gyroscope->ranges[wire.rangeTableIndex];
+
+            ASSERT_EQ(config.gyroscope->enabled, static_cast<bool>(wire.flags & wire::imu::Config::FLAGS_ENABLED));
+
+            check_equal(config.gyroscope->rate, rate);
+            check_equal(config.gyroscope->range, range);
+        }
+        else if (imu_info.magnetometer && wire.name == imu_info.magnetometer->name)
+        {
+            const auto rate = imu_info.magnetometer->rates[wire.rateTableIndex];
+            const auto range = imu_info.magnetometer->ranges[wire.rangeTableIndex];
+
+            ASSERT_EQ(config.magnetometer->enabled, static_cast<bool>(wire.flags & wire::imu::Config::FLAGS_ENABLED));
+
+            check_equal(config.magnetometer->rate, rate);
+            check_equal(config.magnetometer->range, range);
+        }
+        else
+        {
+            ASSERT_TRUE(false);
+        }
     }
 }
 
@@ -558,7 +629,8 @@ TEST(convert, cam_config)
                                 std::nullopt,
                                 packet_config,
                                 false,
-                                create_device_info(1920, 1200));
+                                create_device_info(1920, 1200),
+                                create_imu_info());
 
     ASSERT_TRUE(static_cast<bool>(config.aux_config));
 
@@ -577,7 +649,8 @@ TEST(convert, cam_config_invalid_aux)
                                 std::nullopt,
                                 packet_config,
                                 false,
-                                create_device_info(1920, 1200));
+                                create_device_info(1920, 1200),
+                                create_imu_info());
 
     ASSERT_FALSE(static_cast<bool>(config.aux_config));
 
@@ -595,7 +668,8 @@ TEST(convert, cam_config_invalid_imu)
                                 std::nullopt,
                                 packet_config,
                                 false,
-                                create_device_info(1920, 1200));
+                                create_device_info(1920, 1200),
+                                create_imu_info());
 
     ASSERT_FALSE(static_cast<bool>(config.imu_config));
 
@@ -614,7 +688,8 @@ TEST(convert, cam_config_invalid_led)
                                 std::nullopt,
                                 packet_config,
                                 false,
-                                create_device_info(1920, 1200));
+                                create_device_info(1920, 1200),
+                                create_imu_info());
 
     ASSERT_FALSE(static_cast<bool>(config.lighting_config));
 
@@ -637,7 +712,8 @@ TEST(convert, cam_config_valid_led_but_no_ligths)
                                 std::make_optional(lighting_config),
                                 packet_config,
                                 false,
-                                create_device_info(1920, 1200));
+                                create_device_info(1920, 1200),
+                                create_imu_info());
 
     ASSERT_FALSE(static_cast<bool>(config.lighting_config));
 
@@ -648,20 +724,22 @@ TEST(convert, cam_config_valid_led_but_no_ligths)
 TEST(convert, imu_config_round_trip)
 {
     const auto wire_config = create_valid_imu_wire_config();
+    const auto info = create_imu_info();
 
-    const auto round_trip = convert(convert(convert(wire_config), 10000));
+    const auto round_trip = convert(convert(convert(wire_config, info), info, 10000), info);
 
-    check_equal(round_trip, wire_config);
+    check_equal(round_trip, wire_config, info);
 }
 
 TEST(convert, imu_config_limit_messages)
 {
     const auto wire_config = create_valid_imu_wire_config();
+    const auto info = create_imu_info();
 
     //
     // Limit the number of samples to one less than our initialized value
     //
-    const auto round_trip = convert(convert(wire_config), wire_config.samplesPerMessage - 1);
+    const auto round_trip = convert(convert(wire_config, info), info, wire_config.samplesPerMessage - 1);
 
     ASSERT_EQ(round_trip.samplesPerMessage, wire_config.samplesPerMessage - 1);
 }
@@ -689,7 +767,8 @@ TEST(convert, network_config)
                                 std::nullopt,
                                 packet_config,
                                 false,
-                                create_device_info(1920, 1200));
+                                create_device_info(1920, 1200),
+                                create_imu_info());
 
     check_equal(config.network_config,
                 convert<wire::SysPacketDelay>(config.network_config));

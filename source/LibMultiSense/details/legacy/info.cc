@@ -246,33 +246,52 @@ std::vector<MultiSenseInfo::SupportedOperatingMode> convert(const crl::multisens
     return output;
 }
 
-MultiSenseInfo::ImuSource convert(const crl::multisense::details::wire::imu::Details &details)
+MultiSenseInfo::ImuInfo::Source convert(const crl::multisense::details::wire::imu::Details &details)
 {
-    std::vector<MultiSenseInfo::ImuSource::Rate> rates;
+    std::vector<ImuRate> rates;
     for (const auto &rate : details.rates)
     {
-        rates.emplace_back(MultiSenseInfo::ImuSource::Rate{rate.sampleRate, rate.bandwidthCutoff});
+        rates.emplace_back(ImuRate{rate.sampleRate, rate.bandwidthCutoff});
     }
 
-    std::vector<MultiSenseInfo::ImuSource::Range> ranges;
+    std::vector<ImuRange> ranges;
     for (const auto &range : details.ranges)
     {
-        ranges.emplace_back(MultiSenseInfo::ImuSource::Range{range.range, range.resolution});
+        ranges.emplace_back(ImuRange{range.range, range.resolution});
     }
 
-    return MultiSenseInfo::ImuSource{details.name,
-                                                     details.device,
-                                                     details.units,
-                                                     std::move(rates),
-                                                     std::move(ranges)};
+    return MultiSenseInfo::ImuInfo::Source{details.name,
+                                           details.device,
+                                           std::move(rates),
+                                           std::move(ranges)};
 }
 
-std::vector<MultiSenseInfo::ImuSource> convert(const crl::multisense::details::wire::ImuInfo &modes)
+MultiSenseInfo::ImuInfo convert(const crl::multisense::details::wire::ImuInfo &modes)
 {
-    std::vector<MultiSenseInfo::ImuSource> output;
+    MultiSenseInfo::ImuInfo output;
     for (const auto &mode : modes.details)
     {
-        output.emplace_back(convert(mode));
+        const auto imu_source = convert(mode);
+
+        if (mode.name == "accelerometer")
+        {
+            output.accelerometer = imu_source;
+            continue;
+        }
+        else if (mode.name == "gyroscope")
+        {
+            output.gyroscope = imu_source;
+            continue;
+        }
+        else if (mode.name == "magnetometer")
+        {
+            output.magnetometer = imu_source;
+            continue;
+        }
+        else
+        {
+            CRL_EXCEPTION("Unknown IMU name: %s\n", mode.name.c_str());
+        }
     }
 
     return output;

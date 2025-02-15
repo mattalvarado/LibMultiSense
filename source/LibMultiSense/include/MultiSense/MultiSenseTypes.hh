@@ -355,21 +355,23 @@ struct ImuSample
         float z = 0.0f;
     };
 
+    //TODO (malvarado) handle implicit conversion under the hood
+
     ///
     /// @brief The acceleration in units of Gs. Depending on the IMU configuration of the sensor,
     ///        this may be invalid (i.e. the MultiSense has separate accelerometer and gyroscope chips)
     ///
-    std::optional<Measurement> accelerometer{};
+    std::optional<Measurement> accelerometer = std::nullopt;
     ///
     /// @brief The rotational velocity in degrees-per-second. Depending on the IMU configuration of the sensor,
     ///        this may be invalid (i.e. the MultiSense has separate accelerometer and gyroscope chips)
     ///
-    std::optional<Measurement> gyroscope{};
+    std::optional<Measurement> gyroscope = std::nullopt;
     ///
     /// @brief The measured magnetic field in milligauss. Depending on the IMU configuration of the sensor,
     ///        this may be invalid (i.e. the MultiSense has a separate magnetometer chip)
     ///
-    std::optional<Measurement> magnetometer{};
+    std::optional<Measurement> magnetometer = std::nullopt;
 
     ///
     /// @brief The MultiSeense timestamp associated with the frame
@@ -391,6 +393,38 @@ struct ImuFrame
     /// @brief A batched collection of IMU samples
     ///
     std::vector<ImuSample> samples;
+};
+
+///
+/// @brief A sample rate, and what impact it has on bandwidth
+///
+struct ImuRate
+{
+    ///
+    /// @brief The sample rate for the sensor in Hz
+    ///
+    float sample_rate = 0.0f;
+
+    ///
+    /// @brief The bandwith cutoff for a given IMU mode in Hz
+    ///
+    float bandwith_cutoff = 0.0f;
+};
+
+///
+/// @brief The range for each sensor along with the corresponding sampling resolution
+///
+struct ImuRange
+{
+    ///
+    /// @brief The max value the sensor can return. This value is +/- units for the given source
+    ///
+    float range = 0.0f;
+
+    ///
+    /// @brief The min resolution the sensor can return. In units per LSB
+    ///
+    float resolution = 0.0f;
 };
 
 
@@ -468,21 +502,25 @@ struct MultiSenseConfig
         std::chrono::microseconds max_exposure_time{10000};
 
         ///
-        /// @brief The desired auto-exposure decay rate.
-        ///         Valid range is [0, 20]
+        /// @brief The desired auto-exposure decay rate. A larger value increases the number of frames it takes
+        ///        for the current auto exposure desired exposure to apply.
+        ///        Valid range is [1, 20]
         ///
-        uint32_t decay = 7;
+        uint32_t decay = 3;
 
         ///
-        /// @brief The target intensity in the form of a ratio the auto exposure algorithm is trying to achieve.j
-        ///        This ratio is multiplied by the max pixel value (255), to get the target auto-exposure pixel value.
-        ///        The auto exposure algorithm tries to drive the target_threshold percentage of pixels below the target
-        ///        intensity value
+        /// @brief The auto-exposure algorithm in digital imaging endeavors to achieve a specified target intensity,
+        ///        which is represented as a ratio. This ratio, when multiplied by the maximum potential pixel
+        ///        brightness (255 for 8-bit images), produces the 'target auto-exposure pixel value'. The algorithm
+        ///        then adjusts the exposure of the camera to ensure a given 'target threshold' percentage of
+        ///        image pixels fall below this target intensity. This process maintains an ideal brightness balance,
+        ///        preventing overexposure or underexposure.
         ///
         float target_intensity = 0.5f;
 
         ///
-        /// @brief The ratio of pixels which must be equal or below the pixel value set by the target intensity setting.
+        /// @brief The fraction of pixels which must be equal or below the pixel value set by the target intensity
+        ///        pixel value
         ///
         float target_threshold = 0.85f;
 
@@ -542,15 +580,9 @@ struct MultiSenseConfig
     {
         ///
         /// @brief Set the gamma correction for the image.
-        ///        Valid range [1.0, 2,2]
+        ///        Valid range [1.0, 2.2]
         ///
         float gamma = 2.2f;
-
-        ///
-        /// @brief Enable HDR. Note this is not supported by the default MultiSense firmware. Please contact
-        ///        support team (https://carnegierobotics.com/submitaticket) if you are interested in this feature
-        ///
-        bool hdr_enabled = false;
 
         ///
         /// @brief Enable or disable auto exposure
@@ -688,30 +720,20 @@ struct MultiSenseConfig
         struct OperatingMode
         {
             ///
-            /// @brief The name of the specific IMU source corresponding to the ImuSource
-            ///
-            std::string name{};
-
-            ///
             /// @brief Enable the current source
             ///
             bool enabled = false;
 
-            //
-            // TODO (malvarado): Pass value rather than index
-            //
-
             ///
-            /// @brief The index of the specific IMU rate configuration specified in ImuSource rate
+            /// @brief The specific IMU rate configuration specified in ImuInfo::Source
             ///        table
             ///
-            uint32_t rate_index = 0;
+            ImuRate rate{};
 
             ///
-            /// @brief The index of the specific IMU range configuration specified in ImuSource range
-            ///        table
+            /// @brief The specific IMU range configuration specified in ImuInfo::Source
             ///
-            uint32_t range_index = 0;
+            ImuRange range{};
         };
 
         ///
@@ -720,14 +742,23 @@ struct MultiSenseConfig
         uint32_t samples_per_frame = 0;
 
         ///
-        /// @brief The current IMU modes
+        /// @brief Configuration for the onboard accelerometer
         ///
-        std::vector<OperatingMode> modes{};
+        std::optional<OperatingMode> accelerometer = std::nullopt;
+
+        ///
+        /// @brief Configuration for the onboard gyroscope
+        ///
+        std::optional<OperatingMode> gyroscope = std::nullopt;
+
+        ///
+        /// @brief Configuration for the onboard magnetometer
+        ///
+        std::optional<OperatingMode> magnetometer = std::nullopt;
     };
 
     ///
     /// @brief Lighting configuration for the camera
-    /// TODO (malvarado) Handle serialization explicitly since optionals of optionals are not supported
     ///
     struct LightingConfig
     {
@@ -1106,7 +1137,8 @@ struct MultiSenseInfo
             CMV4000_COLOR,
             FLIR_TAU2,
             AR0234_GREY,
-            AR0239_COLOR
+            AR0239_COLOR,
+            TENUM1280
         };
 
         ///
@@ -1333,69 +1365,50 @@ struct MultiSenseInfo
     };
 
     ///
-    /// @brief Info about the available IMu configurations
+    /// @brief Information about the IMU onboard the MultiSense
     ///
-    struct ImuSource
+    struct ImuInfo
     {
         ///
-        /// @brief A sample rate, and what impact it has on bandwidth
+        /// @brief Info about the available IMU configurations
         ///
-        struct Rate
+        struct Source
         {
             ///
-            /// @brief The sample rate for the sensor in Hz
+            /// @brief The name of the IMU sensor
             ///
-            float sample_rate = 0.0f;
+            std::string name{};
 
             ///
-            /// @brief The bandwith cutoff for a given IMU mode in Hz
+            /// @brief The name of the IMU chip
             ///
-            float bandwith_cutoff = 0.0f;
+            std::string device{};
+
+            ///
+            /// @brief The available rates supported by this operating mode
+            ///
+            std::vector<ImuRate> rates{};
+
+            ///
+            /// @brief The available ranges supported by this operating mode
+            ///
+            std::vector<ImuRange> ranges{};
         };
 
         ///
-        /// @brief The range for each sensor along with the corresponding sampling resolution
+        /// @brief Configuration specific to the accelerometer
         ///
-        struct Range
-        {
-            ///
-            /// @brief The max value the sensor can return. This value is +/- units for the given source
-            ///
-            float range = 0.0f;
-
-            ///
-            /// @brief The min resolution the sensor can return. In units per LSB
-            ///
-            float resolution = 0.0f;
-        };
+        std::optional<Source> accelerometer = std::nullopt;
 
         ///
-        /// @brief The name of the IMU chip on the camera
+        /// @brief Configuration specific to the gyroscope
         ///
-        std::string name{};
+        std::optional<Source> gyroscope = std::nullopt;
 
         ///
-        /// @brief The name of the IMU device for the source
-        /// TODO (malvarado) make this an enum (accel, gyro, mag) Update sample message too
+        /// @brief Configuration specific to the magnetometer
         ///
-        std::string device{};
-
-        ///
-        /// @brief The name of the units type it broadcasts
-        ///
-        /// TODO (malvarado) only use standard units (g's, degrees, milligaus)
-        ///
-        std::string units{};
-
-        ///
-        /// @brief The available rates supported by this operating mode
-        ///
-        std::vector<Rate> rates;
-
-        ///
-        /// @brief The available ranges supported by this operating mode
-        ///
-        std::vector<Range> ranges;
+        std::optional<Source> magnetometer = std::nullopt;
     };
 
     ///
@@ -1417,7 +1430,7 @@ struct MultiSenseInfo
     /// @brief Supported operating modes for the IMU sensors (accelerometer, gyroscope, magnetometer). Will
     ///        be invalid if an IMU is not present
     ///
-    std::optional<std::vector<ImuSource>> imu;
+    std::optional<ImuInfo> imu;
 
     ///
     /// @brief The network configuration of the MultiSense

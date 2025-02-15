@@ -48,7 +48,8 @@ MultiSenseConfig convert(const crl::multisense::details::wire::CamConfig &config
                          const std::optional<crl::multisense::details::wire::LedStatus> &led_config,
                          const crl::multisense::details::wire::SysPacketDelay &packet_delay,
                          bool ptp_enabled,
-                         const MultiSenseInfo::DeviceInfo &info)
+                         const MultiSenseInfo::DeviceInfo &info,
+                         const std::optional<MultiSenseInfo::ImuInfo> &imu_info)
 {
     using namespace crl::multisense::details;
 
@@ -76,7 +77,6 @@ MultiSenseConfig convert(const crl::multisense::details::wire::CamConfig &config
                                                                 config.autoWhiteBalanceThresh};
 
     ms_config::ImageConfig image{config.gamma,
-                                        config.hdrEnabled,
                                         (config.autoExposure != 0),
                                         std::move(manual_exposure),
                                         std::move(auto_exposure),
@@ -92,8 +92,11 @@ MultiSenseConfig convert(const crl::multisense::details::wire::CamConfig &config
                                    (aux_config ? std::make_optional(convert(aux_config.value())) : std::nullopt),
                                    ms_config::TimeConfig{ptp_enabled},
                                    convert(packet_delay),
-                                   imu_config ? std::make_optional(convert(imu_config.value())) : std::nullopt,
-                                   (led_config && led_config->available) ? std::make_optional(convert(led_config.value(), info.lighting_type)) :
+                                   (imu_config && imu_info) ?
+                                       std::make_optional(convert(imu_config.value(), imu_info.value())) :
+                                       std::nullopt,
+                                   (led_config && led_config->available) ?
+                                       std::make_optional(convert(led_config.value(), info.lighting_type)) :
                                        std::nullopt};
 }
 
@@ -122,7 +125,6 @@ MultiSenseConfig::AuxConfig convert(const crl::multisense::details::wire::AuxCam
                                                                 config.autoWhiteBalanceThresh};
 
     ms_config::ImageConfig image{config.gamma,
-                                        config.hdrEnabled,
                                         (config.autoExposure != 0),
                                         std::move(manual_exposure),
                                         std::move(auto_exposure),
@@ -212,7 +214,7 @@ crl::multisense::details::wire::CamControl convert<crl::multisense::details::wir
 
     output.stereoPostFilterStrength = config.stereo_config.postfilter_strength;
 
-    output.hdrEnabled = config.image_config.hdr_enabled;
+    output.hdrEnabled = false;
     output.gamma = config.image_config.gamma;
 
     return output;
@@ -246,7 +248,7 @@ crl::multisense::details::wire::AuxCamControl convert(const MultiSenseConfig::Au
     output.autoWhiteBalanceDecay = config.image_config.auto_white_balance.decay;
     output.autoWhiteBalanceThresh  = config.image_config.auto_white_balance.threshold;
 
-    output.hdrEnabled = config.image_config.hdr_enabled;
+    output.hdrEnabled = false;;
     output.gamma = config.image_config.gamma;
     output.sharpeningEnable = config.sharpening_enabled;
     output.sharpeningPercentage = config.sharpening_percentage;
@@ -270,24 +272,46 @@ crl::multisense::details::wire::SysSetPtp convert(const MultiSenseConfig::TimeCo
     return output;
 }
 
-MultiSenseConfig::ImuConfig convert(const crl::multisense::details::wire::ImuConfig &imu)
+MultiSenseConfig::ImuConfig convert(const crl::multisense::details::wire::ImuConfig &imu,
+                                    const MultiSenseInfo::ImuInfo &imu_info)
 {
     using namespace crl::multisense::details;
     using ImuConfig = MultiSenseConfig::ImuConfig;
 
-    std::vector<ImuConfig::OperatingMode> modes;
+    std::optional<ImuConfig::OperatingMode> accelerometer = std::nullopt;
+    std::optional<ImuConfig::OperatingMode> gyroscope = std::nullopt;
+    std::optional<ImuConfig::OperatingMode> magnetometer = std::nullopt;
     for (const auto &element : imu.configs)
     {
-        modes.emplace_back(ImuConfig::OperatingMode{element.name,
-                                                    static_cast<bool>(element.flags & wire::imu::Config::FLAGS_ENABLED),
-                                                    element.rateTableIndex,
-                                                    element.rangeTableIndex});
+        if (imu_info.accelerometer && element.name == imu_info.accelerometer->name)
+        {
+            accelerometer = ImuConfig::OperatingMode{static_cast<bool>(element.flags & wire::imu::Config::FLAGS_ENABLED),
+                                                     imu_info.accelerometer->rates[element.rateTableIndex],
+                                                     imu_info.accelerometer->ranges[element.rangeTableIndex]};
+        }
+        else if (imu_info.gyroscope && element.name == imu_info.gyroscope->name)
+        {
+            gyroscope = ImuConfig::OperatingMode{static_cast<bool>(element.flags & wire::imu::Config::FLAGS_ENABLED),
+                                                 imu_info.gyroscope->rates[element.rateTableIndex],
+                                                 imu_info.gyroscope->ranges[element.rangeTableIndex]};
+        }
+        else if (imu_info.magnetometer && element.name == imu_info.magnetometer->name)
+        {
+            magnetometer = ImuConfig::OperatingMode{static_cast<bool>(element.flags & wire::imu::Config::FLAGS_ENABLED),
+                                                     imu_info.magnetometer->rates[element.rateTableIndex],
+                                                     imu_info.magnetometer->ranges[element.rangeTableIndex]};
+        }
+        else
+        {
+            CRL_EXCEPTION("Unknown imu name: %s\n", element.name.c_str());
+        }
     }
 
-    return ImuConfig{imu.samplesPerMessage, std::move(modes)};
+    return ImuConfig{imu.samplesPerMessage, std::move(accelerometer), std::move(gyroscope), std::move(magnetometer)};
 }
 
 crl::multisense::details::wire::ImuConfig convert(const MultiSenseConfig::ImuConfig &imu,
+                                                  const MultiSenseInfo::ImuInfo &imu_info,
                                                   uint32_t max_samples_per_message)
 {
     using namespace crl::multisense::details;
@@ -297,13 +321,39 @@ crl::multisense::details::wire::ImuConfig convert(const MultiSenseConfig::ImuCon
     output.samplesPerMessage = std::min(max_samples_per_message, imu.samples_per_frame);
 
     std::vector<wire::imu::Config> configs;
-    for (const auto &mode : imu.modes)
+
+    if (imu.accelerometer && imu_info.accelerometer)
     {
         wire::imu::Config config;
-        config.name = mode.name;
-        config.flags = mode.enabled ? wire::imu::Config::FLAGS_ENABLED : 0;
-        config.rateTableIndex = mode.rate_index;
-        config.rangeTableIndex = mode.range_index;
+        config.name = imu_info.accelerometer->name;
+        config.flags = imu.accelerometer->enabled ? wire::imu::Config::FLAGS_ENABLED : 0;
+
+        config.rateTableIndex = get_rate_index(imu_info.accelerometer->rates, imu.accelerometer->rate);
+        config.rangeTableIndex = get_range_index(imu_info.accelerometer->ranges, imu.accelerometer->range);
+
+        configs.emplace_back(std::move(config));
+    }
+
+    if (imu.gyroscope && imu_info.gyroscope)
+    {
+        wire::imu::Config config;
+        config.name = imu_info.gyroscope->name;
+        config.flags = imu.gyroscope->enabled ? wire::imu::Config::FLAGS_ENABLED : 0;
+
+        config.rateTableIndex = get_rate_index(imu_info.gyroscope->rates, imu.gyroscope->rate);
+        config.rangeTableIndex = get_range_index(imu_info.gyroscope->ranges, imu.gyroscope->range);
+
+        configs.emplace_back(std::move(config));
+    }
+
+    if (imu.magnetometer && imu_info.magnetometer)
+    {
+        wire::imu::Config config;
+        config.name = imu_info.magnetometer->name;
+        config.flags = imu.magnetometer->enabled ? wire::imu::Config::FLAGS_ENABLED : 0;
+
+        config.rateTableIndex = get_rate_index(imu_info.magnetometer->rates, imu.magnetometer->rate);
+        config.rangeTableIndex = get_range_index(imu_info.magnetometer->ranges, imu.magnetometer->range);
 
         configs.emplace_back(std::move(config));
     }

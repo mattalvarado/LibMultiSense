@@ -111,7 +111,9 @@ namespace nlohmann
             }
             else
             {
-                opt = j.get<T>();
+                T v{};
+                j.get_to(v);
+                opt = std::move(v);
             }
         }
     };
@@ -263,7 +265,6 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfig::AutoWhiteBalanceConfig,
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfig::ImageConfig,
                                    gamma,
-                                   hdr_enabled,
                                    auto_exposure_enabled,
                                    manual_exposure,
                                    auto_exposure,
@@ -283,15 +284,18 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfig::TimeConfig,
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfig::NetworkTransmissionConfig,
                                    packet_delay_enabled)
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfig::ImuConfig::OperatingMode,
-                                   name,
-                                   enabled,
-                                   rate_index,
-                                   range_index)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ImuRate,
+                                   sample_rate,
+                                   bandwith_cutoff)
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfig::ImuConfig,
-                                   samples_per_frame,
-                                   modes)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ImuRange,
+                                   range,
+                                   resolution)
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfig::ImuConfig::OperatingMode,
+                                   enabled,
+                                   rate,
+                                   range)
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfig::LightingConfig::InternalConfig,
                                    intensity,
@@ -302,67 +306,16 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfig::LightingConfig::ExternalCon
                                    flash,
                                    pulses_per_exposure,
                                    startup_time)
-}
 
-namespace nlohmann
-{
-    ///
-    /// @brief Define a custom serialize for the lighting config since nlohmann json cannot handle
-    ///        serializing optional structs of optionals
-    ///
-    template <>
-    struct adl_serializer<multisense::MultiSenseConfig::LightingConfig>
-    {
-        static void to_json(json& j, const multisense::MultiSenseConfig::LightingConfig &val)
-        {
-            if (val.internal.has_value())
-            {
-                j["internal"] =  *val.internal;
-            }
-            else
-            {
-                j["internal"] =  nullptr;
-            }
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfig::LightingConfig,
+                                   internal,
+                                   external)
 
-            if (val.external.has_value())
-            {
-                j["external"] =  *val.internal;
-            }
-            else
-            {
-                j["external"] =  nullptr;
-            }
-        }
-
-        static void from_json(const json& j, multisense::MultiSenseConfig::LightingConfig &val)
-        {
-            if (j["internal"].is_null())
-            {
-                val.internal = std::nullopt;
-            }
-            else
-            {
-                multisense::MultiSenseConfig::LightingConfig::InternalConfig internal;
-                j.at("internal").get_to(internal);
-                val.internal = internal;
-            }
-
-            if (j["external"].is_null())
-            {
-                val.external = std::nullopt;
-            }
-            else
-            {
-                multisense::MultiSenseConfig::LightingConfig::ExternalConfig external;
-                j.at("external").get_to(external);
-                val.external = external;
-            }
-        }
-    };
-}
-
-namespace multisense
-{
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfig::ImuConfig,
+                                   samples_per_frame,
+                                   accelerometer,
+                                   gyroscope,
+                                   magnetometer)
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfig,
                                    resolution,
@@ -461,20 +414,16 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseInfo::SupportedOperatingMode,
                                    disparities,
                                    supported_sources)
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseInfo::ImuSource::Rate,
-                                   sample_rate,
-                                   bandwith_cutoff)
-
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseInfo::ImuSource::Range,
-                                   range,
-                                   resolution)
-
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseInfo::ImuSource,
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseInfo::ImuInfo::Source,
                                    name,
                                    device,
-                                   units,
                                    rates,
                                    ranges)
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseInfo::ImuInfo,
+                                   accelerometer,
+                                   gyroscope,
+                                   magnetometer)
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseInfo,
                                    device,

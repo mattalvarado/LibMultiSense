@@ -117,6 +117,16 @@ crl::multisense::details::wire::SourceType convert_sources(const std::vector<Dat
 ImuSample add_wire_sample(ImuSample sample, const crl::multisense::details::wire::ImuSample &wire);
 
 ///
+/// @brief Get the index of the rate in a vector of rates
+///
+size_t get_rate_index(const std::vector<ImuRate> &rates, const ImuRate &rate);
+
+///
+/// @brief Get the index of the range in a vector of ranges
+///
+size_t get_range_index(const std::vector<ImuRange> &ranges, const ImuRange &range);
+
+///
 /// @brief Helper to wait for ack from the camera from a given query command. Once a query
 ///        command is sent to the MultiSense, it Ack's the command before sending the response
 ///

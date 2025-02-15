@@ -72,7 +72,8 @@ MultiSenseConfig convert(const crl::multisense::details::wire::CamConfig &config
                          const std::optional<crl::multisense::details::wire::LedStatus> &led_config,
                          const crl::multisense::details::wire::SysPacketDelay &packet_delay,
                          bool ptp_enabled,
-                         const MultiSenseInfo::DeviceInfo &info);
+                         const MultiSenseInfo::DeviceInfo &info,
+                         const std::optional<MultiSenseInfo::ImuInfo> &imu_info);
 
 ///
 /// @brief Generic conversions between the MultiSenseConfig config object an MultiSense wire types
@@ -93,12 +94,14 @@ crl::multisense::details::wire::SysSetPtp convert(const MultiSenseConfig::TimeCo
 ///
 /// @brief Convert a ImuConfig object to a wire ImuConfig message
 ///
-MultiSenseConfig::ImuConfig convert(const crl::multisense::details::wire::ImuConfig &imu);
+MultiSenseConfig::ImuConfig convert(const crl::multisense::details::wire::ImuConfig &imu,
+                                    const MultiSenseInfo::ImuInfo &imu_info);
 
 ///
 /// @brief Convert a ImuConfig object to a wire message
 ///
 crl::multisense::details::wire::ImuConfig convert(const MultiSenseConfig::ImuConfig &imu,
+                                                  const MultiSenseInfo::ImuInfo &imu_info,
                                                   uint32_t max_samples_per_message);
 
 ///

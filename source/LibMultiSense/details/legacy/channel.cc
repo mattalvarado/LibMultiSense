@@ -439,14 +439,16 @@ Status LegacyChannel::set_configuration(const MultiSenseConfig &config)
     //
     // Set imu controls if they are valid
     //
-    if (config.imu_config)
+    if (config.imu_config && m_info.imu)
     {
         //
         // Set the imu controls
         //
         const auto imu_ack = wait_for_ack(m_message_assembler,
                                           m_socket,
-                                          convert(config.imu_config.value(), m_max_batched_imu_messages),
+                                          convert(config.imu_config.value(),
+                                                  m_info.imu.value(),
+                                                  m_max_batched_imu_messages),
                                           m_transmit_id++,
                                           m_current_mtu,
                                           m_config.receive_timeout);
@@ -795,7 +797,8 @@ std::optional<MultiSenseConfig> LegacyChannel::query_configuration(bool has_aux_
                        led_config,
                        packet_delay ? packet_delay.value() : wire::SysPacketDelay{false},
                        ptp_enabled,
-                       m_info.device);
+                       m_info.device,
+                       m_info.imu);
     }
 
     CRL_DEBUG("Unable to query the camera's configuration\n");
