@@ -215,7 +215,9 @@ NLOHMANN_JSON_SERIALIZE_ENUM(MultiSenseInfo::DeviceInfo::LightingType, {
 })
 
 NLOHMANN_JSON_SERIALIZE_ENUM(MultiSenseInfo::DeviceInfo::LensType, {
-    {MultiSenseInfo::DeviceInfo::LensType::UNKNOWN, "UNKNOWN"}
+    {MultiSenseInfo::DeviceInfo::LensType::UNKNOWN, "UNKNOWN"},
+    {MultiSenseInfo::DeviceInfo::LensType::STANDARD, "STANDARD"},
+    {MultiSenseInfo::DeviceInfo::LensType::FISHEYE, "FISHEYE"}
 })
 
 NLOHMANN_JSON_SERIALIZE_ENUM(Channel::ChannelImplementation, {

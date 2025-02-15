@@ -512,7 +512,9 @@ PYBIND11_MODULE(libmultisense, m) {
 
     // MultiSenseInfo::DeviceInfo::LensType
     py::enum_<multisense::MultiSenseInfo::MultiSenseInfo::DeviceInfo::LensType>(m, "LensType")
-        .value("UNKNOWN", multisense::MultiSenseInfo::DeviceInfo::LensType::UNKNOWN);
+        .value("UNKNOWN", multisense::MultiSenseInfo::DeviceInfo::LensType::UNKNOWN)
+        .value("STANDARD", multisense::MultiSenseInfo::DeviceInfo::LensType::STANDARD)
+        .value("FISHEYE", multisense::MultiSenseInfo::DeviceInfo::LensType::FISHEYE);
 
     // MultiSenseInfo::NetworkInfo
     py::class_<multisense::MultiSenseInfo::MultiSenseInfo::NetworkInfo>(m, "NetworkInfo")

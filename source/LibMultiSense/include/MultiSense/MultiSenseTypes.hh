@@ -1337,12 +1337,14 @@ struct MultiSenseInfo
             PATTERN_PROJECTOR
         };
 
-        //
-        // TODO(malvarado): Populate this with valid inputs
-        //
+        ///
+        /// @brief MultiSense lens types
+        ///
         enum class LensType : uint8_t
         {
-            UNKNOWN
+            UNKNOWN,
+            STANDARD,
+            FISHEYE
         };
 
         ///
