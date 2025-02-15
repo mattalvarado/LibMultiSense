@@ -259,7 +259,7 @@ double get_acceleration_scale(const std::string &units)
 {
     std::string lower_units = units;
     std::transform(lower_units.begin(), lower_units.end(), lower_units.begin(),
-                   [](unsigned char c){ return std::tolower(c); });
+                   [](unsigned char c){ return static_cast<char>(std::tolower(c));});
 
 
     if (lower_units == "g" || lower_units == "gs")
@@ -282,7 +282,7 @@ double get_gyroscope_scale(const std::string &units)
 {
     std::string lower_units = units;
     std::transform(lower_units.begin(), lower_units.end(), lower_units.begin(),
-                   [](unsigned char c){ return std::tolower(c); });
+                   [](unsigned char c){ return static_cast<char>(std::tolower(c));});
 
     if (lower_units == "dps" || lower_units == "degrees-per-second")
     {
@@ -304,7 +304,7 @@ double get_magnetomter_scale(const std::string &units)
 {
     std::string lower_units = units;
     std::transform(lower_units.begin(), lower_units.end(), lower_units.begin(),
-                   [](unsigned char c){ return std::tolower(c); });
+                   [](unsigned char c){ return static_cast<char>(std::tolower(c));});
 
     if (lower_units == "guass")
     {
