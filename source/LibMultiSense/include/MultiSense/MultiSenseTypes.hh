@@ -355,8 +355,6 @@ struct ImuSample
         float z = 0.0f;
     };
 
-    //TODO (malvarado) handle implicit conversion under the hood
-
     ///
     /// @brief The acceleration in units of Gs. Depending on the IMU configuration of the sensor,
     ///        this may be invalid (i.e. the MultiSense has separate accelerometer and gyroscope chips)

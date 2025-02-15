@@ -48,6 +48,7 @@
 #include "details/legacy/message.hh"
 #include "details/legacy/storage.hh"
 #include "details/legacy/udp.hh"
+#include "details/legacy/utilities.hh"
 
 namespace multisense{
 namespace legacy{
@@ -292,17 +293,17 @@ private:
     ///
     /// @brief Internal mutex used to handle updates from users
     ///
-    std::mutex m_mutex;
+    std::mutex m_mutex{};
 
     ///
     /// @brief Internal mutex used to handle user callbacks for image data
     ///
-    std::mutex m_image_callback_mutex;
+    std::mutex m_image_callback_mutex{};
 
     ///
     /// @brief Internal mutex used to handle user callbacks imu data
     ///
-    std::mutex m_imu_callback_mutex;
+    std::mutex m_imu_callback_mutex{};
 
     ///
     /// @brief Atomic flag to determine if we are connected to an active camera
@@ -317,12 +318,12 @@ private:
     ///
     /// @brief Channel config
     ///
-    ChannelConfig m_config;
+    ChannelConfig m_config{};
 
     ///
     /// @brief Active network socket for receiving and transmitting data
     ///
-    NetworkSocket m_socket;
+    NetworkSocket m_socket{};
 
     ///
     /// @brief Monotonically increasing internal id used to uniquely identify requests sent to the camera
@@ -332,52 +333,52 @@ private:
     ///
     /// @brief The current cached calibration stored here for convenience
     ///
-    StereoCalibration m_calibration;
+    StereoCalibration m_calibration{};
 
     ///
     /// @brief The current cached device info stored here for convenience
     ///
-    MultiSenseInfo m_info;
+    MultiSenseInfo m_info{};
 
     ///
     /// @brief The current cached MultiSense configuration stored for convenience
     ///
-    MultiSenseConfig m_multisense_config;
+    MultiSenseConfig m_multisense_config{};
 
     ///
     /// @brief The current set of active data streams the MultiSense is transmitting.
     ///
-    std::set<DataSource> m_active_streams;
+    std::set<DataSource> m_active_streams{};
 
     ///
     /// @brief The currently active image frame user callback
     ///
-    std::function<void(const ImageFrame&)> m_user_image_frame_callback;
+    std::function<void(const ImageFrame&)> m_user_image_frame_callback{};
 
     ///
     /// @brief The currently active imu frame user callback
     ///
-    std::function<void(const ImuFrame&)> m_user_imu_frame_callback;
+    std::function<void(const ImuFrame&)> m_user_imu_frame_callback{};
 
     ///
     /// @brief Notifier used to service the get_next_image_frame member function
     ///
-    FrameNotifier<ImageFrame> m_image_frame_notifier;
+    FrameNotifier<ImageFrame> m_image_frame_notifier{};
 
     ///
     /// @brief Notifier used to service the get_next_imu_frame member function
     ///
-    FrameNotifier<ImuFrame> m_imu_frame_notifier;
+    FrameNotifier<ImuFrame> m_imu_frame_notifier{};
 
     ///
     /// @brief A cache of image metadata associated with a specific frame id
     ///
-    std::map<int64_t, crl::multisense::details::wire::ImageMeta> m_meta_cache;
+    std::map<int64_t, crl::multisense::details::wire::ImageMeta> m_meta_cache{};
 
     ///
     /// @brief A cache of image frames associated with a specific frame id
     ///
-    std::map<int64_t, ImageFrame> m_frame_buffer;
+    std::map<int64_t, ImageFrame> m_frame_buffer{};
 
     ///
     /// @brief The max number of IMU messages which can be batched over the wire
@@ -385,10 +386,15 @@ private:
     std::atomic_uint32_t m_max_batched_imu_messages = 0;
 
     ///
+    /// @brief Scalars to convert imu samples from wire units to standard LibMultiSense units
+    ///
+    ImuSampleScalars m_imu_scalars{};
+
+    ///
     /// @brief A cache of IMU samples which will be internally filled until it reaches the
     ///        sample threshold for dispatch
     ///
-    ImuFrame m_current_imu_frame;
+    ImuFrame m_current_imu_frame{};
 
     ///
     /// @brief A collection of buffers to avoid dynamic allocation for incoming messages

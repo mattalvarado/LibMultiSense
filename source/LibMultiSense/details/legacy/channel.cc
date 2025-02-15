@@ -870,6 +870,7 @@ std::optional<MultiSenseInfo> LegacyChannel::query_info()
     if (imu_info)
     {
         m_max_batched_imu_messages = imu_info->maxSamplesPerMessage;
+        m_imu_scalars = get_imu_scalars(imu_info.value());
     }
 
     const auto network_info = wait_for_data<wire::SysNetwork>(m_message_assembler,
@@ -1076,7 +1077,9 @@ void LegacyChannel::imu_callback(std::shared_ptr<const std::vector<uint8_t>> dat
             m_current_imu_frame.samples.back().ptp_sample_time == ptp_time)
         {
             const size_t i = m_current_imu_frame.samples.size() - 1;
-            m_current_imu_frame.samples[i] = add_wire_sample(std::move(m_current_imu_frame.samples[i]), wire_sample);
+            m_current_imu_frame.samples[i] = add_wire_sample(std::move(m_current_imu_frame.samples[i]),
+                                                             wire_sample,
+                                                             m_imu_scalars);
         }
         else
         {
@@ -1097,7 +1100,7 @@ void LegacyChannel::imu_callback(std::shared_ptr<const std::vector<uint8_t>> dat
             }
 
             ImuSample sample{std::nullopt, std::nullopt, std::nullopt, camera_time, ptp_time};
-            sample = add_wire_sample(std::move(sample), wire_sample);
+            sample = add_wire_sample(std::move(sample), wire_sample, m_imu_scalars);
             m_current_imu_frame.samples.push_back(std::move(sample));
         }
     }

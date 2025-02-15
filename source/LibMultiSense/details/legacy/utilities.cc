@@ -192,27 +192,34 @@ crl::multisense::details::wire::SourceType convert_sources(const std::vector<Dat
     return mask;
 }
 
-ImuSample add_wire_sample(ImuSample sample, const crl::multisense::details::wire::ImuSample &wire)
+ImuSample add_wire_sample(ImuSample sample,
+                          const crl::multisense::details::wire::ImuSample &wire,
+                          const ImuSampleScalars &scalars)
 {
     using namespace crl::multisense::details;
 
-    ImuSample::Measurement measurement{wire.x, wire.y, wire.z};
 
     switch(wire.type)
     {
         case wire::ImuSample::TYPE_ACCEL:
         {
-            sample.accelerometer = std::move(measurement);
+            sample.accelerometer = ImuSample::Measurement{static_cast<float>(wire.x * scalars.accelerometer_scale),
+                                                          static_cast<float>(wire.y * scalars.accelerometer_scale),
+                                                          static_cast<float>(wire.z * scalars.accelerometer_scale)};
             break;
         }
         case wire::ImuSample::TYPE_GYRO:
         {
-            sample.gyroscope = std::move(measurement);
+            sample.gyroscope = ImuSample::Measurement{static_cast<float>(wire.x * scalars.gyroscope_scale),
+                                                      static_cast<float>(wire.y * scalars.gyroscope_scale),
+                                                      static_cast<float>(wire.z * scalars.gyroscope_scale)};
             break;
         }
         case wire::ImuSample::TYPE_MAG:
         {
-            sample.magnetometer = std::move(measurement);
+            sample.magnetometer = ImuSample::Measurement{static_cast<float>(wire.x * scalars.magnetometer_scale),
+                                                         static_cast<float>(wire.y * scalars.magnetometer_scale),
+                                                         static_cast<float>(wire.z * scalars.magnetometer_scale)};
             break;
         }
         default:
@@ -244,6 +251,103 @@ uint32_t get_range_index(const std::vector<ImuRange> &ranges, const ImuRange &ra
                                                   return (std::abs(e.range - range.range) < 1e-6 &&
                                                           std::abs(e.resolution - range.resolution) < 1e-6);
                                               })));
+}
+
+double get_acceleration_scale(const std::string &units)
+{
+    std::string lower_units = units;
+    std::transform(lower_units.begin(), lower_units.end(), lower_units.begin(),
+                   [](unsigned char c){ return std::tolower(c); });
+
+
+    if (lower_units == "g" or lower_units == "gs")
+    {
+        return 1.0;
+    }
+    else if (lower_units == "millig" or lower_units == "milli-g")
+    {
+        return 1.0/1000.0;
+    }
+    else
+    {
+        CRL_DEBUG("Unknown acceleration units: %s\n", units.c_str());
+    }
+
+    return 1.0;
+}
+
+double get_gyroscope_scale(const std::string &units)
+{
+    std::string lower_units = units;
+    std::transform(lower_units.begin(), lower_units.end(), lower_units.begin(),
+                   [](unsigned char c){ return std::tolower(c); });
+
+    if (lower_units == "dps" or lower_units == "degrees-per-second")
+    {
+        return 1.0;
+    }
+    else if (lower_units == "rps" or units == "radians-per-second")
+    {
+        return 1.0/1000.0;
+    }
+    else
+    {
+        CRL_DEBUG("Unknown gyroscope units: %s\n", units.c_str());
+    }
+
+    return 1.0;
+}
+
+double get_magnetomter_scale(const std::string &units)
+{
+    std::string lower_units = units;
+    std::transform(lower_units.begin(), lower_units.end(), lower_units.begin(),
+                   [](unsigned char c){ return std::tolower(c); });
+
+    if (lower_units == "guass")
+    {
+        return 1000.0;
+    }
+    else if (lower_units == "milligauss" or units == "milli-gauss")
+    {
+        return 1.0;
+    }
+    else
+    {
+        CRL_DEBUG("Unknown magnetometer units: %s\n", units.c_str());
+    }
+
+    return 1.0;
+}
+
+ImuSampleScalars get_imu_scalars(const crl::multisense::details::wire::ImuInfo &info)
+{
+    ImuSampleScalars output;
+
+    for (const auto &mode : info.details)
+    {
+        if (mode.name == "accelerometer")
+        {
+            output.accelerometer_scale = get_acceleration_scale(mode.units);
+            continue;
+        }
+        else if (mode.name == "gyroscope")
+        {
+            output.gyroscope_scale = get_gyroscope_scale(mode.units);
+            continue;
+        }
+        else if (mode.name == "magnetometer")
+        {
+            output.magnetometer_scale = get_magnetomter_scale(mode.units);
+            continue;
+        }
+        else
+        {
+            CRL_EXCEPTION("Unknown IMU name: %s\n", mode.name.c_str());
+        }
+    }
+
+    return output;
 }
 
 }

@@ -41,6 +41,7 @@
 #include <utility/BufferStream.hh>
 #include <wire/AckMessage.hh>
 #include <wire/ImuDataMessage.hh>
+#include <wire/ImuInfoMessage.hh>
 
 #include "details/legacy/message.hh"
 #include "details/legacy/udp.hh"
@@ -71,6 +72,28 @@ constexpr crl::multisense::details::wire::SourceType all_sources = {
     crl::multisense::details::wire::SOURCE_CHROMA_RECT_AUX |
     crl::multisense::details::wire::SOURCE_DISPARITY_COST |
     crl::multisense::details::wire::SOURCE_IMU
+};
+
+///
+/// @brief Values to scale IMU samples from the MultiSense camera into standard units LibMultiSense
+///        expects
+///
+struct ImuSampleScalars
+{
+    ///
+    /// @brief Scale for the acclerometer to convert wire samples into G's
+    ///
+    double accelerometer_scale = 1.0;
+
+    ///
+    /// @brief Scale for the gyroscope_scale to convert wire samples into degrees/sec
+    ///
+    double gyroscope_scale = 1.0;
+
+    ///
+    /// @brief Scale for the magnetometer to convert wire samples into milligauss
+    ///
+    double magnetometer_scale = 1.0;
 };
 
 ///
@@ -114,7 +137,9 @@ crl::multisense::details::wire::SourceType convert_sources(const std::vector<Dat
 ///
 /// @brief Add a wire sample to a ImuSample
 ///
-ImuSample add_wire_sample(ImuSample sample, const crl::multisense::details::wire::ImuSample &wire);
+ImuSample add_wire_sample(ImuSample sample,
+                          const crl::multisense::details::wire::ImuSample &wire,
+                          const ImuSampleScalars &scalars);
 
 ///
 /// @brief Get the index of the rate in a vector of rates
@@ -125,6 +150,26 @@ uint32_t get_rate_index(const std::vector<ImuRate> &rates, const ImuRate &rate);
 /// @brief Get the index of the range in a vector of ranges
 ///
 uint32_t get_range_index(const std::vector<ImuRange> &ranges, const ImuRange &range);
+
+///
+/// @brief Get a scale for the acceleration value based on a units string
+///
+double get_acceleration_scale(const std::string &units);
+
+///
+/// @brief Get a scale for the gyroscope value based on a units string
+///
+double get_gyroscope_scale(const std::string &units);
+
+///
+/// @brief Get a scale for the magnetometer value based on a units string
+///
+double get_magnetomter_scale(const std::string &units);
+
+///
+/// @brief Get IMU scalars from the cameras's reported IMU info
+///
+ImuSampleScalars get_imu_scalars(const crl::multisense::details::wire::ImuInfo &info);
 
 ///
 /// @brief Helper to wait for ack from the camera from a given query command. Once a query
