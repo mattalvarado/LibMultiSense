@@ -377,7 +377,7 @@ std::optional<Image> create_rgb(const ImageFrame &frame, const DataSource &outpu
 {
     const auto expanded_sources = legacy::expand_source(output_source);
 
-    if (expanded_sources.size() != 2 || frame.has_image(expanded_sources[0]) || frame.has_image(expanded_sources[1]))
+    if (expanded_sources.size() != 2 || !frame.has_image(expanded_sources[0]) || !frame.has_image(expanded_sources[1]))
     {
         return std::nullopt;
     }
