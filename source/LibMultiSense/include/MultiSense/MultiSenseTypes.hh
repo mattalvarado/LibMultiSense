@@ -229,7 +229,7 @@ struct Image
     ///
     /// @brief The scaled calibration associated with the image
     ///
-    CameraCalibration calibration;
+    CameraCalibration calibration{};
 
     ///
     /// @brief Get a pixel at a certain width/height location in the image.

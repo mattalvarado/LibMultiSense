@@ -278,6 +278,62 @@ std::optional<Image> create_depth_image(const ImageFrame &frame,
                  disparity.calibration};
 }
 
+
+std::optional<Image> create_rgb_image(const Image &luma, const Image &chroma, const DataSource &output_source)
+{
+    if (luma.format != Image::PixelFormat::MONO8 || chroma.format != Image::PixelFormat::MONO16)
+    {
+        return std::nullopt;
+    }
+
+    const size_t color_length = luma.image_data_length * 3;
+
+    std::vector<uint8_t> raw_data(color_length, static_cast<uint8_t>(0));
+
+    for (int h = 0 ; h < luma.height ; ++h)
+    {
+        const size_t row_offset = h * luma.width * 3;
+
+        for (int w = 0 ; w < luma.width ; ++w)
+        {
+            const size_t luma_offset = (h * luma.width) + w;
+            const size_t chroma_offset = 2 * (((h / 2) * (luma.width / 2)) + (w / 2));
+
+            const float px_y = static_cast<float>(*(luma.raw_data->data() + luma.image_data_offset + luma_offset));
+            const float px_cb = static_cast<float>(*(chroma.raw_data->data() + chroma.image_data_offset + chroma_offset)) - 128.0f;
+            const float px_cr = static_cast<float>(*(chroma.raw_data->data() + chroma.image_data_offset + chroma_offset + 1)) - 128.0f;
+
+            float px_r = px_y + 1.13983f * px_cr;
+            float px_g = px_y - 0.39465f * px_cb - 0.58060f * px_cr;
+            float px_b = px_y + 2.03211f * px_cb;
+
+            if (px_r < 0.0f)        px_r = 0.0f;
+            else if (px_r > 255.0f) px_r = 255.0f;
+            if (px_g < 0.0f)        px_g = 0.0f;
+            else if (px_g > 255.0f) px_g = 255.0f;
+            if (px_b < 0.0f)        px_b = 0.0f;
+            else if (px_b > 255.0f) px_b = 255.0f;
+
+            auto rgb_pixel_ptr = reinterpret_cast<float*>(raw_data.data() + row_offset);
+
+            rgb_pixel_ptr[0] = px_r;
+            rgb_pixel_ptr[1] = px_g;
+            rgb_pixel_ptr[2] = px_b;
+        }
+    }
+
+    return Image{std::make_shared<std::vector<uint8_t>>(std::move(raw_data)),
+                 0,
+                 color_length,
+                 Image::PixelFormat::RGB8,
+                 luma.width,
+                 luma.height,
+                 luma.camera_timestamp,
+                 luma.ptp_timestamp,
+                 output_source,
+                 luma.calibration};
+}
+
 std::optional<PointCloud<void>> create_pointcloud(const ImageFrame &frame,
                                                   double max_range,
                                                   const DataSource &disparity_source)

@@ -101,6 +101,11 @@ MULTISENSE_API std::optional<Image> create_depth_image(const ImageFrame &frame,
                                                        int32_t invalid_value = 65535);
 
 ///
+/// @brief Convert a YCbCr420 luma + chroma image into a RGB color image
+///
+MULTISENSE_API std::optional<Image> create_rgb_image(const Image &luma, const Image &chroma, const DataSource &output_source);
+
+///
 /// @brief Create a point cloud from a image frame and a color source.
 ///
 template<typename Color>

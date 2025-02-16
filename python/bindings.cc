@@ -797,4 +797,6 @@ PYBIND11_MODULE(libmultisense, m) {
     m.def("create_gray16_pointcloud", &multisense::create_color_pointcloud<uint16_t>, py::call_guard<py::gil_scoped_release>());
 
     m.def("create_depth_image", &multisense::create_depth_image, py::call_guard<py::gil_scoped_release>());
+
+    m.def("create_rbg_image", &multisense::create_rgb_image, py::call_guard<py::gil_scoped_release>());
 }
