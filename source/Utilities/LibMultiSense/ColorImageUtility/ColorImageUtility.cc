@@ -146,8 +146,7 @@ int main(int argc, char** argv)
         {
             if (const auto rgb = create_rgb(image_frame.value(), lms::DataSource::AUX_RAW); rgb)
             {
-                const auto path = std::to_string(image_frame->frame_id) +  "_aux.ppm";
-                lms::write_image(rgb.value(), path);
+                lms::write_image(rgb.value(), std::to_string(image_frame->frame_id) +  "_aux.ppm");
             }
         }
     }
