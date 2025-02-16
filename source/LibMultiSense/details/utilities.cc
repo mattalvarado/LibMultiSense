@@ -108,9 +108,15 @@ bool write_binary_image(const Image &image, const std::filesystem::path &path)
                    << image.width << " " << image.height << "\n"
                    << 0xFF << "\n";
 
-            //TODO (malvarado): Handle BGR here
-            output.write(reinterpret_cast<const char*>(image.raw_data->data()) + image.image_data_offset,
-                         image.image_data_length);
+            //
+            // Convert BGR to RGB
+            //
+            for (int i = 0 ; i < (image.width * image.height) ; ++i)
+            {
+                const auto rgb = reinterpret_cast<std::array<uint8_t, 3>*>(image.raw_data->data() + image.image_data_offset + (i * 3));
+                std::array<uint8_t, 3> bgr{rgb[2], rgb[1], rgb[0]};
+                output.write(bgr.data(), sizeof(bgr);
+            }
 
             break;
         }
