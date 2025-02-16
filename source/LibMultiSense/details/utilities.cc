@@ -314,11 +314,11 @@ std::optional<Image> create_rgb_image(const Image &luma, const Image &chroma, co
             if (px_b < 0.0f)        px_b = 0.0f;
             else if (px_b > 255.0f) px_b = 255.0f;
 
-            auto rgb_pixel_ptr = reinterpret_cast<float*>(raw_data.data() + row_offset + (3 * w));
+            auto rgb_pixel_ptr = reinterpret_cast<uint8_t*>(raw_data.data() + row_offset + (3 * w));
 
-            rgb_pixel_ptr[0] = px_r;
-            rgb_pixel_ptr[1] = px_g;
-            rgb_pixel_ptr[2] = px_b;
+            rgb_pixel_ptr[0] = static_cast<uint8_t>(px_r);
+            rgb_pixel_ptr[1] = static_cast<uint8_t>(px_g);
+            rgb_pixel_ptr[2] = static_cast<uint8_t>(px_b);
         }
     }
 
