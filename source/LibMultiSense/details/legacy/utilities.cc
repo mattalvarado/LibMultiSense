@@ -373,7 +373,7 @@ ImuSampleScalars get_imu_scalars(const crl::multisense::details::wire::ImuInfo &
 
 }
 
-std::optional<Image> create_rgb(const ImageFrame &frame, const DataSource &output_source)
+std::optional<Image> create_bgr(const ImageFrame &frame, const DataSource &output_source)
 {
     const auto expanded_sources = legacy::expand_source(output_source);
 
@@ -382,7 +382,7 @@ std::optional<Image> create_rgb(const ImageFrame &frame, const DataSource &outpu
         return std::nullopt;
     }
 
-    return create_rgb_image(frame.get_image(expanded_sources[0]), frame.get_image(expanded_sources[1]), output_source);
+    return create_bgr_image(frame.get_image(expanded_sources[0]), frame.get_image(expanded_sources[1]), output_source);
 }
 
 }

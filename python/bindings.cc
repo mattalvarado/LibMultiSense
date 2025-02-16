@@ -179,7 +179,7 @@ PYBIND11_MODULE(libmultisense, m) {
                     element_size = sizeof(uint8_t);
                     format = py::format_descriptor<uint8_t>::format();
                     shape.push_back(3);
-                    strides = {sizeof(uint8_t) * image.width, sizeof(uint8_t), sizeof(uint8_t)};
+                    strides = {sizeof(uint8_t) * image.width * 3, sizeof(uint8_t) * 3, sizeof(uint8_t)};
                     break;
                 }
                 case multisense::Image::PixelFormat::FLOAT32:
@@ -798,7 +798,7 @@ PYBIND11_MODULE(libmultisense, m) {
 
     m.def("create_depth_image", &multisense::create_depth_image, py::call_guard<py::gil_scoped_release>());
 
-    m.def("create_rgb_image", &multisense::create_rgb_image, py::call_guard<py::gil_scoped_release>());
+    m.def("create_bgr_image", &multisense::create_bgr_image, py::call_guard<py::gil_scoped_release>());
 
-    m.def("create_rgb", &multisense::create_rgb, py::call_guard<py::gil_scoped_release>());
+    m.def("create_bgr", &multisense::create_bgr, py::call_guard<py::gil_scoped_release>());
 }

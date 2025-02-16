@@ -64,9 +64,9 @@ def main(args):
     while True:
         frame = channel.get_next_image_frame()
         if frame:
-            rgb = lms.create_rgb(frame, lms.DataSource.AUX_RAW)
-            if rgb:
-                cv2.imwrite(str(frame.frame_id) + "_ aux" + ".png", rgb.as_array)
+            bgr = lms.create_bgr(frame, lms.DataSource.AUX_RAW)
+            if bgr:
+                cv2.imwrite(str(frame.frame_id) + "_aux.png", bgr.as_array)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser("LibMultiSense save image utility")

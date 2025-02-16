@@ -113,9 +113,9 @@ bool write_binary_image(const Image &image, const std::filesystem::path &path)
             //
             for (int i = 0 ; i < (image.width * image.height) ; ++i)
             {
-                const auto rgb = reinterpret_cast<const std::array<uint8_t, 3>*>(image.raw_data->data() + image.image_data_offset + (i * 3));
-                const std::array<uint8_t, 3> bgr{rgb->at(2), rgb->at(1), rgb->at(0)};
-                output.write(reinterpret_cast<const char*>(bgr.data()), sizeof(bgr));
+                const auto bgr = reinterpret_cast<const std::array<uint8_t, 3>*>(image.raw_data->data() + image.image_data_offset + (i * 3));
+                const std::array<uint8_t, 3> rgb{bgr->at(2), bgr->at(1), bgr->at(0)};
+                output.write(reinterpret_cast<const char*>(rgb.data()), sizeof(rgb));
             }
 
             break;
@@ -287,7 +287,7 @@ std::optional<Image> create_depth_image(const ImageFrame &frame,
 }
 
 
-std::optional<Image> create_rgb_image(const Image &luma, const Image &chroma, const DataSource &output_source)
+std::optional<Image> create_bgr_image(const Image &luma, const Image &chroma, const DataSource &output_source)
 {
     if (luma.format != Image::PixelFormat::MONO8 || chroma.format != Image::PixelFormat::MONO16)
     {
@@ -315,11 +315,11 @@ std::optional<Image> create_rgb_image(const Image &luma, const Image &chroma, co
             const float px_g = std::clamp(px_y - 0.39465f * px_cb - 0.58060f * px_cr, 0.0f, 255.0f);
             const float px_b = std::clamp(px_y + 2.03211f * px_cb, 0.0f, 255.0f);
 
-            auto rgb_pixel_ptr = reinterpret_cast<uint8_t*>(raw_data.data() + row_offset + (3 * w));
+            auto bgr_pixel_ptr = reinterpret_cast<uint8_t*>(raw_data.data() + row_offset + (3 * w));
 
-            rgb_pixel_ptr[0] = static_cast<uint8_t>(px_b);
-            rgb_pixel_ptr[1] = static_cast<uint8_t>(px_g);
-            rgb_pixel_ptr[2] = static_cast<uint8_t>(px_r);
+            bgr_pixel_ptr[0] = static_cast<uint8_t>(px_b);
+            bgr_pixel_ptr[1] = static_cast<uint8_t>(px_g);
+            bgr_pixel_ptr[2] = static_cast<uint8_t>(px_r);
         }
     }
 

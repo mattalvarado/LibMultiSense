@@ -144,9 +144,9 @@ int main(int argc, char** argv)
     {
         if (const auto image_frame = channel->get_next_image_frame(); image_frame)
         {
-            if (const auto rgb = create_rgb(image_frame.value(), lms::DataSource::AUX_RAW); rgb)
+            if (const auto bgr = create_bgr(image_frame.value(), lms::DataSource::AUX_RAW); bgr)
             {
-                lms::write_image(rgb.value(), std::to_string(image_frame->frame_id) +  "_aux.ppm");
+                lms::write_image(bgr.value(), std::to_string(image_frame->frame_id) +  "_aux.ppm");
             }
         }
     }
