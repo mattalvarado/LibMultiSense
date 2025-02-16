@@ -261,17 +261,17 @@ MULTISENSE_API bool write_pointcloud_ply(const PointCloud<Color> &point_cloud, c
 
     if constexpr (std::is_same_v<Color, uint8_t>)
     {
-        ss << "property uchar intensity\n";
+        ss << "property uchar gray\n";
     }
     else if constexpr (std::is_same_v<Color, uint16_t>)
     {
-        ss << "property ushort intensity\n";
+        ss << "property ushort gray\n";
     }
     else if constexpr (std::is_same_v<Color, std::array<uint8_t, 3>>)
     {
-        ss << "property uchar r\n";
-        ss << "property uchar g\n";
-        ss << "property uchar b\n";
+        ss << "property uchar red\n";
+        ss << "property uchar green\n";
+        ss << "property uchar blue\n";
     }
     else if (!std::is_same_v<Color, void>)
     {

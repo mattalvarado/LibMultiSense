@@ -796,7 +796,7 @@ PYBIND11_MODULE(libmultisense, m) {
             return py::array(py::buffer_info(
                              const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(cloud.cloud.data())),
                              element_size,
-                             "15",
+                             "15B",
                              1,
                              shape,
                              strides));
