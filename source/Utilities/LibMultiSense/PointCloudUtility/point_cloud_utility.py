@@ -68,7 +68,7 @@ def main(args):
         exit(1)
 
     info = channel.get_info()
-    color_stream = lms.DataSource.AUX_RECTIFIED_RAW if args.use_color and info.has_aux_camera() else lms.DataSource.LEFT_RECTIFIED_RAW
+    color_stream = lms.DataSource.AUX_RECTIFIED_RAW if args.use_color and info.device.has_aux_camera() else lms.DataSource.LEFT_RECTIFIED_RAW
 
     if channel.start_streams([color_stream, lms.DataSource.LEFT_DISPARITY_RAW]) != lms.Status.OK:
         print("Unable to start streams")

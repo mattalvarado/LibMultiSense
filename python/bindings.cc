@@ -667,6 +667,13 @@ PYBIND11_MODULE(libmultisense, m) {
         .def_readwrite("z", &multisense::Point<uint16_t>::z)
         .def_readwrite("color", &multisense::Point<uint16_t>::color);
 
+    py::class_<multisense::Point<std::array<uint8_t, 3>>>(m, "PointBGR")
+        .def(py::init<>())
+        .def_readwrite("x", &multisense::Point<std::array<uint8_t, 3>>::x)
+        .def_readwrite("y", &multisense::Point<std::array<uint8_t, 3>>::y)
+        .def_readwrite("z", &multisense::Point<std::array<uint8_t, 3>>::z)
+        .def_readwrite("color", &multisense::Point<std::array<uint8_t, 3>>::color);
+
     py::class_<multisense::PointCloud<void>>(m, "PointCloud")
         .def(py::init<>())
         .def_readwrite("cloud", &multisense::PointCloud<void>::cloud)
@@ -685,6 +692,7 @@ PYBIND11_MODULE(libmultisense, m) {
                              shape,
                              strides));
         });
+
     py::class_<multisense::PointCloud<uint8_t>>(m, "PointCloudLuma8")
         .def(py::init<>())
         .def_readwrite("cloud", &multisense::PointCloud<uint8_t>::cloud)
@@ -736,7 +744,7 @@ PYBIND11_MODULE(libmultisense, m) {
             const std::string format = py::format_descriptor<float>::format();;
 
             return py::array(py::buffer_info(
-                             const_cast<uint16_t*>(reinterpret_cast<const uint16_t*>(cloud.cloud.data())),
+                             const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(cloud.cloud.data())),
                              element_size,
                              format,
                              2,
@@ -750,9 +758,45 @@ PYBIND11_MODULE(libmultisense, m) {
             const size_t element_size = sizeof(multisense::Point<uint16_t>);
 
             return py::array(py::buffer_info(
-                             const_cast<uint16_t*>(reinterpret_cast<const uint16_t*>(cloud.cloud.data())),
+                             const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(cloud.cloud.data())),
                              element_size,
                              "14B",
+                             1,
+                             shape,
+                             strides));
+        });
+
+    py::class_<multisense::PointCloud<std::array<uint8_t, 3>>>(m, "PointCloudBGR")
+        .def(py::init<>())
+        .def_readwrite("cloud", &multisense::PointCloud<std::array<uint8_t, 3>>::cloud)
+        .def_property_readonly("as_array", [](const multisense::PointCloud<std::array<uint8_t, 3>> &cloud)
+        {
+            const std::vector<size_t> shape = {static_cast<size_t>(cloud.cloud.size()), 3};
+            //
+            // Make sure we skip over the color
+            //
+            const std::vector<size_t> strides = {sizeof(multisense::Point<std::array<uint8_t, 3>>), sizeof(float)};
+            const size_t element_size = sizeof(multisense::Point<std::array<uint8_t, 3>>);
+            const std::string format = py::format_descriptor<float>::format();;
+
+            return py::array(py::buffer_info(
+                             const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(cloud.cloud.data())),
+                             element_size,
+                             format,
+                             2,
+                             shape,
+                             strides));
+        })
+        .def_property_readonly("as_raw_array", [](const multisense::PointCloud<std::array<uint8_t, 3>> &cloud)
+        {
+            const std::vector<size_t> shape = {static_cast<size_t>(cloud.cloud.size())};
+            const std::vector<size_t> strides = {sizeof(multisense::Point<std::array<uint8_t, 3>>)};
+            const size_t element_size = sizeof(multisense::Point<std::array<uint8_t, 3>>);
+
+            return py::array(py::buffer_info(
+                             const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(cloud.cloud.data())),
+                             element_size,
+                             "15",
                              1,
                              shape,
                              strides));
