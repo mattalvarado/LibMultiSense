@@ -143,7 +143,7 @@ PYBIND11_MODULE(libmultisense, m) {
     py::enum_<multisense::Image::PixelFormat>(m, "PixelFormat")
         .value("UNKNOWN", multisense::Image::PixelFormat::UNKNOWN)
         .value("MONO8", multisense::Image::PixelFormat::MONO8)
-        .value("RGB8", multisense::Image::PixelFormat::RGB8)
+        .value("BGR8", multisense::Image::PixelFormat::BGR8)
         .value("MONO16", multisense::Image::PixelFormat::MONO16)
         .value("FLOAT32", multisense::Image::PixelFormat::FLOAT32);
 
@@ -152,9 +152,7 @@ PYBIND11_MODULE(libmultisense, m) {
         .def(py::init<>())
         .def_property_readonly("as_array", [](const multisense::Image& image)
         {
-            //
-            // Inspired from https://github.com/carnegierobotics/simple_sfm/blob/28dbcadb6682e002c5206a172f70dd5640ff70b5/python/bindings.cpp#L87
-            //
+
             std::vector<size_t> shape = {static_cast<size_t>(image.height), static_cast<size_t>(image.width)};
             std::vector<size_t> strides;
             size_t element_size = 0;
@@ -176,7 +174,7 @@ PYBIND11_MODULE(libmultisense, m) {
                     strides = {sizeof(uint16_t) * image.width, sizeof(uint16_t)};
                     break;
                 }
-                case multisense::Image::PixelFormat::RGB8:
+                case multisense::Image::PixelFormat::BGR8:
                 {
                     element_size = sizeof(uint8_t);
                     format = py::format_descriptor<uint8_t>::format();

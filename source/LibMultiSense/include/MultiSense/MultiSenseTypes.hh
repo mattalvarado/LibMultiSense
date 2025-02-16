@@ -176,7 +176,7 @@ struct Image
     {
         UNKNOWN,
         MONO8,
-        RGB8,
+        BGR8,
         MONO16,
         FLOAT32
     };
@@ -248,7 +248,7 @@ struct Image
 
         if ((sizeof(T) == 8 && format == PixelFormat::MONO8) ||
             (sizeof(T) == 16 && format == PixelFormat::MONO16) ||
-            (sizeof(T) == 24 && format == PixelFormat::RGB8) ||
+            (sizeof(T) == 24 && format == PixelFormat::BGR8) ||
             (sizeof(T) == 32 && format == PixelFormat::FLOAT32))
         {
             const size_t offset = sizeof(T) * ((width * h) + w);

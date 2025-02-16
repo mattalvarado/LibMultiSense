@@ -46,6 +46,7 @@
 #include <arpa/inet.h>
 #endif
 
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
@@ -101,12 +102,13 @@ bool write_binary_image(const Image &image, const std::filesystem::path &path)
 
             break;
         }
-        case Image::PixelFormat::RGB8:
+        case Image::PixelFormat::BGR8:
         {
             output << "P6\n"
                    << image.width << " " << image.height << "\n"
                    << 0xFF << "\n";
 
+            //TODO (malvarado): Handle BGR here
             output.write(reinterpret_cast<const char*>(image.raw_data->data()) + image.image_data_offset,
                          image.image_data_length);
 
@@ -150,7 +152,7 @@ cv::Mat Image::cv_mat() const
     switch(format)
     {
         case Image::PixelFormat::MONO8: {cv_type = CV_8UC1; break;}
-        case Image::PixelFormat::RGB8: {cv_type = CV_8UC3; break;}
+        case Image::PixelFormat::BGR8: {cv_type = CV_8UC3; break;}
         case Image::PixelFormat::MONO16: {cv_type = CV_16UC1; break;}
         case Image::PixelFormat::FLOAT32: {cv_type = CV_32FC1; break;}
         default: {throw std::runtime_error("invalid pixel format");}
@@ -303,29 +305,22 @@ std::optional<Image> create_rgb_image(const Image &luma, const Image &chroma, co
             const float px_cb = static_cast<float>(*(chroma.raw_data->data() + chroma.image_data_offset + chroma_offset)) - 128.0f;
             const float px_cr = static_cast<float>(*(chroma.raw_data->data() + chroma.image_data_offset + chroma_offset + 1)) - 128.0f;
 
-            float px_r = px_y + 1.13983f * px_cr;
-            float px_g = px_y - 0.39465f * px_cb - 0.58060f * px_cr;
-            float px_b = px_y + 2.03211f * px_cb;
-
-            if (px_r < 0.0f)        px_r = 0.0f;
-            else if (px_r > 255.0f) px_r = 255.0f;
-            if (px_g < 0.0f)        px_g = 0.0f;
-            else if (px_g > 255.0f) px_g = 255.0f;
-            if (px_b < 0.0f)        px_b = 0.0f;
-            else if (px_b > 255.0f) px_b = 255.0f;
+            const float px_r = std::clamp(px_y + 1.13983f * px_cr, 0.0f, 255.0f);
+            const float px_g = std::clamp(px_y - 0.39465f * px_cb - 0.58060f * px_cr, 0.0f, 255.0f);
+            const float px_b = std::clamp(px_y + 2.03211f * px_cb, 0.0f, 255.0f);
 
             auto rgb_pixel_ptr = reinterpret_cast<uint8_t*>(raw_data.data() + row_offset + (3 * w));
 
-            rgb_pixel_ptr[0] = static_cast<uint8_t>(px_r);
+            rgb_pixel_ptr[0] = static_cast<uint8_t>(px_b);
             rgb_pixel_ptr[1] = static_cast<uint8_t>(px_g);
-            rgb_pixel_ptr[2] = static_cast<uint8_t>(px_b);
+            rgb_pixel_ptr[2] = static_cast<uint8_t>(px_r);
         }
     }
 
     return Image{std::make_shared<std::vector<uint8_t>>(std::move(raw_data)),
                  0,
                  color_length,
-                 Image::PixelFormat::RGB8,
+                 Image::PixelFormat::BGR8,
                  luma.width,
                  luma.height,
                  luma.camera_timestamp,
