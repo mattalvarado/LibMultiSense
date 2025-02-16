@@ -284,12 +284,15 @@ MULTISENSE_API bool write_pointcloud_ply(const PointCloud<Color> &point_cloud, c
     {
         if constexpr (std::is_same_v<Color, std::array<uint8_t, 3>>)
         {
+            //
+            // Our points are in BGR ordering, convert to RGB
+            //
             ss << point.x << " " <<
                   point.y << " " <<
                   point.z << " " <<
-                  static_cast<uint32_t>(point.color[0]) << " " <<
+                  static_cast<uint32_t>(point.color[2]) << " " <<
                   static_cast<uint32_t>(point.color[1]) << " " <<
-                  static_cast<uint32_t>(point.color[2]) << "\n";
+                  static_cast<uint32_t>(point.color[0]) << "\n";
         }
         else if constexpr(std::is_same_v<Color, void>)
         {

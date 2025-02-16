@@ -51,7 +51,7 @@ def main(args):
         print("Invalid channel")
         return
 
-    info = channel.get_info();
+    info = channel.get_info()
 
     print("Firmware build date :  ", info.version.firmware_build_date)
     print("Firmware version    :  ", info.version.firmware_version.to_string())

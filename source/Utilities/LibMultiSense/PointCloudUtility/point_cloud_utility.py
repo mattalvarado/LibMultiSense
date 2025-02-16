@@ -41,10 +41,15 @@ import numpy as np
 import libmultisense as lms
 
 
-color_point_dtype = np.dtype({'names': ['x', 'y', 'z', 'color'],
-                              'formats': [np.float32, np.float32, np.float32, np.uint8],
-                              'offsets': [0, 4, 8, 12],
-                              'itemsize': 13})
+luma_point_type = np.dtype({'names': ['x', 'y', 'z', 'luma'],
+                            'formats': [np.float32, np.float32, np.float32, np.uint8],
+                            'offsets': [0, 4, 8, 12],
+                            'itemsize': 13})
+
+color_point_type = np.dtype({'names': ['x', 'y', 'z', 'blue', 'green', 'red'],
+                            'formats': [np.float32, np.float32, np.float32, np.uint8, np.uint8, np.uint8],
+                            'offsets': [0, 4, 8, 12, 13, 14],
+                            'itemsize': 15})
 
 def main(args):
     channel_config = lms.ChannelConfig()
@@ -62,29 +67,52 @@ def main(args):
         print("Cannot set configuration")
         exit(1)
 
-    if channel.start_streams([lms.DataSource.LEFT_RECTIFIED_RAW, lms.DataSource.LEFT_DISPARITY_RAW]) != lms.Status.OK:
+    info = channel.get_info()
+    color_stream = lms.DataSource.AUX_RECTIFIED_RAW if args.use_color and info.has_aux_camera() else lms.DataSource.LEFT_RECTIFIED_RAW
+
+    if channel.start_streams([color_stream, lms.DataSource.LEFT_DISPARITY_RAW]) != lms.Status.OK:
         print("Unable to start streams")
         exit(1)
 
     while True:
         frame = channel.get_next_image_frame()
         if frame:
-            point_cloud = lms.create_gray8_pointcloud(frame,
-                                                     args.max_range,
-                                                     lms.DataSource.LEFT_RECTIFIED_RAW,
-                                                     lms.DataSource.LEFT_DISPARITY_RAW)
+            if color_stream == lms.DataSource.LEFT_RECTIFIED_RAW:
+                point_cloud = lms.create_gray8_pointcloud(frame,
+                                                         args.max_range,
+                                                         lms.DataSource.LEFT_RECTIFIED_RAW,
+                                                         lms.DataSource.LEFT_DISPARITY_RAW)
 
-            # Convert to numpy array and compute the average depth
-            point_cloud_array = point_cloud.as_raw_array.view(color_point_dtype)
-            mean_depth = np.mean(point_cloud_array["z"])
-            print("Mean depth:", mean_depth, "(m)")
+                # Convert to numpy array and compute the average depth
+                point_cloud_array = point_cloud.as_raw_array.view(luma_point_type)
+                mean_depth = np.mean(point_cloud_array["z"])
+                print("Mean depth:", mean_depth, "(m)")
 
-            print("Saving pointcloud for frame id: ", frame.frame_id)
-            lms.write_pointcloud_ply(point_cloud, str(frame.frame_id) + ".ply")
+                print("Saving pointcloud for frame id: ", frame.frame_id)
+                lms.write_pointcloud_ply(point_cloud, str(frame.frame_id) + ".ply")
+            else:
+                bgr = lms.create_bgr(frame, color_stream)
+                if bgr:
+                    frame.add_image(bgr)
+
+                point_cloud = lms.create_bgr_pointcloud(frame,
+                                                        args.max_range,
+                                                        color_stream,
+                                                        lms.DataSource.LEFT_DISPARITY_RAW)
+
+                # Convert to numpy array and compute the average depth
+                point_cloud_array = point_cloud.as_raw_array.view(color_point_type)
+                mean_depth = np.mean(point_cloud_array["z"])
+                print("Mean depth:", mean_depth, "(m)")
+
+                print("Saving color pointcloud for frame id: ", frame.frame_id)
+                lms.write_pointcloud_ply(point_cloud, str(frame.frame_id) + ".ply")
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser("LibMultiSense save image utility")
     parser.add_argument("-a", "--ip_address", default="10.66.171.21", help="The IPv4 address of the MultiSense.")
     parser.add_argument("-m", "--mtu", type=int, default=1500, help="The MTU to use to communicate with the camera.")
     parser.add_argument("-r", "--max-range", type=float, default=50.0, help="The max point cloud range in meters.")
+    parser.add_argument("-c", "--use-color", action="store_true", help="Try to use the aux color image for colorizing")
     main(parser.parse_args())

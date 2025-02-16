@@ -68,6 +68,7 @@ void usage(const char *name)
     std::cerr << "\t-a <current_address> : CURRENT IPV4 address (default=10.66.171.21)" << std::endl;
     std::cerr << "\t-m <mtu>             : MTU to use to communicate with the camera (default=1500)" << std::endl;
     std::cerr << "\t-r <max-range>       : Current max range from the camera for points to be included (default=50m)" << std::endl;
+    std::cerr << "\t-c                   : Flag to colorize the point clouds with the aux image" << std::endl;
     exit(1);
 }
 
@@ -99,15 +100,17 @@ int main(int argc, char** argv)
     std::string ip_address = "10.66.171.21";
     int16_t mtu = 1500;
     double max_range = 50.0;
+    bool color = false;
 
     int c;
-    while(-1 != (c = getopt(argc, argv, "a:m:r:")))
+    while(-1 != (c = getopt(argc, argv, "a:m:r:c")))
     {
         switch(c)
         {
             case 'a': ip_address = std::string(optarg); break;
             case 'm': mtu = static_cast<uint16_t>(atoi(optarg)); break;
             case 'r': max_range = std::stod(optarg); break;
+            case 'c': color = true; break;
             default: usage(*argv); break;
         }
     }
@@ -131,9 +134,18 @@ int main(int argc, char** argv)
     }
 
     //
+    // If our camera has an aux color camera, and we want to colorize our point clouds with the aux image,
+    // color
+    //
+    const auto info = channel->get_info();
+    const auto color_stream = (color && info.device.has_aux_camera()) ?
+        lms::DataSource::AUX_RECTIFIED_RAW :
+        lms::DataSource::LEFT_RECTIFIED_RAW;
+
+    //
     // Start a single image stream
     //
-    if (const auto status = channel->start_streams({lms::DataSource::LEFT_RECTIFIED_RAW,
+    if (const auto status = channel->start_streams({color_stream,
                                                     lms::DataSource::LEFT_DISPARITY_RAW}); status != lms::Status::OK)
     {
         std::cerr << "Cannot start streams: " << lms::to_string(status) << std::endl;
@@ -144,13 +156,38 @@ int main(int argc, char** argv)
     {
         if (const auto image_frame = channel->get_next_image_frame(); image_frame)
         {
-            if (const auto point_cloud = lms::create_color_pointcloud<uint8_t>(image_frame.value(),
-                                                                               max_range,
-                                                                               lms::DataSource::LEFT_RECTIFIED_RAW,
-                                                                               lms::DataSource::LEFT_DISPARITY_RAW); point_cloud)
+            if (color_stream == lms::DataSource::LEFT_RECTIFIED_RAW)
             {
-                std::cout << "Saving pointcloud for frame id: " << image_frame->frame_id << std::endl;
-                lms::write_pointcloud_ply(point_cloud.value(), std::to_string(image_frame->frame_id) + ".ply");
+                if (const auto point_cloud = lms::create_color_pointcloud<uint8_t>(image_frame.value(),
+                                                                                   max_range,
+                                                                                   color_stream,
+                                                                                   lms::DataSource::LEFT_DISPARITY_RAW); point_cloud)
+                {
+                    std::cout << "Saving pointcloud for frame id: " << image_frame->frame_id << std::endl;
+                    lms::write_pointcloud_ply(point_cloud.value(), std::to_string(image_frame->frame_id) + ".ply");
+                }
+            }
+            else
+            {
+                auto color_frame = image_frame.value();
+                if (const auto bgr = create_bgr(image_frame.value(), color_stream); bgr)
+                {
+                    color_frame.add_image(bgr.value());
+                }
+                else
+                {
+                    std::cerr << "Unable to create bgr image for frame: " << color_frame.frame_id << std::endl;
+                    continue;
+                }
+
+                if (const auto point_cloud = lms::create_color_pointcloud<std::array<uint8_t, 3>>(color_frame,
+                                                                                                  max_range,
+                                                                                                  color_stream,
+                                                                                                  lms::DataSource::LEFT_DISPARITY_RAW); point_cloud)
+                {
+                    std::cout << "Saving aux colorized pointcloud for frame id: " << image_frame->frame_id << std::endl;
+                    lms::write_pointcloud_ply(point_cloud.value(), std::to_string(image_frame->frame_id) + ".ply");
+                }
             }
         }
     }

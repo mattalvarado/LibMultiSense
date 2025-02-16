@@ -790,11 +790,21 @@ PYBIND11_MODULE(libmultisense, m) {
           }
     );
 
+    m.def("write_pointcloud_ply",
+          [](const multisense::PointCloud<std::array<uint8_t, 3>> &pointcloud, const std::string &path)
+          {
+              py::gil_scoped_release release;
+              return multisense::write_pointcloud_ply(pointcloud, std::filesystem::path{path});
+          }
+    );
+
     m.def("create_pointcloud", &multisense::create_pointcloud, py::call_guard<py::gil_scoped_release>());
 
     m.def("create_gray8_pointcloud", &multisense::create_color_pointcloud<uint8_t>, py::call_guard<py::gil_scoped_release>());
 
     m.def("create_gray16_pointcloud", &multisense::create_color_pointcloud<uint16_t>, py::call_guard<py::gil_scoped_release>());
+
+    m.def("create_bgr_pointcloud", &multisense::create_color_pointcloud<std::array<uint8_t, 3>>, py::call_guard<py::gil_scoped_release>());
 
     m.def("create_depth_image", &multisense::create_depth_image, py::call_guard<py::gil_scoped_release>());
 
