@@ -36,6 +36,7 @@
 
 #include <algorithm>
 
+#include "MultiSense/MultiSenseUtilities.hh"
 #include "details/legacy/utilities.hh"
 
 namespace multisense{
@@ -184,6 +185,8 @@ crl::multisense::details::wire::SourceType convert_sources(const std::vector<Dat
             case DataSource::AUX_LUMA_RECTIFIED_RAW: {mask |= wire::SOURCE_LUMA_RECT_AUX; break;}
             case DataSource::AUX_CHROMA_RAW: {mask |= wire::SOURCE_CHROMA_AUX; break;}
             case DataSource::AUX_CHROMA_RECTIFIED_RAW: {mask |= wire::SOURCE_CHROMA_RECT_AUX; break;}
+            case DataSource::AUX_RAW: {mask |= wire::SOURCE_CHROMA_AUX | wire::SOURCE_LUMA_AUX; break;}
+            case DataSource::AUX_RECTIFIED_RAW: {mask |= wire::SOURCE_CHROMA_RECT_AUX | wire::SOURCE_LUMA_RECT_AUX; break;}
             case DataSource::COST_RAW: {mask |= wire::SOURCE_DISPARITY_COST; break;}
             case DataSource::IMU: {mask |= wire::SOURCE_IMU; break;}
             case DataSource::ALL: {mask |= all_sources; break;}
@@ -192,6 +195,22 @@ crl::multisense::details::wire::SourceType convert_sources(const std::vector<Dat
     }
 
     return mask;
+}
+
+std::vector<DataSource> expand_source(const DataSource &source)
+{
+    switch(source)
+    {
+        case DataSource::AUX_RAW:
+        {
+            return std::vector<DataSource>{DataSource::AUX_LUMA_RAW, DataSource::AUX_CHROMA_RAW};
+        }
+        case DataSource::AUX_RECTIFIED_RAW:
+        {
+            return std::vector<DataSource>{DataSource::AUX_LUMA_RECTIFIED_RAW, DataSource::AUX_CHROMA_RECTIFIED_RAW};
+        }
+        default: {return std::vector<DataSource>{source};}
+    }
 }
 
 ImuSample add_wire_sample(ImuSample sample,
@@ -353,4 +372,17 @@ ImuSampleScalars get_imu_scalars(const crl::multisense::details::wire::ImuInfo &
 }
 
 }
+
+std::optional<Image> create_rgb(const ImageFrame &frame, const DataSource &output_source)
+{
+    const auto expanded_sources = legacy::expand_source(output_source);
+
+    if (expanded_sources.size() != 2 || frame.has_image(expanded_sources[0]) || frame.has_image(expanded_sources[1]))
+    {
+        return std::nullopt;
+    }
+
+    return create_rgb_image(frame.get_image(expanded_sources[0]), frame.get_image(expanded_sources[1]), output_source);
+}
+
 }

@@ -100,6 +100,8 @@ enum class DataSource : uint16_t
     AUX_LUMA_RECTIFIED_RAW,
     AUX_CHROMA_RAW,
     AUX_CHROMA_RECTIFIED_RAW,
+    AUX_RAW,
+    AUX_RECTIFIED_RAW,
     COST_RAW,
     IMU
 };

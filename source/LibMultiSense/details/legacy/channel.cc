@@ -164,10 +164,12 @@ Status LegacyChannel::start_streams(const std::vector<DataSource> &sources)
             return get_status(ack->status);
         }
 
-        ///
-        /// TODO (malvarado): Handle DataSource::ALL here
-        ///
-        m_active_streams.insert(std::begin(sources), std::end(sources));
+        for (const auto &source : sources)
+        {
+            const auto expanded = expand_source(source);
+            m_active_streams.insert(std::begin(expanded), std::end(expanded));
+        }
+
         return Status::OK;
     }
 

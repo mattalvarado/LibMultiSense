@@ -154,6 +154,8 @@ NLOHMANN_JSON_SERIALIZE_ENUM(DataSource, {
     {DataSource::AUX_LUMA_RECTIFIED_RAW, "AUX_LUMA_RECTIFIED_RAW"},
     {DataSource::AUX_CHROMA_RAW, "AUX_CHROMA_RAW"},
     {DataSource::AUX_CHROMA_RECTIFIED_RAW, "AUX_CHROMA_RECTIFIED_RAW"},
+    {DataSource::AUX_RAW, "AUX_RAW"},
+    {DataSource::AUX_RECTIFIED_RAW, "AUX_RECTIFIED_RAW"},
     {DataSource::COST_RAW, "COST_RAW"},
     {DataSource::IMU, "IMU"}
 })

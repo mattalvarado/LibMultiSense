@@ -111,6 +111,8 @@ PYBIND11_MODULE(libmultisense, m) {
         .value("AUX_LUMA_RECTIFIED_RAW", multisense::DataSource::AUX_LUMA_RECTIFIED_RAW)
         .value("AUX_CHROMA_RAW", multisense::DataSource::AUX_CHROMA_RAW)
         .value("AUX_CHROMA_RECTIFIED_RAW", multisense::DataSource::AUX_CHROMA_RECTIFIED_RAW)
+        .value("AUX_RAW", multisense::DataSource::AUX_RAW)
+        .value("AUX_RECTIFIED_RAW", multisense::DataSource::AUX_RECTIFIED_RAW)
         .value("COST_RAW", multisense::DataSource::COST_RAW);
 
     // CameraCalibration::DistortionType
@@ -799,4 +801,6 @@ PYBIND11_MODULE(libmultisense, m) {
     m.def("create_depth_image", &multisense::create_depth_image, py::call_guard<py::gil_scoped_release>());
 
     m.def("create_rbg_image", &multisense::create_rgb_image, py::call_guard<py::gil_scoped_release>());
+
+    m.def("create_rbg", &multisense::create_rgb, py::call_guard<py::gil_scoped_release>());
 }

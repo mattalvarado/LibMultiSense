@@ -1,5 +1,5 @@
 /**
- * @file SaveImageUtility.cc
+ * @file ColorImageUtility.cc
  *
  * Copyright 2013-2025
  * Carnegie Robotics, LLC
@@ -31,7 +31,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * Significant history (date, user, job code, action):
- *   2024-12-24, malvarado@carnegierobotics.com, IRAD, Created file.
+ *   2025-02-15, malvarado@carnegierobotics.com, IRAD, Created file.
  **/
 
 #ifdef WIN32
@@ -120,18 +120,6 @@ int main(int argc, char** argv)
     }
 
     //
-    // Query Static info from the camera
-    //
-    auto info = channel->get_info();
-
-	std::cout << "Firmware build date :  " << info.version.firmware_build_date << std::endl;
-	std::cout << "Firmware version    :  " << info.version.firmware_version.to_string() << std::endl;
-	std::cout << "Hardware version    :  0x" << std::hex << info.version.hardware_version << std::endl;
-	std::cout << "Hardware magic      :  0x" << std::hex << info.version.hardware_magic << std::endl;
-	std::cout << "FPGA DNA            :  0x" << std::hex << info.version.fpga_dna << std::endl;
-	std::cout << std::dec;
-
-    //
     // QuerySet dynamic config from the camera
     //
     auto config = channel->get_configuration();
@@ -144,55 +132,24 @@ int main(int argc, char** argv)
     }
 
     //
-    // Start a single image stream
+    // Start the color image streams
     //
-    if (const auto status = channel->start_streams({lms::DataSource::LEFT_RECTIFIED_RAW}); status != lms::Status::OK)
+    if (const auto status = channel->start_streams({lms::DataSource::AUX_RAW}); status != lms::Status::OK)
     {
         std::cerr << "Cannot start streams: " << lms::to_string(status) << std::endl;
         return 1;
     }
 
-    //
-    // Only save the first image
-    //
-    bool saved_image = false;
-
     while(!done)
     {
-        if (!saved_image)
+        if (const auto image_frame = channel->get_next_image_frame(); image_frame)
         {
-            if (const auto image_frame = channel->get_next_image_frame(); image_frame)
+            if (const auto rgb = create_rgb(image_frame.value(), lms::DataSource::AUX_RAW); rgb)
             {
-                for (const auto &[source, image]: image_frame->images)
-                {
-
-                    const auto path = std::to_string(image_frame->frame_id) +  "_" +
-                                      std::to_string(static_cast<int>(source)) + ".pgm";
-                    lms::write_image(image, path);
-                    saved_image = true;
-                }
+                const auto path = std::to_string(image_frame->frame_id) +  "_aux.ppm";
+                lms::write_image(rgb.value(), path);
             }
         }
-
-        if (const auto status = channel->get_system_status(); status)
-        {
-            std::cout << "Camera Time(ns): " << status->time.camera_time.count() << ", " <<
-                         "System Ok: " << status->system_ok << ", " <<
-                         "FPGA Temp (C): " << status->temperature.fpga_temperature << ", " <<
-                         "Left Imager Temp (C): " << status->temperature.left_imager_temperature << ", " <<
-                         "Right Imager Temp (C): " << status->temperature.right_imager_temperature << ", " <<
-                         "Input Voltage (V): " << status->power.input_voltage << ", " <<
-                         "Input Current (A): " << status->power.input_current << ", " <<
-                         "FPGA Power (W): " << status->power.fpga_power << " , " <<
-                         "Received Messages: " << status->client_network.received_messages << " , " <<
-                         "Dropped Messages: " << status->client_network.dropped_messages << std::endl;
-        }
-        else
-        {
-            std::cerr << "Failed to query sensor status" << std::endl;
-        }
-
-        std::this_thread::sleep_for(1s);
     }
 
     channel->stop_streams({lms::DataSource::ALL});

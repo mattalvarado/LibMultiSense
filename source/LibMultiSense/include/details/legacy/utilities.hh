@@ -135,6 +135,11 @@ std::vector<DataSource> convert_sources(const crl::multisense::details::wire::So
 crl::multisense::details::wire::SourceType convert_sources(const std::vector<DataSource> &sources);
 
 ///
+/// @brief Expand sources since some sources may represent multiple sources on the wire
+///
+std::vector<DataSource> expand_source(const DataSource &source);
+
+///
 /// @brief Add a wire sample to a ImuSample
 ///
 ImuSample add_wire_sample(ImuSample sample,
