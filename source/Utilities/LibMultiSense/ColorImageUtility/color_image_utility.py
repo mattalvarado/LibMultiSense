@@ -60,7 +60,6 @@ def main(args):
         print("Unable to start streams")
         exit(1)
 
-
     while True:
         frame = channel.get_next_image_frame()
         if frame:

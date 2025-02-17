@@ -114,57 +114,41 @@ MULTISENSE_API std::optional<Image> create_bgr(const ImageFrame &frame, const Da
 /// @brief Create a point cloud from a image frame and a color source.
 ///
 template<typename Color>
-MULTISENSE_API std::optional<PointCloud<Color>> create_color_pointcloud(const ImageFrame &frame,
-                                                                        double max_range,
-                                                                        const DataSource &color_source = DataSource::UNKNOWN,
-                                                                        const DataSource &disparity_source = DataSource::LEFT_DISPARITY_RAW)
+MULTISENSE_API std::optional<PointCloud<Color>> create_color_pointcloud(const Image &disparity,
+                                                                         const std::optional<Image> &color,
+                                                                         double max_range,
+                                                                         const StereoCalibration &calibration)
 {
-    Image placeholder{};
-    std::reference_wrapper<const Image> disparity = std::cref(placeholder);
-    std::reference_wrapper<const Image> color = std::cref(placeholder);
-
     size_t color_step = 0;
     double color_disparity_scale = 0.0;
 
     if constexpr (std::is_same_v<Color, void>)
     {
-        if (!frame.has_image(disparity_source))
-        {
-            return std::nullopt;
-        }
-
-        disparity = frame.get_image(disparity_source);
-
-        if (disparity.get().format != Image::PixelFormat::MONO16 ||
-            disparity.get().width < 0 ||
-            disparity.get().height < 0)
+        if (disparity.format != Image::PixelFormat::MONO16 || disparity.width < 0 || disparity.height < 0)
         {
             return std::nullopt;
         }
     }
     else
     {
+        if (!color)
+        {
+            return std::nullopt;
+        }
+
         color_step = sizeof(Color);
 
-        if (!frame.has_image(color_source) || !frame.has_image(disparity_source))
+        if (disparity.format != Image::PixelFormat::MONO16 ||
+            color->width != disparity.width ||
+            color->height != disparity.height ||
+            disparity.width < 0 ||
+            disparity.height < 0)
         {
             return std::nullopt;
         }
 
-        disparity = frame.get_image(disparity_source);
-        color = frame.get_image(color_source);
-
-        if (disparity.get().format != Image::PixelFormat::MONO16 ||
-            color.get().width != disparity.get().width ||
-            color.get().height != disparity.get().height ||
-            disparity.get().width < 0 ||
-            disparity.get().height < 0)
-        {
-            return std::nullopt;
-        }
-
-        const double tx = frame.calibration.right.P[0][3] / frame.calibration.right.P[0][0];
-        const double color_tx = color.get().calibration.P[0][3] / color.get().calibration.P[0][0];
+        const double tx = calibration.right.P[0][3] / calibration.right.P[0][0];
+        const double color_tx = color->calibration.P[0][3] / color->calibration.P[0][0];
         color_disparity_scale = color_tx / tx;
     }
 
@@ -172,12 +156,12 @@ MULTISENSE_API std::optional<PointCloud<Color>> create_color_pointcloud(const Im
 
     const double squared_range = max_range * max_range;
 
-    const double fx = disparity.get().calibration.P[0][0];
-    const double fy = disparity.get().calibration.P[1][1];
-    const double cx = disparity.get().calibration.P[0][2];
-    const double cy = disparity.get().calibration.P[1][2];
-    const double tx = frame.calibration.right.P[0][3] / frame.calibration.right.P[0][0];
-    const double cx_prime = frame.calibration.right.P[0][2];
+    const double fx = disparity.calibration.P[0][0];
+    const double fy = disparity.calibration.P[1][1];
+    const double cx = disparity.calibration.P[0][2];
+    const double cy = disparity.calibration.P[1][2];
+    const double tx = calibration.right.P[0][3] / calibration.right.P[0][0];
+    const double cx_prime = calibration.right.P[0][2];
 
     const double fytx = fy * tx;
     const double fxtx = fx * tx;
@@ -188,18 +172,18 @@ MULTISENSE_API std::optional<PointCloud<Color>> create_color_pointcloud(const Im
     const double fycxcxprime = fy * (cx - cx_prime);
 
     PointCloud<Color> output;
-    output.cloud.reserve(disparity.get().width * disparity.get().height);
+    output.cloud.reserve(disparity.width * disparity.height);
 
-    for (size_t h = 0 ; h < static_cast<size_t>(disparity.get().height) ; ++h)
+    for (size_t h = 0 ; h < static_cast<size_t>(disparity.height) ; ++h)
     {
-        for (size_t w = 0 ; w < static_cast<size_t>(disparity.get().width) ; ++w)
+        for (size_t w = 0 ; w < static_cast<size_t>(disparity.width) ; ++w)
         {
-            const size_t index = disparity.get().image_data_offset +
-                                 (h * disparity.get().width * sizeof(uint16_t)) +
+            const size_t index = disparity.image_data_offset +
+                                 (h * disparity.width * sizeof(uint16_t)) +
                                  (w * sizeof(uint16_t));
 
             const double d =
-                static_cast<double>(*reinterpret_cast<const uint16_t*>(disparity.get().raw_data->data() + index)) * scale;
+                static_cast<double>(*reinterpret_cast<const uint16_t*>(disparity.raw_data->data() + index)) * scale;
 
             if (d == 0.0)
             {
@@ -225,11 +209,11 @@ MULTISENSE_API std::optional<PointCloud<Color>> create_color_pointcloud(const Im
                 //
                 // Use the approximation that color_pixel_u = disp_u - (tx_color/ tx) * d
                 //
-                const size_t color_index = color.get().image_data_offset +
-                                           (h * color.get().width * color_step) +
+                const size_t color_index = color->image_data_offset +
+                                           (h * color->width * color_step) +
                                            static_cast<size_t>((static_cast<double>(w) - (color_disparity_scale * d))) * color_step;
 
-                const Color color_pixel = *reinterpret_cast<const Color*>(color.get().raw_data->data() + color_index);
+                const Color color_pixel = *reinterpret_cast<const Color*>(color->raw_data->data() + color_index);
 
                 output.cloud.push_back(Point<Color>{static_cast<float>(x), static_cast<float>(y), static_cast<float>(z),
                                                     color_pixel});
@@ -238,6 +222,38 @@ MULTISENSE_API std::optional<PointCloud<Color>> create_color_pointcloud(const Im
     }
 
     return output;
+}
+
+///
+/// @brief Create a point cloud from a image frame and a color source.
+///
+template<typename Color>
+MULTISENSE_API std::optional<PointCloud<Color>> create_color_pointcloud(const ImageFrame &frame,
+                                                                        double max_range,
+                                                                        const DataSource &color_source = DataSource::UNKNOWN,
+                                                                        const DataSource &disparity_source = DataSource::LEFT_DISPARITY_RAW)
+{
+    if constexpr (std::is_same_v<Color, void>)
+    {
+        if (!frame.has_image(disparity_source))
+        {
+            return std::nullopt;
+        }
+
+        return create_color_pointcloud<Color>(frame.get_image(disparity_source), std::nullopt, max_range, frame.calibration);
+    }
+    else
+    {
+        if (!frame.has_image(color_source) || !frame.has_image(disparity_source))
+        {
+            return std::nullopt;
+        }
+
+        return create_color_pointcloud<Color>(frame.get_image(disparity_source),
+                                              frame.get_image(color_source),
+                                              max_range,
+                                              frame.calibration);
+    }
 }
 
 MULTISENSE_API std::optional<PointCloud<void>> create_pointcloud(const ImageFrame &frame,

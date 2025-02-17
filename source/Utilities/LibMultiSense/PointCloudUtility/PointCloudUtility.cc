@@ -169,24 +169,18 @@ int main(int argc, char** argv)
             }
             else
             {
-                auto color_frame = image_frame.value();
+                using ColorT = std::array<uint8_t, 3>;
                 if (const auto bgr = create_bgr(image_frame.value(), color_stream); bgr)
                 {
-                    color_frame.add_image(bgr.value());
-                }
-                else
-                {
-                    std::cerr << "Unable to create bgr image for frame: " << color_frame.frame_id << std::endl;
-                    continue;
-                }
-
-                if (const auto point_cloud = lms::create_color_pointcloud<std::array<uint8_t, 3>>(color_frame,
-                                                                                                  max_range,
-                                                                                                  color_stream,
-                                                                                                  lms::DataSource::LEFT_DISPARITY_RAW); point_cloud)
-                {
-                    std::cout << "Saving aux colorized pointcloud for frame id: " << image_frame->frame_id << std::endl;
-                    lms::write_pointcloud_ply(point_cloud.value(), std::to_string(image_frame->frame_id) + ".ply");
+                    const auto &disparity = image_frame->get_image(lms::DataSource::LEFT_DISPARITY_RAW);
+                    if (const auto point_cloud = lms::create_color_pointcloud<ColorT>(disparity,
+                                                                                      bgr,
+                                                                                      max_range,
+                                                                                      image_frame->calibration); point_cloud)
+                    {
+                        std::cout << "Saving aux colorized pointcloud for frame id: " << image_frame->frame_id << std::endl;
+                        lms::write_pointcloud_ply(point_cloud.value(), std::to_string(image_frame->frame_id) + ".ply");
+                    }
                 }
             }
         }

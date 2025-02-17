@@ -93,20 +93,18 @@ def main(args):
             else:
                 bgr = lms.create_bgr(frame, color_stream)
                 if bgr:
-                    frame.add_image(bgr)
+                    point_cloud = lms.create_bgr_pointcloud(frame.get_image(lms.DataSource.LEFT_DISPARITY_RAW),
+                                                            bgr,
+                                                            args.max_range,
+                                                            frame.calibration)
 
-                point_cloud = lms.create_bgr_pointcloud(frame,
-                                                        args.max_range,
-                                                        color_stream,
-                                                        lms.DataSource.LEFT_DISPARITY_RAW)
+                    # Convert to numpy array and compute the average depth
+                    point_cloud_array = point_cloud.as_raw_array.view(color_point_type)
+                    mean_depth = np.mean(point_cloud_array["z"])
+                    print("Mean depth:", mean_depth, "(m)")
 
-                # Convert to numpy array and compute the average depth
-                point_cloud_array = point_cloud.as_raw_array.view(color_point_type)
-                mean_depth = np.mean(point_cloud_array["z"])
-                print("Mean depth:", mean_depth, "(m)")
-
-                print("Saving color pointcloud for frame id: ", frame.frame_id)
-                lms.write_pointcloud_ply(point_cloud, str(frame.frame_id) + ".ply")
+                    print("Saving color pointcloud for frame id: ", frame.frame_id)
+                    lms.write_pointcloud_ply(point_cloud, str(frame.frame_id) + ".ply")
 
 
 if __name__ == '__main__':

@@ -844,11 +844,50 @@ PYBIND11_MODULE(libmultisense, m) {
 
     m.def("create_pointcloud", &multisense::create_pointcloud, py::call_guard<py::gil_scoped_release>());
 
-    m.def("create_gray8_pointcloud", &multisense::create_color_pointcloud<uint8_t>, py::call_guard<py::gil_scoped_release>());
+    m.def("create_gray8_pointcloud",
+            static_cast<std::optional<multisense::PointCloud<uint8_t>>(*)(const multisense::ImageFrame&,
+                                                                          double,
+                                                                          const multisense::DataSource&,
+                                                                          const multisense::DataSource&)>(
+                &multisense::create_color_pointcloud<uint8_t>),
+            py::call_guard<py::gil_scoped_release>());
+    m.def("create_gray8_pointcloud",
+            static_cast<std::optional<multisense::PointCloud<uint8_t>>(*)(const multisense::Image&,
+                                                                          const std::optional<multisense::Image>&,
+                                                                          double,
+                                                                          const multisense::StereoCalibration&)>(
+                &multisense::create_color_pointcloud<uint8_t>),
+            py::call_guard<py::gil_scoped_release>());
 
-    m.def("create_gray16_pointcloud", &multisense::create_color_pointcloud<uint16_t>, py::call_guard<py::gil_scoped_release>());
+    m.def("create_gray16_pointcloud",
+            static_cast<std::optional<multisense::PointCloud<uint16_t>>(*)(const multisense::ImageFrame&,
+                                                                          double,
+                                                                          const multisense::DataSource&,
+                                                                          const multisense::DataSource&)>(
+                &multisense::create_color_pointcloud<uint16_t>),
+            py::call_guard<py::gil_scoped_release>());
+    m.def("create_gray16_pointcloud",
+            static_cast<std::optional<multisense::PointCloud<uint16_t>>(*)(const multisense::Image&,
+                                                                          const std::optional<multisense::Image>&,
+                                                                          double,
+                                                                          const multisense::StereoCalibration&)>(
+                &multisense::create_color_pointcloud<uint16_t>),
+            py::call_guard<py::gil_scoped_release>());
 
-    m.def("create_bgr_pointcloud", &multisense::create_color_pointcloud<std::array<uint8_t, 3>>, py::call_guard<py::gil_scoped_release>());
+    m.def("create_bgr_pointcloud",
+            static_cast<std::optional<multisense::PointCloud<std::array<uint8_t, 3>>>(*)(const multisense::ImageFrame&,
+                                                                                         double,
+                                                                                         const multisense::DataSource&,
+                                                                                         const multisense::DataSource&)>(
+                &multisense::create_color_pointcloud<std::array<uint8_t, 3>>),
+            py::call_guard<py::gil_scoped_release>());
+    m.def("create_bgr_pointcloud",
+            static_cast<std::optional<multisense::PointCloud<std::array<uint8_t, 3>>>(*)(const multisense::Image&,
+                                                                                         const std::optional<multisense::Image>&,
+                                                                                         double,
+                                                                                         const multisense::StereoCalibration&)>(
+                &multisense::create_color_pointcloud<std::array<uint8_t, 3>>),
+            py::call_guard<py::gil_scoped_release>());
 
     m.def("create_depth_image", &multisense::create_depth_image, py::call_guard<py::gil_scoped_release>());
 
