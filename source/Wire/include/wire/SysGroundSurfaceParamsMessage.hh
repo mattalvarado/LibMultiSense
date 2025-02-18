@@ -1,9 +1,9 @@
 /**
- * @file LibMultiSense/SysGroundSurfaceParamsMessage.hh
+ * @file SysGroundSurfaceParamsMessage.hh
  *
  * This message contains general device information
  *
- * Copyright 2022
+ * Copyright 2022-2025
  * Carnegie Robotics, LLC
  * 4501 Hatfield Street, Pittsburgh, PA 15201
  * http://www.carnegierobotics.com
