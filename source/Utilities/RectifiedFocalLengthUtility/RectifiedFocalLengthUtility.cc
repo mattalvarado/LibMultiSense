@@ -1,7 +1,7 @@
 /**
  * @file RectifiedFocalLengthUtility/RectifiedFocalLengthUtility.cc
  *
- * Copyright 2013-2022
+ * Copyright 2013-2025
  * Carnegie Robotics, LLC
  * 4501 Hatfield Street, Pittsburgh, PA 15201
  * http://www.carnegierobotics.com
@@ -137,7 +137,8 @@ int main(int    argc,
 
     hasAuxCamera = info.hardwareRevision == system::DeviceInfo::HARDWARE_REV_MULTISENSE_C6S2_S27 ||
                    info.hardwareRevision == system::DeviceInfo::HARDWARE_REV_MULTISENSE_S30 ||
-                   info.hardwareRevision == system::DeviceInfo::HARDWARE_REV_MULTISENSE_MONOCAM;
+                   info.hardwareRevision == system::DeviceInfo::HARDWARE_REV_MULTISENSE_MONOCAM ||
+                   info.hardwareRevision == system::DeviceInfo::HARDWARE_REV_MULTISENSE_KS21i;
 
     image::Calibration calibration;
 

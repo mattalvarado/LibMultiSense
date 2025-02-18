@@ -1,7 +1,7 @@
 /**
  * @file LibMultiSense/details/public.cc
  *
- * Copyright 2013-2022
+ * Copyright 2013-2025
  * Carnegie Robotics, LLC
  * 4501 Hatfield Street, Pittsburgh, PA 15201
  * http://www.carnegierobotics.com
@@ -42,78 +42,82 @@
 #include "MultiSense/details/channel.hh"
 #include "MultiSense/details/query.hh"
 
-#include "MultiSense/details/wire/VersionRequestMessage.hh"
-#include "MultiSense/details/wire/VersionResponseMessage.hh"
-#include "MultiSense/details/wire/StatusRequestMessage.hh"
-#include "MultiSense/details/wire/StatusResponseMessage.hh"
-#include "MultiSense/details/wire/PtpStatusRequestMessage.hh"
-#include "MultiSense/details/wire/PtpStatusResponseMessage.hh"
+#include <wire/VersionRequestMessage.hh>
+#include <wire/VersionResponseMessage.hh>
+#include <wire/StatusRequestMessage.hh>
+#include <wire/StatusResponseMessage.hh>
+#include <wire/PtpStatusRequestMessage.hh>
+#include <wire/PtpStatusResponseMessage.hh>
 
-#include "MultiSense/details/wire/StreamControlMessage.hh"
-#include "MultiSense/details/wire/SysSetPtpMessage.hh"
+#include <wire/StreamControlMessage.hh>
+#include <wire/SysSetPtpMessage.hh>
 
-#include "MultiSense/details/wire/CamControlMessage.hh"
-#include "MultiSense/details/wire/AuxCamControlMessage.hh"
-#include "MultiSense/details/wire/CamSetResolutionMessage.hh"
-#include "MultiSense/details/wire/CamGetConfigMessage.hh"
-#include "MultiSense/details/wire/AuxCamGetConfigMessage.hh"
-#include "MultiSense/details/wire/CamConfigMessage.hh"
-#include "MultiSense/details/wire/AuxCamConfigMessage.hh"
-#include "MultiSense/details/wire/CamSetTriggerSourceMessage.hh"
+#include <wire/CamControlMessage.hh>
+#include <wire/AuxCamControlMessage.hh>
+#include <wire/CamSetResolutionMessage.hh>
+#include <wire/CamGetConfigMessage.hh>
+#include <wire/AuxCamGetConfigMessage.hh>
+#include <wire/CamConfigMessage.hh>
+#include <wire/AuxCamConfigMessage.hh>
+#include <wire/CamSetTriggerSourceMessage.hh>
 
-#include "MultiSense/details/wire/RemoteHeadControlMessage.hh"
-#include "MultiSense/details/wire/RemoteHeadGetConfigMessage.hh"
-#include "MultiSense/details/wire/RemoteHeadConfigMessage.hh"
+#include <wire/RemoteHeadControlMessage.hh>
+#include <wire/RemoteHeadGetConfigMessage.hh>
+#include <wire/RemoteHeadConfigMessage.hh>
 
-#include "MultiSense/details/wire/LidarSetMotorMessage.hh"
+#include <wire/LidarSetMotorMessage.hh>
 
-#include "MultiSense/details/wire/LedGetStatusMessage.hh"
-#include "MultiSense/details/wire/LedSetMessage.hh"
-#include "MultiSense/details/wire/LedStatusMessage.hh"
+#include <wire/LedGetStatusMessage.hh>
+#include <wire/LedSetMessage.hh>
+#include <wire/LedStatusMessage.hh>
 
-#include "MultiSense/details/wire/LedGetSensorStatusMessage.hh"
-#include "MultiSense/details/wire/LedSensorStatusMessage.hh"
+#include <wire/LedGetSensorStatusMessage.hh>
+#include <wire/LedSensorStatusMessage.hh>
 
-#include "MultiSense/details/wire/LidarPollMotorMessage.hh"
-#include "MultiSense/details/wire/PollMotorInfoMessage.hh"
+#include <wire/LidarPollMotorMessage.hh>
+#include <wire/PollMotorInfoMessage.hh>
 
-#include "MultiSense/details/wire/SysMtuMessage.hh"
-#include "MultiSense/details/wire/SysGetMtuMessage.hh"
-#include "MultiSense/details/wire/SysFlashOpMessage.hh"
-#include "MultiSense/details/wire/SysGetNetworkMessage.hh"
-#include "MultiSense/details/wire/SysNetworkMessage.hh"
-#include "MultiSense/details/wire/SysGetDeviceInfoMessage.hh"
-#include "MultiSense/details/wire/SysDeviceInfoMessage.hh"
-#include "MultiSense/details/wire/SysGetCameraCalibrationMessage.hh"
-#include "MultiSense/details/wire/SysCameraCalibrationMessage.hh"
-#include "MultiSense/details/wire/SysGetSensorCalibrationMessage.hh"
-#include "MultiSense/details/wire/SysGetTransmitDelayMessage.hh"
-#include "MultiSense/details/wire/SysSensorCalibrationMessage.hh"
-#include "MultiSense/details/wire/SysTransmitDelayMessage.hh"
-#include "MultiSense/details/wire/SysGetLidarCalibrationMessage.hh"
-#include "MultiSense/details/wire/SysLidarCalibrationMessage.hh"
-#include "MultiSense/details/wire/SysGetDeviceModesMessage.hh"
-#include "MultiSense/details/wire/SysDeviceModesMessage.hh"
-#include "MultiSense/details/wire/SysGetExternalCalibrationMessage.hh"
-#include "MultiSense/details/wire/SysExternalCalibrationMessage.hh"
-#include "MultiSense/details/wire/SysGroundSurfaceParamsMessage.hh"
-#include "MultiSense/details/wire/SysApriltagParamsMessage.hh"
-#include "MultiSense/details/wire/SysGetPacketDelayMessage.hh"
-#include "MultiSense/details/wire/SysPacketDelayMessage.hh"
+#include <wire/SysMtuMessage.hh>
+#include <wire/SysGetMtuMessage.hh>
+#include <wire/SysFlashOpMessage.hh>
+#include <wire/SysGetNetworkMessage.hh>
+#include <wire/SysNetworkMessage.hh>
+#include <wire/SysGetDeviceInfoMessage.hh>
+#include <wire/SysDeviceInfoMessage.hh>
+#include <wire/SysGetCameraCalibrationMessage.hh>
+#include <wire/SysCameraCalibrationMessage.hh>
+#include <wire/SysGetSensorCalibrationMessage.hh>
+#include <wire/SysGetTransmitDelayMessage.hh>
+#include <wire/SysSensorCalibrationMessage.hh>
+#include <wire/SysTransmitDelayMessage.hh>
+#include <wire/SysGetLidarCalibrationMessage.hh>
+#include <wire/SysLidarCalibrationMessage.hh>
+#include <wire/SysGetDeviceModesMessage.hh>
+#include <wire/SysDeviceModesMessage.hh>
+#include <wire/SysGetExternalCalibrationMessage.hh>
+#include <wire/SysExternalCalibrationMessage.hh>
+#include <wire/SysGroundSurfaceParamsMessage.hh>
+#include <wire/SysApriltagParamsMessage.hh>
+#include <wire/SysGetPacketDelayMessage.hh>
+#include <wire/SysPacketDelayMessage.hh>
 
-#include "MultiSense/details/wire/ImuGetInfoMessage.hh"
-#include "MultiSense/details/wire/ImuGetConfigMessage.hh"
-#include "MultiSense/details/wire/ImuInfoMessage.hh"
-#include "MultiSense/details/wire/ImuConfigMessage.hh"
+#include <wire/ImuGetInfoMessage.hh>
+#include <wire/ImuGetConfigMessage.hh>
+#include <wire/ImuInfoMessage.hh>
+#include <wire/ImuConfigMessage.hh>
 
-#include "MultiSense/details/wire/FeatureDetectorConfigMessage.hh"
-#include "MultiSense/details/wire/FeatureDetectorGetConfigMessage.hh"
-#include "MultiSense/details/wire/FeatureDetectorControlMessage.hh"
-#include "MultiSense/details/wire/FeatureDetectorMessage.hh"
-#include "MultiSense/details/wire/FeatureDetectorMetaMessage.hh"
+#include <wire/SysTestMtuMessage.hh>
+#include <wire/SysTestMtuResponseMessage.hh>
 
-#include "MultiSense/details/wire/SysTestMtuMessage.hh"
-#include "MultiSense/details/wire/SysTestMtuResponseMessage.hh"
+#include <wire/SecondaryAppConfigMessage.hh>
+#include <wire/SecondaryAppControlMessage.hh>
+#include <wire/SecondaryAppGetConfigMessage.hh>
+#include <wire/SecondaryAppDataMessage.hh>
+#include <wire/SecondaryAppGetRegisteredAppsMessage.hh>
+#include <wire/SecondaryAppRegisteredAppsMessage.hh>
+#include <wire/SecondaryAppActivateMessage.hh>
+
+#include <utility/BufferStream.hh>
 
 namespace crl {
 namespace multisense {
@@ -281,27 +285,6 @@ Status impl::addIsolatedCallback(apriltag::Callback callback,
 }
 
 //
-// Adds a new feature detector listener
-
-Status impl::addIsolatedCallback(feature_detector::Callback callback,
-                                 void *userDataP)
-{
-    try {
-
-        utility::ScopedLock lock(m_dispatchLock);
-        m_featureDetectorListeners.push_back(new FeatureDetectorListener(callback,
-                                               0,
-                                               userDataP,
-                                               MAX_USER_FEATURE_DETECTOR_QUEUE_SIZE));
-
-    } catch (const std::exception& e) {
-        CRL_DEBUG("exception: %s\n", e.what());
-        return Status_Exception;
-    }
-    return Status_Ok;
-}
-
-//
 // Removes an image listener
 
 Status impl::removeIsolatedCallback(image::Callback callback)
@@ -327,6 +310,27 @@ Status impl::removeIsolatedCallback(image::Callback callback)
     }
 
     return Status_Error;
+}
+
+//
+// Adds a new secondarty app listener
+
+Status impl::addIsolatedCallback(secondary_app::Callback callback,
+                                 void *userDataP)
+{
+    try {
+
+        utility::ScopedLock lock(m_dispatchLock);
+        m_secondaryAppListeners.push_back(new SecondaryAppListener(callback,
+                                               0,
+                                               userDataP,
+                                               MAX_USER_SECONDARY_APP_QUEUE_SIZE));
+
+    } catch (const std::exception& e) {
+        CRL_DEBUG("exception: %s\n", e.what());
+        return Status_Exception;
+    }
+    return Status_Ok;
 }
 
 //
@@ -498,21 +502,20 @@ Status impl::removeIsolatedCallback(apriltag::Callback callback)
 }
 
 //
-// Removes a feature detector listener
+// Removes a secondary_app listener
 
-Status impl::removeIsolatedCallback(feature_detector::Callback callback)
+Status impl::removeIsolatedCallback(secondary_app::Callback callback)
 {
     try {
         utility::ScopedLock lock(m_dispatchLock);
-
-        std::list<FeatureDetectorListener*>::iterator it;
-        for(it  = m_featureDetectorListeners.begin();
-            it != m_featureDetectorListeners.end();
-            ++ it) {
+        std::list<SecondaryAppListener*>::iterator it;
+        for(it  = m_secondaryAppListeners.begin();
+            it != m_secondaryAppListeners.end();
+            it ++) {
 
             if ((*it)->callback() == callback) {
                 delete *it;
-                m_featureDetectorListeners.erase(it);
+                m_secondaryAppListeners.erase(it);
                 return Status_Ok;
             }
         }
@@ -1736,29 +1739,100 @@ Status impl::setApriltagParams (const system::ApriltagParams& params)
     return waitAck(w);
 }
 
-Status impl::getFeatureDetectorConfig (system::FeatureDetectorConfig & c)
-{
-    wire::FeatureDetectorConfig f;
+//
+// Query camera configuration
 
-    Status status = waitData(wire::FeatureDetectorGetConfig(), f);
+Status impl::getSecondaryAppConfig(system::SecondaryAppConfig& config)
+{
+    Status          status;
+    wire::SecondaryAppConfig d;
+
+    status = waitData(wire::SecondaryAppGetConfig(), d);
     if (Status_Ok != status)
         return status;
 
-    c.setNumberOfFeatures(f.numberOfFeatures);
-    c.setGrouping(f.grouping);
-    c.setMotion(f.motion);
+
+    if (d.dataLength >= 1024)
+    {
+        std::cerr << "Error: data length exceeds 1024b, truncating\n";
+        config.dataLength = 1023;
+        status = Status_Exception;
+    }
+    else
+    {
+        config.dataLength = d.dataLength;
+    }
+
+    memcpy(config.data, d.data, config.dataLength);
 
     return Status_Ok;
 }
-Status impl::setFeatureDetectorConfig (const system::FeatureDetectorConfig & c)
+
+
+//
+// Set camera configuration
+//
+// Currently several sensor messages are combined and presented
+// to the user as one.
+
+Status impl::setSecondaryAppConfig(system::SecondaryAppConfig& c)
 {
-    wire::FeatureDetectorControl f;
+    wire::SecondaryAppControl cmd;
 
-    f.numberOfFeatures = c.numberOfFeatures();
-    f.grouping = c.grouping();
-    f.motion = c.motion();
+    c.serialize();
 
-    return waitAck(f);
+    if (c.dataLength >= 1024)
+    {
+        std::cerr << "Error: data length too large" << std::endl;
+        return Status_Error;
+    }
+    else
+    {
+        cmd.dataLength = c.dataLength;
+    }
+
+    memcpy(cmd.data, c.data, c.dataLength);
+
+    return waitAck(cmd);
+}
+
+Status impl::getRegisteredApps(system::SecondaryAppRegisteredApps& registeredApps)
+{
+    Status          status;
+    wire::SecondaryAppRegisteredApps d;
+
+    status = waitData(wire::SecondaryAppGetRegisteredApps(), d);
+    if (Status_Ok != status)
+        return status;
+
+    for (auto app: d.apps)
+    {
+        system::SecondaryAppRegisteredApp _a(app.appVersion, app.appName);
+        registeredApps.apps.push_back(_a);
+    }
+
+    return Status_Ok;
+}
+
+
+//
+// Set camera configuration
+//
+// Currently several sensor messages are combined and presented
+// to the user as one.
+
+Status impl::secondaryAppActivate(const std::string &_name)
+{
+    wire::SecondaryAppActivate cmd(1, _name);
+
+    return waitAck(cmd);
+}
+
+Status impl::secondaryAppDeactivate(const std::string &_name)
+{
+    wire::SecondaryAppActivate cmd(0, _name);
+
+    return waitAck(cmd);
 }
 
 //
@@ -1799,46 +1873,6 @@ Status impl::setDeviceInfo(const std::string& key,
     w.motorGearReduction      = info.motorGearReduction;
 
     return waitAck(w);
-}
-
-//
-// Flash the bitstream file (dangerous!)
-
-Status impl::flashBitstream(const std::string& filename)
-{
-    return doFlashOp(filename,
-                     wire::SysFlashOp::OP_PROGRAM,
-                     wire::SysFlashOp::RGN_BITSTREAM);
-}
-
-//
-// Flash the firmware file (dangerous!)
-
-Status impl::flashFirmware(const std::string& filename)
-{
-    return doFlashOp(filename,
-                     wire::SysFlashOp::OP_PROGRAM,
-                     wire::SysFlashOp::RGN_FIRMWARE);
-}
-
-//
-// Verify the bitstream file
-
-Status impl::verifyBitstream(const std::string& filename)
-{
-    return doFlashOp(filename,
-                     wire::SysFlashOp::OP_VERIFY,
-                     wire::SysFlashOp::RGN_BITSTREAM);
-}
-
-//
-// Verify the firmware file
-
-Status impl::verifyFirmware(const std::string& filename)
-{
-    return doFlashOp(filename,
-                     wire::SysFlashOp::OP_VERIFY,
-                     wire::SysFlashOp::RGN_FIRMWARE);
 }
 
 //
