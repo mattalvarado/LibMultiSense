@@ -844,6 +844,10 @@ PYBIND11_MODULE(libmultisense, m) {
 
     m.def("create_pointcloud", &multisense::create_pointcloud, py::call_guard<py::gil_scoped_release>());
 
+    //
+    // Handle creation of colorized pointclouds with either just an ImageFrame, or the explicit disparity
+    // and color images
+    //
     m.def("create_gray8_pointcloud",
             static_cast<std::optional<multisense::PointCloud<uint8_t>>(*)(const multisense::ImageFrame&,
                                                                           double,
