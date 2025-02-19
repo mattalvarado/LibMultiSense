@@ -409,9 +409,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseInfo::Version,
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseInfo::SensorVersion,
                                    firmware_build_date,
                                    firmware_version,
-                                   hardware_version,
-                                   hardware_magic,
-                                   fpga_dna)
+                                   hardware_version)
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseInfo::SupportedOperatingMode,
                                    resolution,

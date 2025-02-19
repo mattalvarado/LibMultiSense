@@ -178,7 +178,9 @@ struct Image
         MONO8,
         BGR8,
         MONO16,
-        FLOAT32
+        FLOAT32,
+        JPEG,
+        H264
     };
 
     ///
@@ -241,7 +243,11 @@ struct Image
     template <typename T>
     std::optional<T> at(int w, int h) const
     {
-        if (w < 0 || h < 0 || w >= width || h >= height || raw_data == nullptr || format == PixelFormat::UNKNOWN)
+        if (w < 0 || h < 0 || w >= width || h >= height ||
+            raw_data == nullptr ||
+            format == PixelFormat::UNKNOWN ||
+            format == PixelFormat::JPEG ||
+            format == PixelFormat::H264)
         {
             return std::nullopt;
         }
@@ -321,12 +327,12 @@ struct ImageFrame
     StereoCalibration calibration;
 
     ///
-    /// @brief The MultiSeense timestamp associated with the frame
+    /// @brief The MultiSense timestamp associated with the frame
     ///
     TimeT frame_time{};
 
     ///
-    /// @brief The MultiSeense ptp timestamp associated with the frame
+    /// @brief The MultiSense ptp timestamp associated with the frame
     ///
     TimeT ptp_frame_time{};
 };
@@ -374,12 +380,12 @@ struct ImuSample
     std::optional<Measurement> magnetometer = std::nullopt;
 
     ///
-    /// @brief The MultiSeense timestamp associated with the frame
+    /// @brief The MultiSense timestamp associated with the frame
     ///
     TimeT sample_time{};
 
     ///
-    /// @brief The  MultiSeense ptp timestamp associated with the frame
+    /// @brief The MultiSense ptp timestamp associated with the frame
     ///
     TimeT ptp_sample_time{};
 };
@@ -990,8 +996,13 @@ struct MultiSenseConfig
         }
     };
 
+    //
+    // TODO (malvarado): make all these optional. except res/disparities
+    //
+
     ///
     /// @brief The operating resolution of the MultiSense
+    /// TODO (malvarado) reconsider?
     ///
     OperatingResolution resolution = OperatingResolution::QUARTER_RESOLUTION;
 
@@ -1203,6 +1214,10 @@ struct MultiSenseStatus
             return input_camera_time + std::chrono::duration_cast<std::chrono::system_clock::duration>(offset_to_host());
         }
     };
+
+    ///
+    /// TODO (malvarado): Make optional members
+    ///
 
     ///
     /// @brief Summary of the current MultiSense state. True if the MultiSense is operating properly
@@ -1508,16 +1523,6 @@ struct MultiSenseInfo
         /// @brief ID for the version of hardware
         ///
         uint64_t hardware_version = 0;
-
-        ///
-        /// @brief Unique ID for the hardware
-        ///
-        uint64_t hardware_magic = 0;
-
-        ///
-        /// @brief Unique ID for the fpga
-        ///
-        uint64_t fpga_dna = 0;
     };
 
     ///

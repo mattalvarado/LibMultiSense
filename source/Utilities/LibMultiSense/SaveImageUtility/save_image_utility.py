@@ -56,8 +56,6 @@ def main(args):
     print("Firmware build date :  ", info.version.firmware_build_date)
     print("Firmware version    :  ", info.version.firmware_version.to_string())
     print("Hardware version    :  ", hex(info.version.hardware_version))
-    print("Hardware magic      :  ", hex(info.version.hardware_magic))
-    print("FPGA DNA            :  ", hex(info.version.fpga_dna))
 
     config = channel.get_configuration()
     config.frames_per_second = 30.0

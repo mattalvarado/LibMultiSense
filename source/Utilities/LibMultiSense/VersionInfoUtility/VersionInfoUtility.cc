@@ -99,8 +99,6 @@ int main(int argc, char** argv)
 	std::cout << "Firmware build date :  " << info.version.firmware_build_date << std::endl;
 	std::cout << "Firmware version    :  " << info.version.firmware_version.to_string() << std::endl;
 	std::cout << "Hardware version    :  0x" << std::hex << info.version.hardware_version << std::endl;
-	std::cout << "Hardware magic      :  0x" << std::hex << info.version.hardware_magic << std::endl;
-	std::cout << "FPGA DNA            :  0x" << std::hex << info.version.fpga_dna << std::endl;
 	std::cout << std::dec;
 
     return 0;

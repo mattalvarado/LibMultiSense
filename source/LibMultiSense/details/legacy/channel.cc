@@ -982,7 +982,7 @@ void LegacyChannel::image_callback(std::shared_ptr<const std::vector<uint8_t>> d
     const auto cal_y_scale = static_cast<double>(wire_image.height) / static_cast<double>(info.imager_height);
 
     Image image{data,
-                reinterpret_cast<const uint8_t*>(wire_image.dataP) - data->data(),
+                static_cast<const uint8_t*>(wire_image.dataP) - data->data(),
                 ((wire_image.bitsPerPixel / 8) * wire_image.width * wire_image.height),
                 pixel_format,
                 wire_image.width,
@@ -1050,7 +1050,7 @@ void LegacyChannel::disparity_callback(std::shared_ptr<const std::vector<uint8_t
     const auto cal_y_scale = static_cast<double>(wire_image.height) / static_cast<double>(info.imager_height);
 
     Image image{data,
-                reinterpret_cast<const uint8_t*>(wire_image.dataP) - data->data(),
+                static_cast<const uint8_t*>(wire_image.dataP) - data->data(),
                 disparity_length,
                 pixel_format,
                 wire_image.width,

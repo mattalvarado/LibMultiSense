@@ -334,8 +334,6 @@ TEST(convert, version)
     ASSERT_FALSE(converted_version < version.firmware_version);
 
     ASSERT_EQ(version.hardware_version, version_wire.hardwareVersion);
-    ASSERT_EQ(version.hardware_magic, version_wire.hardwareMagic);
-    ASSERT_EQ(version.fpga_dna, version_wire.fpgaDna);
 }
 
 TEST(convert, device_modes)

@@ -243,9 +243,7 @@ MultiSenseInfo::SensorVersion convert(const crl::multisense::details::wire::Vers
 {
     return MultiSenseInfo::SensorVersion{response.firmwareBuildDate,
                                          get_version(response.firmwareVersion),
-                                         response.hardwareVersion,
-                                         response.hardwareMagic,
-                                         response.fpgaDna};
+                                         response.hardwareVersion};
 }
 
 std::vector<MultiSenseInfo::SupportedOperatingMode> convert(const crl::multisense::details::wire::SysDeviceModes &modes,

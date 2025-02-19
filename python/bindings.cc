@@ -145,7 +145,9 @@ PYBIND11_MODULE(libmultisense, m) {
         .value("MONO8", multisense::Image::PixelFormat::MONO8)
         .value("BGR8", multisense::Image::PixelFormat::BGR8)
         .value("MONO16", multisense::Image::PixelFormat::MONO16)
-        .value("FLOAT32", multisense::Image::PixelFormat::FLOAT32);
+        .value("FLOAT32", multisense::Image::PixelFormat::FLOAT32)
+        .value("JPEG", multisense::Image::PixelFormat::JPEG)
+        .value("H264", multisense::Image::PixelFormat::H264);
 
     // Image
     py::class_<multisense::Image>(m, "Image")
@@ -562,9 +564,7 @@ PYBIND11_MODULE(libmultisense, m) {
         PYBIND11_JSON_SUPPORT(multisense::MultiSenseInfo::SensorVersion)
         .def_readwrite("firmware_build_date", &multisense::MultiSenseInfo::SensorVersion::firmware_build_date)
         .def_readwrite("firmware_version", &multisense::MultiSenseInfo::SensorVersion::firmware_version)
-        .def_readwrite("hardware_version", &multisense::MultiSenseInfo::SensorVersion::hardware_version)
-        .def_readwrite("hardware_magic", &multisense::MultiSenseInfo::SensorVersion::hardware_magic)
-        .def_readwrite("fpga_dna", &multisense::MultiSenseInfo::SensorVersion::fpga_dna);
+        .def_readwrite("hardware_version", &multisense::MultiSenseInfo::SensorVersion::hardware_version);
 
     // MultiSenseInfo::SupportedOperatingMode
     py::class_<multisense::MultiSenseInfo::SupportedOperatingMode>(m, "SupportedOperatingMode")

@@ -188,6 +188,9 @@ bool MessageAssembler::process_packet(const std::vector<uint8_t> &raw_data)
         return false;
     }
 
+    //
+    // TODO (malvarado): Header constructor with raw pointer
+    //
     const wire::Header& header = *(reinterpret_cast<const wire::Header*>(raw_data.data()));
 
     //
