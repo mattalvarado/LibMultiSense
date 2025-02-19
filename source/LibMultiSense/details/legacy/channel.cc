@@ -483,31 +483,37 @@ Status LegacyChannel::set_configuration(const MultiSenseConfig &config)
     //
     // Enable/disable ptp
     //
-    const auto ptp_ack = wait_for_ack(m_message_assembler,
-                                      m_socket,
-                                      convert(config.time_config),
-                                      m_transmit_id++,
-                                      m_current_mtu,
-                                      m_config.receive_timeout);
-
-    if (!ptp_ack || ptp_ack->status != wire::Ack::Status_Ok)
+    if (config.time_config)
     {
-        responses.push_back(get_status(ptp_ack->status));
+        const auto ptp_ack = wait_for_ack(m_message_assembler,
+                                          m_socket,
+                                          convert(config.time_config.value()),
+                                          m_transmit_id++,
+                                          m_current_mtu,
+                                          m_config.receive_timeout);
+
+        if (!ptp_ack || ptp_ack->status != wire::Ack::Status_Ok)
+        {
+            responses.push_back(get_status(ptp_ack->status));
+        }
     }
 
     //
     // Set our packet delay
     //
-    const auto packet_ack = wait_for_ack(m_message_assembler,
-                                         m_socket,
-                                         convert<wire::SysPacketDelay>(config.network_config),
-                                         m_transmit_id++,
-                                         m_current_mtu,
-                                         m_config.receive_timeout);
-
-    if (!packet_ack || packet_ack->status != wire::Ack::Status_Ok)
+    if (config.network_config)
     {
-        responses.push_back(get_status(packet_ack->status));
+        const auto packet_ack = wait_for_ack(m_message_assembler,
+                                             m_socket,
+                                             convert<wire::SysPacketDelay>(config.network_config.value()),
+                                             m_transmit_id++,
+                                             m_current_mtu,
+                                             m_config.receive_timeout);
+
+        if (!packet_ack || packet_ack->status != wire::Ack::Status_Ok)
+        {
+            responses.push_back(get_status(packet_ack->status));
+        }
     }
 
     const auto errors = std::any_of(std::begin(responses), std::end(responses),
@@ -526,7 +532,7 @@ Status LegacyChannel::set_configuration(const MultiSenseConfig &config)
     //
     // Update our internal cached image config after we successfully set everything
     //
-    const auto ptp_enabled = config.time_config.ptp_enabled;
+    const auto ptp_enabled = config.time_config && config.time_config->ptp_enabled;
     if (const auto new_config = query_configuration(m_info.device.has_aux_camera(),
                                                     m_info.imu.has_value(),
                                                     ptp_enabled); new_config)
@@ -645,7 +651,7 @@ std::optional<MultiSenseStatus> LegacyChannel::get_system_status()
     }
 
     std::optional<wire::PtpStatusResponse> ptp_status = std::nullopt;
-    if (m_multisense_config.time_config.ptp_enabled)
+    if (m_multisense_config.time_config && m_multisense_config.time_config->ptp_enabled)
     {
 
         if (ptp_status = wait_for_data<wire::PtpStatusResponse>(m_message_assembler,

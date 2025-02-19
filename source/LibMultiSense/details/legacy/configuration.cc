@@ -190,27 +190,42 @@ crl::multisense::details::wire::CamControl convert<crl::multisense::details::wir
     wire::CamControl output;
 
     output.framesPerSecond = config.frames_per_second;
-    output.gain = config.image_config.manual_exposure.gain;
-    output.exposure = static_cast<uint32_t>(config.image_config.manual_exposure.exposure_time.count());
+
+    const auto manual_exposure = config.image_config.manual_exposure ? config.image_config.manual_exposure.value() :
+                                                                   MultiSenseConfig::ManualExposureConfig{};
+
+    output.gain = manual_exposure.gain;
+    output.exposure = static_cast<uint32_t>(manual_exposure.exposure_time.count());
 
     output.autoExposure = config.image_config.auto_exposure_enabled;
-    output.autoExposureMax = static_cast<uint32_t>(config.image_config.auto_exposure.max_exposure_time.count());
-    output.autoExposureDecay = config.image_config.auto_exposure.decay;
-    output.autoExposureThresh = config.image_config.auto_exposure.target_threshold;
-    output.autoExposureTargetIntensity = config.image_config.auto_exposure.target_intensity;
-    output.gainMax = config.image_config.auto_exposure.max_gain;
 
-    output.autoExposureRoiX = config.image_config.auto_exposure.roi.top_left_x_position;
-    output.autoExposureRoiY = config.image_config.auto_exposure.roi.top_left_y_position;
-    output.autoExposureRoiWidth = config.image_config.auto_exposure.roi.width;
-    output.autoExposureRoiHeight = config.image_config.auto_exposure.roi.height;
+    const auto auto_exposure = config.image_config.auto_exposure ? config.image_config.auto_exposure.value() :
+                                                                   MultiSenseConfig::AutoExposureConfig{};
 
-    output.whiteBalanceRed = config.image_config.manual_white_balance.red;
-    output.whiteBalanceBlue = config.image_config.manual_white_balance.blue;
+    output.autoExposureMax = static_cast<uint32_t>(auto_exposure.max_exposure_time.count());
+    output.autoExposureDecay = auto_exposure.decay;
+    output.autoExposureThresh = auto_exposure.target_threshold;
+    output.autoExposureTargetIntensity = auto_exposure.target_intensity;
+    output.gainMax = auto_exposure.max_gain;
+
+    output.autoExposureRoiX = auto_exposure.roi.top_left_x_position;
+    output.autoExposureRoiY = auto_exposure.roi.top_left_y_position;
+    output.autoExposureRoiWidth = auto_exposure.roi.width;
+    output.autoExposureRoiHeight = auto_exposure.roi.height;
+
+
+    const auto manual_wb = config.image_config.manual_white_balance ? config.image_config.manual_white_balance.value() :
+                                                                   MultiSenseConfig::ManualWhiteBalanceConfig{};
+
+    output.whiteBalanceRed = manual_wb.red;
+    output.whiteBalanceBlue = manual_wb.blue;
+
+    const auto auto_wb = config.image_config.auto_white_balance ? config.image_config.auto_white_balance.value() :
+                                                                   MultiSenseConfig::AutoWhiteBalanceConfig{};
 
     output.autoWhiteBalance = config.image_config.auto_white_balance_enabled;
-    output.autoWhiteBalanceDecay = config.image_config.auto_white_balance.decay;
-    output.autoWhiteBalanceThresh  = config.image_config.auto_white_balance.threshold;
+    output.autoWhiteBalanceDecay = auto_wb.decay;
+    output.autoWhiteBalanceThresh  = auto_wb.threshold;
 
     output.stereoPostFilterStrength = config.stereo_config.postfilter_strength;
 
@@ -226,29 +241,44 @@ crl::multisense::details::wire::AuxCamControl convert(const MultiSenseConfig::Au
 
     wire::AuxCamControl output;
 
-    output.gain = config.image_config.manual_exposure.gain;
-    output.exposure = static_cast<uint32_t>(config.image_config.manual_exposure.exposure_time.count());
+    const auto manual_exposure = config.image_config.manual_exposure ? config.image_config.manual_exposure.value() :
+                                                                   MultiSenseConfig::ManualExposureConfig{};
+
+    output.gain = manual_exposure.gain;
+    output.exposure = static_cast<uint32_t>(manual_exposure.exposure_time.count());
 
     output.autoExposure = config.image_config.auto_exposure_enabled;
-    output.autoExposureMax = static_cast<uint32_t>(config.image_config.auto_exposure.max_exposure_time.count());
-    output.autoExposureDecay = config.image_config.auto_exposure.decay;
-    output.autoExposureThresh = config.image_config.auto_exposure.target_threshold;
-    output.autoExposureTargetIntensity = config.image_config.auto_exposure.target_intensity;
-    output.gainMax = config.image_config.auto_exposure.max_gain;
 
-    output.autoExposureRoiX = config.image_config.auto_exposure.roi.top_left_x_position;
-    output.autoExposureRoiY = config.image_config.auto_exposure.roi.top_left_y_position;
-    output.autoExposureRoiWidth = config.image_config.auto_exposure.roi.width;
-    output.autoExposureRoiHeight = config.image_config.auto_exposure.roi.height;
+    const auto auto_exposure = config.image_config.auto_exposure ? config.image_config.auto_exposure.value() :
+                                                                   MultiSenseConfig::AutoExposureConfig{};
 
-    output.whiteBalanceRed = config.image_config.manual_white_balance.red;
-    output.whiteBalanceBlue = config.image_config.manual_white_balance.blue;
+    output.autoExposureMax = static_cast<uint32_t>(auto_exposure.max_exposure_time.count());
+    output.autoExposureDecay = auto_exposure.decay;
+    output.autoExposureThresh = auto_exposure.target_threshold;
+    output.autoExposureTargetIntensity = auto_exposure.target_intensity;
+    output.gainMax = auto_exposure.max_gain;
+
+    output.autoExposureRoiX = auto_exposure.roi.top_left_x_position;
+    output.autoExposureRoiY = auto_exposure.roi.top_left_y_position;
+    output.autoExposureRoiWidth = auto_exposure.roi.width;
+    output.autoExposureRoiHeight = auto_exposure.roi.height;
+
+
+    const auto manual_wb = config.image_config.manual_white_balance ? config.image_config.manual_white_balance.value() :
+                                                                      MultiSenseConfig::ManualWhiteBalanceConfig{};
+
+    output.whiteBalanceRed = manual_wb.red;
+    output.whiteBalanceBlue = manual_wb.blue;
+
+    const auto auto_wb = config.image_config.auto_white_balance ? config.image_config.auto_white_balance.value() :
+                                                                  MultiSenseConfig::AutoWhiteBalanceConfig{};
 
     output.autoWhiteBalance = config.image_config.auto_white_balance_enabled;
-    output.autoWhiteBalanceDecay = config.image_config.auto_white_balance.decay;
-    output.autoWhiteBalanceThresh  = config.image_config.auto_white_balance.threshold;
+    output.autoWhiteBalanceDecay = auto_wb.decay;
+    output.autoWhiteBalanceThresh  = auto_wb.threshold;
 
-    output.hdrEnabled = false;;
+
+    output.hdrEnabled = false;
     output.gamma = config.image_config.gamma;
     output.sharpeningEnable = config.sharpening_enabled;
     output.sharpeningPercentage = config.sharpening_percentage;

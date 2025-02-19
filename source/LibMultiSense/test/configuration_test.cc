@@ -80,8 +80,8 @@ multisense::MultiSenseConfig create_valid_config(const multisense::MultiSenseCon
                             stereo_config,
                             image_config,
                             aux_config,
-                            time,
-                            network,
+                            std::make_optional(time),
+                            std::make_optional(network),
                             std::nullopt,
                             std::nullopt};
 }
@@ -285,27 +285,31 @@ template <typename ConfigT, typename ControlT>
 void check_equal(const ConfigT &config,
                  const ControlT &control)
 {
-    ASSERT_FLOAT_EQ(config.manual_exposure.gain, control.gain);
-    ASSERT_EQ(config.manual_exposure.exposure_time.count(), control.exposure);
+    ASSERT_TRUE(static_cast<bool>(config.manual_exposure));
+    ASSERT_FLOAT_EQ(config.manual_exposure->gain, control.gain);
+    ASSERT_EQ(config.manual_exposure->exposure_time.count(), control.exposure);
 
+    ASSERT_TRUE(static_cast<bool>(config.auto_exposure));
     ASSERT_EQ(config.auto_exposure_enabled, control.autoExposure);
-    ASSERT_EQ(config.auto_exposure.max_exposure_time.count(), control.autoExposureMax);
-    ASSERT_EQ(config.auto_exposure.decay, control.autoExposureDecay);
-    ASSERT_FLOAT_EQ(config.auto_exposure.target_threshold, control.autoExposureThresh);
-    ASSERT_FLOAT_EQ(config.auto_exposure.target_intensity, control.autoExposureTargetIntensity);
-    ASSERT_FLOAT_EQ(config.auto_exposure.max_gain, control.gainMax);
+    ASSERT_EQ(config.auto_exposure->max_exposure_time.count(), control.autoExposureMax);
+    ASSERT_EQ(config.auto_exposure->decay, control.autoExposureDecay);
+    ASSERT_FLOAT_EQ(config.auto_exposure->target_threshold, control.autoExposureThresh);
+    ASSERT_FLOAT_EQ(config.auto_exposure->target_intensity, control.autoExposureTargetIntensity);
+    ASSERT_FLOAT_EQ(config.auto_exposure->max_gain, control.gainMax);
 
-    ASSERT_EQ(config.auto_exposure.roi.top_left_x_position, control.autoExposureRoiX);
-    ASSERT_EQ(config.auto_exposure.roi.top_left_y_position, control.autoExposureRoiY);
-    ASSERT_EQ(config.auto_exposure.roi.width, control.autoExposureRoiWidth);
-    ASSERT_EQ(config.auto_exposure.roi.height, control.autoExposureRoiHeight);
+    ASSERT_EQ(config.auto_exposure->roi.top_left_x_position, control.autoExposureRoiX);
+    ASSERT_EQ(config.auto_exposure->roi.top_left_y_position, control.autoExposureRoiY);
+    ASSERT_EQ(config.auto_exposure->roi.width, control.autoExposureRoiWidth);
+    ASSERT_EQ(config.auto_exposure->roi.height, control.autoExposureRoiHeight);
 
-    ASSERT_FLOAT_EQ(config.manual_white_balance.red, control.whiteBalanceRed);
-    ASSERT_FLOAT_EQ(config.manual_white_balance.blue, control.whiteBalanceBlue);
+    ASSERT_TRUE(static_cast<bool>(config.manual_white_balance));
+    ASSERT_FLOAT_EQ(config.manual_white_balance->red, control.whiteBalanceRed);
+    ASSERT_FLOAT_EQ(config.manual_white_balance->blue, control.whiteBalanceBlue);
 
+    ASSERT_TRUE(static_cast<bool>(config.auto_white_balance));
     ASSERT_EQ(config.auto_white_balance_enabled, control.autoWhiteBalance);
-    ASSERT_EQ(config.auto_white_balance.decay, control.autoWhiteBalanceDecay);
-    ASSERT_EQ(config.auto_white_balance.threshold, control.autoWhiteBalanceThresh);
+    ASSERT_EQ(config.auto_white_balance->decay, control.autoWhiteBalanceDecay);
+    ASSERT_EQ(config.auto_white_balance->threshold, control.autoWhiteBalanceThresh);
 
     ASSERT_EQ(config.gamma, control.gamma);
 }
@@ -693,7 +697,9 @@ TEST(convert, cam_config_invalid_imu)
     ASSERT_FALSE(static_cast<bool>(config.imu_config));
 
     check_equal(config, wire_config, 1920, 1200);
-    check_equal(config.network_config, packet_config);
+
+    ASSERT_TRUE(static_cast<bool>(config.network_config));
+    check_equal(config.network_config.value(), packet_config);
 }
 
 TEST(convert, cam_config_invalid_led)
@@ -713,7 +719,9 @@ TEST(convert, cam_config_invalid_led)
     ASSERT_FALSE(static_cast<bool>(config.lighting_config));
 
     check_equal(config, wire_config, 1920, 1200);
-    check_equal(config.network_config, packet_config);
+
+    ASSERT_TRUE(static_cast<bool>(config.network_config));
+    check_equal(config.network_config.value(), packet_config);
 }
 
 TEST(convert, cam_config_valid_led_but_no_ligths)
@@ -737,7 +745,9 @@ TEST(convert, cam_config_valid_led_but_no_ligths)
     ASSERT_FALSE(static_cast<bool>(config.lighting_config));
 
     check_equal(config, wire_config, 1920, 1200);
-    check_equal(config.network_config, packet_config);
+
+    ASSERT_TRUE(static_cast<bool>(config.network_config));
+    check_equal(config.network_config.value(), packet_config);
 }
 
 TEST(convert, imu_config_round_trip)
@@ -789,7 +799,8 @@ TEST(convert, network_config)
                                 create_device_info(1920, 1200),
                                 create_imu_info());
 
-    check_equal(config.network_config,
-                convert<wire::SysPacketDelay>(config.network_config));
+    ASSERT_TRUE(static_cast<bool>(config.network_config));
+    check_equal(config.network_config.value(),
+                convert<wire::SysPacketDelay>(config.network_config.value()));
 
 }

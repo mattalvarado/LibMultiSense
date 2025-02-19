@@ -582,7 +582,7 @@ struct MultiSenseConfig
         /// @brief The auto exposure region-of-interest used to restrict the portion of the image which the
         ///        auto exposure algorithm is run on
         ///
-        AutoExposureRoiConfig roi;
+        AutoExposureRoiConfig roi{};
 
         ///
         /// @brief Equality operator
@@ -669,12 +669,12 @@ struct MultiSenseConfig
         ///
         /// @brief The exposure config to use if auto exposure is disabled
         ///
-        ManualExposureConfig manual_exposure;
+        std::optional<ManualExposureConfig> manual_exposure = std::nullopt;
 
         ///
         /// @brief The exposure config to use if auto exposure is enabled
         ///
-        AutoExposureConfig auto_exposure;
+        std::optional<AutoExposureConfig> auto_exposure = std::nullopt;
 
         ///
         /// @brief Enable or disable auto white balance
@@ -684,12 +684,12 @@ struct MultiSenseConfig
         ///
         /// @brief The white balance parameters to use if auto white balance is disabled
         ///
-        ManualWhiteBalanceConfig manual_white_balance;
+        std::optional<ManualWhiteBalanceConfig> manual_white_balance = std::nullopt;
 
         ///
         /// @brief The white balance parameters to use if auto white balance is enabled
         ///
-        AutoWhiteBalanceConfig auto_white_balance;
+        std::optional<AutoWhiteBalanceConfig> auto_white_balance = std::nullopt;
 
         ///
         /// @brief Equality operator
@@ -996,10 +996,6 @@ struct MultiSenseConfig
         }
     };
 
-    //
-    // TODO (malvarado): make all these optional. except res/disparities
-    //
-
     ///
     /// @brief The operating resolution of the MultiSense
     /// TODO (malvarado) reconsider?
@@ -1034,12 +1030,12 @@ struct MultiSenseConfig
     ///
     /// @brief Config for the MultiSense time-sync options
     ///
-    TimeConfig time_config;
+    std::optional<TimeConfig> time_config = std::nullopt;
 
     ///
     /// @brief Config to control network transmission settings
     ///
-    NetworkTransmissionConfig network_config;
+    std::optional<NetworkTransmissionConfig> network_config = std::nullopt;
 
     ///
     /// @brief The imu configuration to use for the camera. Will be invalid if sensor does not contain an IMU
@@ -1050,7 +1046,7 @@ struct MultiSenseConfig
     /// @brief The lighting configuration for the camera. If invalid, the camera does not support lighting
     ///        configuration
     ///
-    std::optional<LightingConfig> lighting_config{};
+    std::optional<LightingConfig> lighting_config = std::nullopt;
 
     ///
     /// @brief Equality operator
@@ -1227,7 +1223,7 @@ struct MultiSenseStatus
     ///
     /// @brief The current ptp status. Only valid if ptp is enabled
     ///
-    std::optional<PtpStatus> ptp;
+    std::optional<PtpStatus> ptp = std::nullopt;
 
     ///
     /// @brief The current camera status
