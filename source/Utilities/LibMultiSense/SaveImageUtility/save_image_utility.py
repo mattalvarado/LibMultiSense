@@ -41,6 +41,27 @@ import cv2
 
 import libmultisense as lms
 
+def get_status_string(status):
+    output = f"Camera Time(ns): {status.time.camera_time}, "\
+             f"System Ok: {status.system_ok}, "
+
+    temp = ""
+    if status.temperature:
+        temp = f"FPGA Temp (C): {status.temperature.fpga_temperature}, "\
+               f"Left Imager Temp (C): {status.temperature.left_imager_temperature}, "\
+               f"Right Imager Temp (C): {status.temperature.right_imager_temperature}, "
+
+    power = ""
+    if status.power:
+        power = f"Input Voltage (V): {status.power.input_voltage}, "\
+                f"Input Current (A): {status.power.input_current}, "\
+                f"FPGA Power (W): {status.power.fpga_power}, "\
+
+    stats = f"Received Messages {status.client_network.received_messages}, "\
+            f"Dropped Messages {status.client_network.dropped_messages}"
+
+    return output + temp + power + stats
+
 def main(args):
     channel_config = lms.ChannelConfig()
     channel_config.ip_address = args.ip_address
@@ -80,16 +101,7 @@ def main(args):
 
         status = channel.get_system_status()
         if status:
-            print("Camera Time(ns): " , status.time.camera_time,
-                  "System Ok: " , status.system_ok,
-                  "FPGA Temp (C): " , status.temperature.fpga_temperature_C,
-                  "Left Imager Temp (C): " , status.temperature.left_imager_temperature_C,
-                  "Right Imager Temp (C): " , status.temperature.right_imager_temperature_C,
-                  "Input Voltage (V): " , status.power.input_voltage,
-                  "Input Current (A): " , status.power.input_current,
-                  "FPGA Power (W): " , status.power.fpga_power,
-                  "Received Messages ", status.client_network.received_messages,
-                  "Dropped Messages ", status.client_network.dropped_messages)
+            print(get_status_string(status))
 
         time.sleep(1)
 

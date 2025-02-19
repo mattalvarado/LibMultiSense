@@ -1212,10 +1212,6 @@ struct MultiSenseStatus
     };
 
     ///
-    /// TODO (malvarado): Make optional members
-    ///
-
-    ///
     /// @brief Summary of the current MultiSense state. True if the MultiSense is operating properly
     ///
     bool system_ok = false;
@@ -1233,12 +1229,12 @@ struct MultiSenseStatus
     ///
     /// @brief The current temperature status
     ///
-    TemperatureStatus temperature;
+    std::optional<TemperatureStatus> temperature = std::nullopt;
 
     ///
     /// @brief The current power status
     ///
-    PowerStatus power;
+    std::optional<PowerStatus> power = std::nullopt;
 
     ///
     /// @brief The current client network statistics
@@ -1248,7 +1244,7 @@ struct MultiSenseStatus
     ///
     /// @brief The current timing status information
     ///
-    TimeStatus time;
+    std::optional<TimeStatus> time = std::nullopt;
 };
 
 ///

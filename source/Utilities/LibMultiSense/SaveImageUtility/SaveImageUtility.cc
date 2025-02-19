@@ -174,16 +174,16 @@ int main(int argc, char** argv)
 
         if (const auto status = channel->get_system_status(); status)
         {
-            std::cout << "Camera Time(ns): " << status->time.camera_time.count() << ", " <<
-                         "System Ok: " << status->system_ok << ", " <<
-                         "FPGA Temp (C): " << status->temperature.fpga_temperature << ", " <<
-                         "Left Imager Temp (C): " << status->temperature.left_imager_temperature << ", " <<
-                         "Right Imager Temp (C): " << status->temperature.right_imager_temperature << ", " <<
-                         "Input Voltage (V): " << status->power.input_voltage << ", " <<
-                         "Input Current (A): " << status->power.input_current << ", " <<
-                         "FPGA Power (W): " << status->power.fpga_power << " , " <<
-                         "Received Messages: " << status->client_network.received_messages << " , " <<
-                         "Dropped Messages: " << status->client_network.dropped_messages << std::endl;
+            if (status->time) std::cout << "Camera Time(ns): " << status->time->camera_time.count() << ", ";
+            std::cout << "System Ok: " << status->system_ok << ", ";
+            if (status->temperature) std::cout << "FPGA Temp (C): " << status->temperature->fpga_temperature << ", ";
+            if (status->temperature) std::cout << "Left Imager Temp (C): " << status->temperature->left_imager_temperature << ", ";
+            if (status->temperature) std::cout << "Right Imager Temp (C): " << status->temperature->right_imager_temperature << ", ";
+            if (status->power) std::cout << "Input Voltage (V): " << status->power->input_voltage << ", ";
+            if (status->power) std::cout << "Input Current (A): " << status->power->input_current << ", ";
+            if (status->power) std::cout << "FPGA Power (W): " << status->power->fpga_power << " , ";
+            std::cout << "Received Messages: " << status->client_network.received_messages << " , ";
+            std::cout << "Dropped Messages: " << status->client_network.dropped_messages << std::endl;
         }
         else
         {
