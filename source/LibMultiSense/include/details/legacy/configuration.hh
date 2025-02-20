@@ -122,13 +122,6 @@ MultiSenseConfig::NetworkTransmissionConfig
     convert(const crl::multisense::details::wire::SysPacketDelay &packet);
 
 ///
-/// @brief Convert the current configuration to a wire resolution message
-///
-crl::multisense::details::wire::CamSetResolution convert_resolution(const MultiSenseConfig &config,
-                                                                    uint32_t imager_width,
-                                                                    uint32_t imager_height);
-
-///
 /// @brief Generic conversions between the MultiSenseConfig::NetworkTransmissionConfig config
 ///        object an MultiSense wire types
 ///

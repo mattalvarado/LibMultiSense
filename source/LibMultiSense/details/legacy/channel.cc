@@ -393,7 +393,7 @@ Status LegacyChannel::set_configuration(const MultiSenseConfig &config)
     //
     const auto res_ack = wait_for_ack(m_message_assembler,
                                       m_socket,
-                                      convert_resolution(config, m_info.device.imager_width, m_info.device.imager_height),
+                                      convert<wire::CamSetResolution>(config),
                                       m_transmit_id++,
                                       m_current_mtu,
                                       m_config.receive_timeout);
@@ -906,7 +906,7 @@ std::optional<MultiSenseInfo> LegacyChannel::query_info()
 
     return MultiSenseInfo{device_info.value(),
                           convert(version.value()),
-                          convert(device_modes.value(), device_info->imager_width, device_info->imager_height),
+                          convert(device_modes.value()),
                           imu_info ? std::make_optional(convert(imu_info.value())) : std::nullopt,
                           convert(network_info.value())};
 }

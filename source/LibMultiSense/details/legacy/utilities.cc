@@ -91,34 +91,6 @@ MultiSenseInfo::Version get_version(const crl::multisense::details::wire::Versio
     return MultiSenseInfo::Version{static_cast<uint32_t>(version >> 8), static_cast<uint32_t>(version & 0xFF), 0};
 }
 
-MultiSenseConfig::OperatingResolution get_resolution(uint32_t width,
-                                                            uint32_t height,
-                                                            uint32_t imager_width,
-                                                            uint32_t imager_height)
-{
-    MultiSenseConfig::OperatingResolution resolution =
-        MultiSenseConfig::OperatingResolution::FULL_RESOLUTION;
-
-    const double x_scalar = static_cast<double>(width) / static_cast<double>(imager_width);
-    const double y_scalar = static_cast<double>(height) / static_cast<double>(imager_height);
-
-
-    if (std::abs(x_scalar - 1) < 1e-6 && std::abs(y_scalar - 1) < 1e-6)
-    {
-        resolution = MultiSenseConfig::OperatingResolution::FULL_RESOLUTION;
-    }
-    else if (std::abs(x_scalar - 0.5) < 1e-6 && std::abs(y_scalar - 0.5) < 1e-6)
-    {
-        resolution = MultiSenseConfig::OperatingResolution::QUARTER_RESOLUTION;
-    }
-    else
-    {
-        resolution = MultiSenseConfig::OperatingResolution::UNSUPPORTED;
-    }
-
-    return resolution;
-}
-
 MultiSenseConfig::MaxDisparities get_disparities(size_t disparity)
 {
     auto disparities = MultiSenseConfig::MaxDisparities::D256;

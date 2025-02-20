@@ -112,14 +112,6 @@ Status get_status(const crl::multisense::details::wire::Ack::AckStatus &status);
 MultiSenseInfo::Version get_version(const crl::multisense::details::wire::VersionType &version);
 
 ///
-/// @brief Get the operating resolution based on the current width/height and the native imager width height
-///
-MultiSenseConfig::OperatingResolution get_resolution(uint32_t width,
-                                                            uint32_t height,
-                                                            uint32_t imager_width,
-                                                            uint32_t imager_height);
-
-///
 /// @brief Convert a disparity integer to a fixed disparity setting
 ///
 MultiSenseConfig::MaxDisparities get_disparities(size_t disparity);

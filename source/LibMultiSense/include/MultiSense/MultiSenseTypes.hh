@@ -748,26 +748,6 @@ struct MultiSenseConfig
     };
 
     ///
-    /// @brief Operating resolutions for the MultiSense
-    ///
-    enum class OperatingResolution : uint8_t
-    {
-        ///
-        /// @brief default value to handle any unknown values
-        ///
-        UNSUPPORTED,
-        ///
-        /// @brief Operates at the native resolution of the camera's imager sensor
-        ///
-        FULL_RESOLUTION,
-        ///
-        /// @brief Operates at the 1/4 of resolution of the camera's imager sensor. 1/2 of the native width and 1/2
-        ///        of the native height
-        ///
-        QUARTER_RESOLUTION
-    };
-
-    ///
     /// @brief Predefined disparity pixel search windows. Larger values allows the camera to see objects
     ///        closer to the camera
     ///
@@ -997,10 +977,16 @@ struct MultiSenseConfig
     };
 
     ///
-    /// @brief The operating resolution of the MultiSense
-    /// TODO (malvarado) reconsider?
+    /// @brief The operating width of the MultiSense in pixels. For available operating resolutions
+    ///        see the MultiSenseInfo::SupportedOperatingMode
     ///
-    OperatingResolution resolution = OperatingResolution::QUARTER_RESOLUTION;
+    uint32_t width = 0;
+
+    ///
+    /// @brief The operating height of the MultiSense in pixels. For available operating resolutions
+    ///        see the MultiSenseInfo::SupportedOperatingMode
+    ///
+    uint32_t height = 0;
 
     ///
     /// @brief The max number of pixels the MultiSense searches when computing the disparity output
@@ -1053,7 +1039,8 @@ struct MultiSenseConfig
     ///
     bool operator==(const MultiSenseConfig &rhs) const
     {
-        return resolution == rhs.resolution &&
+        return width == rhs.width &&
+               height == rhs.height &&
                disparities == rhs.disparities &&
                frames_per_second == rhs.frames_per_second &&
                stereo_config == rhs.stereo_config &&
@@ -1523,9 +1510,14 @@ struct MultiSenseInfo
     struct SupportedOperatingMode
     {
         ///
-        /// @brief Supported operating resolution
+        /// @brief The width of the output image in pixels
         ///
-        MultiSenseConfig::OperatingResolution resolution = MultiSenseConfig::OperatingResolution::QUARTER_RESOLUTION;
+        uint32_t width = 0;
+
+        ///
+        /// @brief The height of the output image in pixels
+        ///
+        uint32_t height = 0;
 
         ///
         /// @brief Supported operating disparity

@@ -347,24 +347,14 @@ TEST(convert, device_modes)
     constexpr uint32_t imager_height = 1200;
 
     const auto wire_modes = create_device_modes(sources, imager_width, imager_height);
-    const auto modes = convert(wire_modes, imager_width, imager_height);
+    const auto modes = convert(wire_modes);
 
     ASSERT_EQ(modes.size(), wire_modes.modes.size());
 
     for(size_t i = 0 ; i < modes.size() ; ++i)
     {
-        if (wire_modes.modes[i].width == imager_width && wire_modes.modes[i].height == imager_height)
-        {
-            ASSERT_EQ(modes[i].resolution, MultiSenseConfig::OperatingResolution::FULL_RESOLUTION);
-        }
-        else if (wire_modes.modes[i].width == imager_width / 2 && wire_modes.modes[i].height == imager_height / 2)
-        {
-            ASSERT_EQ(modes[i].resolution, MultiSenseConfig::OperatingResolution::QUARTER_RESOLUTION);
-        }
-        else
-        {
-            ASSERT_EQ(modes[i].resolution, MultiSenseConfig::OperatingResolution::UNSUPPORTED);
-        }
+        ASSERT_EQ(modes[i].width, wire_modes.modes[i].width);
+        ASSERT_EQ(modes[i].height, wire_modes.modes[i].height);
 
         ASSERT_EQ(modes[i].disparities, get_disparities(wire_modes.modes[i].disparities));
 

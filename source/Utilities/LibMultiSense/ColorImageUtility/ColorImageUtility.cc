@@ -124,7 +124,6 @@ int main(int argc, char** argv)
     //
     auto config = channel->get_configuration();
     config.frames_per_second = 30.0;
-    config.resolution = lms::MultiSenseConfig::OperatingResolution::QUARTER_RESOLUTION;
     if (const auto status = channel->set_configuration(config); status != lms::Status::OK)
     {
         std::cerr << "Cannot set config" << std::endl;

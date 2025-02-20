@@ -246,16 +246,13 @@ MultiSenseInfo::SensorVersion convert(const crl::multisense::details::wire::Vers
                                          response.hardwareVersion};
 }
 
-std::vector<MultiSenseInfo::SupportedOperatingMode> convert(const crl::multisense::details::wire::SysDeviceModes &modes,
-                                                            uint32_t imager_width,
-                                                            uint32_t imager_height)
+std::vector<MultiSenseInfo::SupportedOperatingMode> convert(const crl::multisense::details::wire::SysDeviceModes &modes)
 {
     std::vector<MultiSenseInfo::SupportedOperatingMode> output;
     for (const auto &mode : modes.modes)
     {
         const auto full_sources = (static_cast<uint64_t>(mode.extendedDataSources)) << 32 | mode.supportedDataSources;
-        output.emplace_back(MultiSenseInfo::SupportedOperatingMode{get_resolution(mode.width, mode.height,
-                                                                                  imager_width, imager_height),
+        output.emplace_back(MultiSenseInfo::SupportedOperatingMode{mode.width, mode.height,
                                                                    get_disparities(mode.disparities),
                                                                    convert_sources(full_sources)});
     }

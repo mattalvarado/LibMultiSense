@@ -166,12 +166,6 @@ NLOHMANN_JSON_SERIALIZE_ENUM(CameraCalibration::DistortionType, {
     {CameraCalibration::DistortionType::RATIONAL_POLYNOMIAL, "RATIONAL_POLYNOMIAL"}
 })
 
-NLOHMANN_JSON_SERIALIZE_ENUM(MultiSenseConfig::OperatingResolution, {
-    {MultiSenseConfig::OperatingResolution::UNSUPPORTED, "UNSUPPORTED"},
-    {MultiSenseConfig::OperatingResolution::FULL_RESOLUTION, "FULL_RESOLUTION"},
-    {MultiSenseConfig::OperatingResolution::QUARTER_RESOLUTION, "QUARTER_RESOLUTION"}
-})
-
 NLOHMANN_JSON_SERIALIZE_ENUM(MultiSenseConfig::MaxDisparities, {
     {MultiSenseConfig::MaxDisparities::D64, "D64"},
     {MultiSenseConfig::MaxDisparities::D128, "D128"},
@@ -322,7 +316,8 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfig::ImuConfig,
                                    magnetometer)
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseConfig,
-                                   resolution,
+                                   width,
+                                   height,
                                    disparities,
                                    frames_per_second,
                                    stereo_config,
@@ -412,7 +407,8 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseInfo::SensorVersion,
                                    hardware_version)
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiSenseInfo::SupportedOperatingMode,
-                                   resolution,
+                                   width,
+                                   height,
                                    disparities,
                                    supported_sources)
 

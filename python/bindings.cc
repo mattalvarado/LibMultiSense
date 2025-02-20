@@ -315,12 +315,6 @@ PYBIND11_MODULE(libmultisense, m) {
         .def_readwrite("sharpening_percentage", &multisense::MultiSenseConfig::AuxConfig::sharpening_percentage)
         .def_readwrite("sharpening_limit", &multisense::MultiSenseConfig::AuxConfig::sharpening_limit);
 
-    // MultiSenseConfig::OperatingResolution
-    py::enum_<multisense::MultiSenseConfig::OperatingResolution>(m, "OperatingResolution")
-        .value("UNSUPPORTED", multisense::MultiSenseConfig::OperatingResolution::UNSUPPORTED)
-        .value("FULL_RESOLUTION", multisense::MultiSenseConfig::OperatingResolution::FULL_RESOLUTION)
-        .value("QUARTER_RESOLUTION", multisense::MultiSenseConfig::OperatingResolution::QUARTER_RESOLUTION);
-
     // MultiSenseConfig::MaxDisparities
     py::enum_<multisense::MultiSenseConfig::MaxDisparities>(m, "MaxDisparities")
         .value("D64", multisense::MultiSenseConfig::MaxDisparities::D64)
@@ -398,7 +392,8 @@ PYBIND11_MODULE(libmultisense, m) {
         .def(py::init<>())
         PYBIND11_JSON_SUPPORT(multisense::MultiSenseConfig)
         .def(py::self == py::self)
-        .def_readwrite("resolution", &multisense::MultiSenseConfig::resolution)
+        .def_readwrite("width", &multisense::MultiSenseConfig::width)
+        .def_readwrite("height", &multisense::MultiSenseConfig::height)
         .def_readwrite("disparities", &multisense::MultiSenseConfig::disparities)
         .def_readwrite("frames_per_second", &multisense::MultiSenseConfig::frames_per_second)
         .def_readwrite("stereo_config", &multisense::MultiSenseConfig::stereo_config)
@@ -570,7 +565,8 @@ PYBIND11_MODULE(libmultisense, m) {
     py::class_<multisense::MultiSenseInfo::SupportedOperatingMode>(m, "SupportedOperatingMode")
         .def(py::init<>())
         PYBIND11_JSON_SUPPORT(multisense::MultiSenseInfo::SupportedOperatingMode)
-        .def_readwrite("resolution", &multisense::MultiSenseInfo::SupportedOperatingMode::resolution)
+        .def_readwrite("width", &multisense::MultiSenseInfo::SupportedOperatingMode::width)
+        .def_readwrite("height", &multisense::MultiSenseInfo::SupportedOperatingMode::height)
         .def_readwrite("disparities", &multisense::MultiSenseInfo::SupportedOperatingMode::disparities)
         .def_readwrite("supported_sources", &multisense::MultiSenseInfo::SupportedOperatingMode::supported_sources);
 

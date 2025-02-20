@@ -84,20 +84,21 @@ MultiSenseConfig convert(const crl::multisense::details::wire::CamConfig &config
                                         std::move(manual_white_balance),
                                         std::move(auto_white_balance)};
 
-    return MultiSenseConfig{get_resolution(config.width, config.height, info.imager_width, info.imager_height),
-                                   get_disparities(config.disparities),
-                                   config.framesPerSecond,
-                                   std::move(stereo),
-                                   std::move(image),
-                                   (aux_config ? std::make_optional(convert(aux_config.value())) : std::nullopt),
-                                   ms_config::TimeConfig{ptp_enabled},
-                                   convert(packet_delay),
-                                   (imu_config && imu_info) ?
-                                       std::make_optional(convert(imu_config.value(), imu_info.value())) :
-                                       std::nullopt,
-                                   (led_config && led_config->available) ?
-                                       std::make_optional(convert(led_config.value(), info.lighting_type)) :
-                                       std::nullopt};
+    return MultiSenseConfig{config.width,
+                            config.height,
+                            get_disparities(config.disparities),
+                            config.framesPerSecond,
+                            std::move(stereo),
+                            std::move(image),
+                            (aux_config ? std::make_optional(convert(aux_config.value())) : std::nullopt),
+                            ms_config::TimeConfig{ptp_enabled},
+                            convert(packet_delay),
+                            (imu_config && imu_info) ?
+                                std::make_optional(convert(imu_config.value(), imu_info.value())) :
+                                std::nullopt,
+                            (led_config && led_config->available) ?
+                                std::make_optional(convert(led_config.value(), info.lighting_type)) :
+                                std::nullopt};
 }
 
 MultiSenseConfig::AuxConfig convert(const crl::multisense::details::wire::AuxCamConfig &config)
@@ -138,9 +139,8 @@ MultiSenseConfig::AuxConfig convert(const crl::multisense::details::wire::AuxCam
                                        config.sharpeningLimit};
 }
 
-crl::multisense::details::wire::CamSetResolution convert_resolution(const MultiSenseConfig &config,
-                                                                    uint32_t imager_width,
-                                                                    uint32_t imager_height)
+template <>
+crl::multisense::details::wire::CamSetResolution convert<crl::multisense::details::wire::CamSetResolution>(const MultiSenseConfig &config)
 {
     using namespace crl::multisense::details;
 
@@ -153,33 +153,7 @@ crl::multisense::details::wire::CamSetResolution convert_resolution(const MultiS
         case MultiSenseConfig::MaxDisparities::D256: {disparities = 256; break;}
     }
 
-    auto width = imager_width;
-    auto height = imager_height;
-
-    switch (config.resolution)
-    {
-        case MultiSenseConfig::OperatingResolution::FULL_RESOLUTION:
-        {
-            width = imager_width;
-            height = imager_height;
-            break;
-        }
-        case MultiSenseConfig::OperatingResolution::QUARTER_RESOLUTION:
-        {
-            width = static_cast<uint32_t>(static_cast<double>(imager_width) * 0.5);
-            height = static_cast<uint32_t>(static_cast<double>(imager_height) * 0.5);
-            break;
-        }
-        case MultiSenseConfig::OperatingResolution::UNSUPPORTED:
-        default:
-        {
-            CRL_EXCEPTION("Unsupported operating resolution\n");
-        }
-    }
-
-    wire::CamSetResolution output{width, height, disparities};
-
-    return output;
+    return wire::CamSetResolution{config.width, config.height, disparities};
 }
 
 template <>

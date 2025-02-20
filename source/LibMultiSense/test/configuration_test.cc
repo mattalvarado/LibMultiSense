@@ -40,7 +40,7 @@
 
 using namespace multisense::legacy;
 
-multisense::MultiSenseConfig create_valid_config(const multisense::MultiSenseConfig::OperatingResolution &res)
+multisense::MultiSenseConfig create_valid_config(uint32_t width, uint32_t height)
 {
     using namespace multisense;
     using namespace std::chrono_literals;
@@ -74,7 +74,8 @@ multisense::MultiSenseConfig create_valid_config(const multisense::MultiSenseCon
 
     MultiSenseConfig::NetworkTransmissionConfig network{true};
 
-    return MultiSenseConfig{res,
+    return MultiSenseConfig{width,
+                            height,
                             MultiSenseConfig::MaxDisparities::D256,
                             11.0,
                             stereo_config,
@@ -243,35 +244,12 @@ crl::multisense::details::wire::LedStatus create_valid_lighting_wire_config()
 }
 
 void check_equal(const multisense::MultiSenseConfig &config,
-                 const crl::multisense::details::wire::CamSetResolution &res,
-                 uint32_t imager_width,
-                 uint32_t imager_height)
+                 const crl::multisense::details::wire::CamSetResolution &res)
 {
     using namespace multisense;
 
-    switch (config.resolution)
-    {
-        case MultiSenseConfig::OperatingResolution::FULL_RESOLUTION:
-        {
-            ASSERT_EQ(imager_width, res.width);
-            ASSERT_EQ(imager_height, res.height);
-            break;
-        }
-        case MultiSenseConfig::OperatingResolution::QUARTER_RESOLUTION:
-        {
-            ASSERT_DOUBLE_EQ(imager_width * 0.5, static_cast<double>(res.width));
-            ASSERT_DOUBLE_EQ(imager_height * 0.5, static_cast<double>(res.height));
-            break;
-        }
-        case MultiSenseConfig::OperatingResolution::UNSUPPORTED:
-        {
-            ASSERT_NE(imager_width, res.width);
-            ASSERT_NE(imager_height, res.height);
-            ASSERT_NE(imager_width * 0.5, static_cast<double>(res.width));
-            ASSERT_NE(imager_height * 0.5, static_cast<double>(res.height));
-            break;
-        }
-    }
+    ASSERT_EQ(config.width, res.width);
+    ASSERT_EQ(config.height, res.height);
 
     switch(config.disparities)
     {
@@ -341,36 +319,14 @@ void check_equal(const multisense::MultiSenseConfig &config,
 }
 
 void check_equal(const multisense::MultiSenseConfig &config,
-                 const crl::multisense::details::wire::CamConfig &wire_config,
-                 uint32_t imager_width,
-                 uint32_t imager_height)
+                 const crl::multisense::details::wire::CamConfig &wire_config)
 {
     using namespace multisense;
 
     ASSERT_FLOAT_EQ(config.stereo_config.postfilter_strength, wire_config.stereoPostFilterStrength);
-    switch (config.resolution)
-    {
-        case MultiSenseConfig::OperatingResolution::FULL_RESOLUTION:
-        {
-            ASSERT_EQ(imager_width, wire_config.width);
-            ASSERT_EQ(imager_height, wire_config.height);
-            break;
-        }
-        case MultiSenseConfig::OperatingResolution::QUARTER_RESOLUTION:
-        {
-            ASSERT_DOUBLE_EQ(imager_width * 0.5, static_cast<double>(wire_config.width));
-            ASSERT_DOUBLE_EQ(imager_height * 0.5, static_cast<double>(wire_config.height));
-            break;
-        }
-        case MultiSenseConfig::OperatingResolution::UNSUPPORTED:
-        {
-            ASSERT_NE(imager_width, wire_config.width);
-            ASSERT_NE(imager_height, wire_config.height);
-            ASSERT_NE(imager_width * 0.5, static_cast<double>(wire_config.width));
-            ASSERT_NE(imager_height * 0.5, static_cast<double>(wire_config.height));
-            break;
-        }
-    }
+
+    ASSERT_EQ(config.width, wire_config.width);
+    ASSERT_EQ(config.height, wire_config.height);
 
     switch(config.disparities)
     {
@@ -574,7 +530,7 @@ TEST(equality, equal)
 {
     using namespace multisense;
 
-    const auto config = create_valid_config(MultiSenseConfig::OperatingResolution::FULL_RESOLUTION);
+    const auto config = create_valid_config(1920, 1200);
 
     ASSERT_TRUE(config == config);
 }
@@ -583,10 +539,10 @@ TEST(equality, not_equal)
 {
     using namespace multisense;
 
-    const auto config = create_valid_config(MultiSenseConfig::OperatingResolution::FULL_RESOLUTION);
-    const auto config_quarter = create_valid_config(MultiSenseConfig::OperatingResolution::QUARTER_RESOLUTION);
+    const auto config0 = create_valid_config(1920, 1200);
+    const auto config1 = create_valid_config(1920, 1201);
 
-    ASSERT_FALSE(config == config_quarter);
+    ASSERT_FALSE(config0 == config1);
 }
 
 TEST(convert, cam_resolution_full_res)
@@ -594,23 +550,11 @@ TEST(convert, cam_resolution_full_res)
     using namespace crl::multisense::details;
     using namespace multisense;
 
-    const auto config = create_valid_config(MultiSenseConfig::OperatingResolution::FULL_RESOLUTION);
+    const auto config = create_valid_config(1920, 1200);
 
-    const auto wire_resolution = convert_resolution(config, 1920, 1200);
+    const auto wire_resolution = convert<wire::CamSetResolution>(config);
 
-    check_equal(config, wire_resolution, 1920, 1200);
-}
-
-TEST(convert, cam_resolution_quarter_res)
-{
-    using namespace crl::multisense::details;
-    using namespace multisense;
-
-    const auto config = create_valid_config(MultiSenseConfig::OperatingResolution::QUARTER_RESOLUTION);
-
-    const auto wire_resolution = convert_resolution(config, 1920, 1200);
-
-    check_equal(config, wire_resolution, 1920, 1200);
+    check_equal(config, wire_resolution);
 }
 
 TEST(convert, cam_control)
@@ -618,7 +562,7 @@ TEST(convert, cam_control)
     using namespace crl::multisense::details;
     using namespace multisense;
 
-    const auto config = create_valid_config(MultiSenseConfig::OperatingResolution::QUARTER_RESOLUTION);
+    const auto config = create_valid_config(1920, 1200);
 
     const auto cam_control = convert<wire::CamControl>(config);
 
@@ -630,7 +574,7 @@ TEST(convert, aux_cam_control)
     using namespace crl::multisense::details;
     using namespace multisense;
 
-    const auto config = create_valid_config(MultiSenseConfig::OperatingResolution::QUARTER_RESOLUTION);
+    const auto config = create_valid_config(1920, 1200);
 
     ASSERT_TRUE(static_cast<bool>(config.aux_config));
 
@@ -657,7 +601,7 @@ TEST(convert, cam_config)
 
     ASSERT_TRUE(static_cast<bool>(config.aux_config));
 
-    check_equal(config, wire_config, 1920, 1200);
+    check_equal(config, wire_config);
     check_equal(config.aux_config.value(), wire_aux_config);
 }
 
@@ -677,7 +621,7 @@ TEST(convert, cam_config_invalid_aux)
 
     ASSERT_FALSE(static_cast<bool>(config.aux_config));
 
-    check_equal(config, wire_config, 1920, 1200);
+    check_equal(config, wire_config);
 }
 
 TEST(convert, cam_config_invalid_imu)
@@ -696,7 +640,7 @@ TEST(convert, cam_config_invalid_imu)
 
     ASSERT_FALSE(static_cast<bool>(config.imu_config));
 
-    check_equal(config, wire_config, 1920, 1200);
+    check_equal(config, wire_config);
 
     ASSERT_TRUE(static_cast<bool>(config.network_config));
     check_equal(config.network_config.value(), packet_config);
@@ -718,7 +662,7 @@ TEST(convert, cam_config_invalid_led)
 
     ASSERT_FALSE(static_cast<bool>(config.lighting_config));
 
-    check_equal(config, wire_config, 1920, 1200);
+    check_equal(config, wire_config);
 
     ASSERT_TRUE(static_cast<bool>(config.network_config));
     check_equal(config.network_config.value(), packet_config);
@@ -744,7 +688,7 @@ TEST(convert, cam_config_valid_led_but_no_ligths)
 
     ASSERT_FALSE(static_cast<bool>(config.lighting_config));
 
-    check_equal(config, wire_config, 1920, 1200);
+    check_equal(config, wire_config);
 
     ASSERT_TRUE(static_cast<bool>(config.network_config));
     check_equal(config.network_config.value(), packet_config);
