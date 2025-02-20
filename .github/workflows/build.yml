@@ -56,11 +56,11 @@ jobs:
     - uses: actions/checkout@v4
     - id: build-release
       run: |
-          cmake -B ${{github.workspace}}/build -DBUILD_LEGACY_API=OFF -DBUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
+          cmake -B ${{github.workspace}}/build -DBUILD_LEGACY_API=OFF -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF
           cmake --build ${{github.workspace}}/build --config Release --target install -- /m:10
     - id: build-debug
       run: |
-          cmake -B ${{github.workspace}}/build -DBUILD_LEGACY_API=OFF -DBUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Debug
+          cmake -B ${{github.workspace}}/build -DBUILD_LEGACY_API=OFF -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=OFF
           cmake --build ${{github.workspace}}/build --config Debug --target install -- /m:10
 
 
