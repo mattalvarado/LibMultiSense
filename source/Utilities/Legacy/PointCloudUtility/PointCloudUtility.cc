@@ -57,11 +57,7 @@
 #include <string.h>
 #include <string>
 
-<<<<<<< HEAD:source/Utilities/Legacy/PointCloudUtility/PointCloudUtility.cc
-#include <Utilities/portability/getopt/getopt.h>
-=======
 #include <getopt/getopt.h>
->>>>>>> master:source/Utilities/PointCloudUtility/PointCloudUtility.cc
 #include <ChannelUtilities.hh>
 
 #include <MultiSense/details/utility/Portability.hh>
