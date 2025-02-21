@@ -122,7 +122,7 @@ private:
 class LegacyChannel : public Channel
 {
 public:
-    explicit LegacyChannel(const ChannelConfig &config);
+    explicit LegacyChannel(const Config &config);
 
     virtual ~LegacyChannel();
 
@@ -158,7 +158,7 @@ public:
     ///
     /// @brief Initialize the connection to the camera
     ///
-    Status connect(const ChannelConfig &config) final override;
+    Status connect(const Config &config) final override;
 
     ///
     /// @brief Disconnect from the camera
@@ -168,7 +168,7 @@ public:
     ///
     /// @brief A blocking call that waits for one image frame from the camera.
     ///
-    /// If you’ve set a receive timeout (via ChannelConfig), it will block until that timeout expires;
+    /// If you’ve set a receive timeout (via Config), it will block until that timeout expires;
     /// otherwise, it blocks indefinitely until data arrives.
     ///
     /// @return The newly received ImageFrame, or std::nullopt if timed out (and you used a timeout).
@@ -178,7 +178,7 @@ public:
     ///
     /// @brief A blocking call that waits for one imu frame from the camera.
     ///
-    /// If you’ve set a receive timeout (via ChannelConfig), it will block until that timeout expires;
+    /// If you’ve set a receive timeout (via Config), it will block until that timeout expires;
     /// otherwise, it blocks indefinitely until data arrives.
     ///
     /// @return The newly received ImuFrame, or std::nullopt if timed out (and you used a timeout).
@@ -318,7 +318,7 @@ private:
     ///
     /// @brief Channel config
     ///
-    ChannelConfig m_config{};
+    Config m_config{};
 
     ///
     /// @brief Active network socket for receiving and transmitting data

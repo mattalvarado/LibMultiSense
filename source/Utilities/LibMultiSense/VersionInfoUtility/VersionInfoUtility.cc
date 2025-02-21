@@ -84,7 +84,7 @@ int main(int argc, char** argv)
         }
     }
 
-    const auto channel = lms::Channel::create(lms::Channel::ChannelConfig{ip_address, mtu});
+    const auto channel = lms::Channel::create(lms::Channel::Config{ip_address, mtu});
     if (!channel)
     {
         std::cerr << "Failed to create channel" << std::endl;;

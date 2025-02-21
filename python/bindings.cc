@@ -612,15 +612,15 @@ PYBIND11_MODULE(libmultisense, m) {
         .def_readwrite("large_buffer_size", &multisense::Channel::ReceiveBufferConfig::large_buffer_size);
 
     // Channel::ChannelConfig
-    py::class_<multisense::Channel::ChannelConfig>(m, "ChannelConfig")
+    py::class_<multisense::Channel::Config>(m, "ChannelConfig")
         .def(py::init<>())
-        PYBIND11_JSON_SUPPORT(multisense::Channel::ChannelConfig)
-        .def_readwrite("ip_address", &multisense::Channel::ChannelConfig::ip_address)
-        .def_readwrite("mtu", &multisense::Channel::ChannelConfig::mtu)
-        .def_readwrite("receive_timeout", &multisense::Channel::ChannelConfig::receive_timeout)
-        .def_readwrite("command_port", &multisense::Channel::ChannelConfig::command_port)
-        .def_readwrite("interface", &multisense::Channel::ChannelConfig::interface)
-        .def_readwrite("receive_buffer_configuration", &multisense::Channel::ChannelConfig::receive_buffer_configuration);
+        PYBIND11_JSON_SUPPORT(multisense::Channel::Config)
+        .def_readwrite("ip_address", &multisense::Channel::Config::ip_address)
+        .def_readwrite("mtu", &multisense::Channel::Config::mtu)
+        .def_readwrite("receive_timeout", &multisense::Channel::Config::receive_timeout)
+        .def_readwrite("command_port", &multisense::Channel::Config::command_port)
+        .def_readwrite("interface", &multisense::Channel::Config::interface)
+        .def_readwrite("receive_buffer_configuration", &multisense::Channel::Config::receive_buffer_configuration);
 
     // Channel
     py::class_<multisense::Channel, std::unique_ptr<multisense::Channel>>(m, "Channel")
