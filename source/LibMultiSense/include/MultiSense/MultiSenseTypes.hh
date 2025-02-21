@@ -144,6 +144,15 @@ struct CameraCalibration
     /// @brief Coefficients for the distortion model
     ///
     std::vector<float> D = {};
+
+    ///
+    /// @brief Get the tx translation in meters which translates points in the current CameraCalibration frame
+    ///        to the origin left camera frame
+    ///
+    float tx() const
+    {
+        return (P[0][0] == 0.0 ? 0.0 : P[0][3] / P[0][0]);
+    }
 };
 
 struct StereoCalibration
