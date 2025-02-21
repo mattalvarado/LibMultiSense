@@ -146,12 +146,14 @@ struct CameraCalibration
     std::vector<float> D = {};
 
     ///
-    /// @brief Get the tx translation in meters which translates points in the current CameraCalibration frame
+    /// @brief Get the translation vector in meters which translates points in the current CameraCalibration frame
     ///        to the origin left camera frame
     ///
-    float tx() const
+    std::array<float, 3> rectified_translation() const
     {
-        return (P[0][0] == 0.0 ? 0.0 : P[0][3] / P[0][0]);
+        return std::array<float, 3>{(P[0][0] == 0.0f ? 0.0f : P[0][3] / P[0][0]),
+                                    (P[1][1] == 0.0f ? 0.0f : P[1][3] / P[1][1]),
+                                    P[2][3]};
     }
 };
 
