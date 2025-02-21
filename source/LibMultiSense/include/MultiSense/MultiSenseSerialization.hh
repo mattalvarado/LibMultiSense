@@ -436,7 +436,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Channel::ReceiveBufferConfig,
                                    num_large_buffers,
                                    large_buffer_size)
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Channel::ChannelConfig,
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Channel::Config,
                                    ip_address,
                                    mtu,
                                    receive_timeout,
