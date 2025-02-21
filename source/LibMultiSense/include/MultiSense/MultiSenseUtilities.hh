@@ -266,67 +266,69 @@ MULTISENSE_API std::optional<PointCloud<void>> create_pointcloud(const ImageFram
 template <typename Color>
 MULTISENSE_API bool write_pointcloud_ply(const PointCloud<Color> &point_cloud, const std::filesystem::path &path)
 {
-    std::stringstream ss;
+    std::ofstream ply(path, std::ios::binary);
+    if (!ply.good())
+    {
+        return false;
+    }
 
-    ss << "ply\n";
-    ss << "format ascii 1.0\n";
-    ss << "element vertex " << point_cloud.cloud.size() << "\n";
-    ss << "property float x\n";
-    ss << "property float y\n";
-    ss << "property float z\n";
+    std::ostringstream header;
+    header << "ply\n";
+    header << "format binary_little_endian 1.0\n";
+    header << "element vertex " << point_cloud.cloud.size() << "\n";
+    header << "property float x\n";
+    header << "property float y\n";
+    header << "property float z\n";
 
     if constexpr (std::is_same_v<Color, uint8_t>)
     {
-        ss << "property uchar gray\n";
+        header << "property uchar intensity\n";
     }
     else if constexpr (std::is_same_v<Color, uint16_t>)
     {
-        ss << "property ushort gray\n";
+        header << "property ushort intensity\n";
     }
     else if constexpr (std::is_same_v<Color, std::array<uint8_t, 3>>)
     {
-        ss << "property uchar red\n";
-        ss << "property uchar green\n";
-        ss << "property uchar blue\n";
+        header << "property uchar red\n";
+        header << "property uchar green\n";
+        header << "property uchar blue\n";
     }
     else if (!std::is_same_v<Color, void>)
     {
         throw std::runtime_error("Unsupported color type");
     }
 
-    ss << "end_header\n";
+    header << "end_header\n";
+
+    std::string header_str = header.str();
+    ply.write(header_str.c_str(), header_str.size());
 
     for (const auto &point : point_cloud.cloud)
     {
+        ply.write(reinterpret_cast<const char*>(&point.x), sizeof(point.x));
+        ply.write(reinterpret_cast<const char*>(&point.y), sizeof(point.y));
+        ply.write(reinterpret_cast<const char*>(&point.z), sizeof(point.z));
+
         if constexpr (std::is_same_v<Color, std::array<uint8_t, 3>>)
         {
-            //
-            // Our points are in BGR ordering, convert to RGB
-            //
-            ss << point.x << " " <<
-                  point.y << " " <<
-                  point.z << " " <<
-                  static_cast<uint32_t>(point.color[2]) << " " <<
-                  static_cast<uint32_t>(point.color[1]) << " " <<
-                  static_cast<uint32_t>(point.color[0]) << "\n";
+            uint8_t red   = point.color[2];
+            uint8_t green = point.color[1];
+            uint8_t blue  = point.color[0];
+            ply.write(reinterpret_cast<const char*>(&red), sizeof(red));
+            ply.write(reinterpret_cast<const char*>(&green), sizeof(green));
+            ply.write(reinterpret_cast<const char*>(&blue), sizeof(blue));
         }
-        else if constexpr(std::is_same_v<Color, void>)
+        else if constexpr (std::is_same_v<Color, void>)
         {
-            ss << point.x << " " << point.y << " " << point.z << "\n";
+            // No color data to write.
         }
         else
         {
-            ss << point.x << " " << point.y << " " << point.z << " " << static_cast<uint32_t>(point.color) << "\n";
+            // Write the color value directly (works for uint8_t or uint16_t).
+            ply.write(reinterpret_cast<const char*>(&point.color), sizeof(point.color));
         }
     }
-
-    std::ofstream ply(path.c_str());
-    if (!ply.good())
-    {
-        return false;
-    }
-
-    ply << ss.str();
 
     return true;
 }
