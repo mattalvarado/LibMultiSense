@@ -118,7 +118,7 @@ PYBIND11_MODULE(libmultisense, m) {
     // CameraCalibration::DistortionType
     py::enum_<multisense::CameraCalibration::DistortionType>(m, "DistortionType")
         .value("NONE", multisense::CameraCalibration::DistortionType::NONE)
-        .value("PLUMBOB", multisense::CameraCalibration::DistortionType::PLUMBOB)
+        .value("PLUMBBOB", multisense::CameraCalibration::DistortionType::PLUMBBOB)
         .value("RATIONAL_POLYNOMIAL", multisense::CameraCalibration::DistortionType::RATIONAL_POLYNOMIAL);
 
     // CameraCalibration
