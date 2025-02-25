@@ -162,7 +162,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(DataSource, {
 
 NLOHMANN_JSON_SERIALIZE_ENUM(CameraCalibration::DistortionType, {
     {CameraCalibration::DistortionType::NONE, "NONE"},
-    {CameraCalibration::DistortionType::PLUMBOB, "PLUMBOB"},
+    {CameraCalibration::DistortionType::PLUMBBOB, "PLUMBBOB"},
     {CameraCalibration::DistortionType::RATIONAL_POLYNOMIAL, "RATIONAL_POLYNOMIAL"}
 })
 

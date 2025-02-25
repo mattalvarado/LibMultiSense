@@ -114,7 +114,7 @@ struct CameraCalibration
     enum class DistortionType : uint8_t
     {
         NONE,
-        PLUMBOB,
+        PLUMBBOB,
         RATIONAL_POLYNOMIAL
     };
 
