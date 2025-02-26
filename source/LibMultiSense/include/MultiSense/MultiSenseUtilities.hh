@@ -98,7 +98,7 @@ MULTISENSE_API bool write_image(const Image &image, const std::filesystem::path 
 MULTISENSE_API std::optional<Image> create_depth_image(const ImageFrame &frame,
                                                        const Image::PixelFormat &depth_format,
                                                        const DataSource &disparity_source = DataSource::LEFT_DISPARITY_RAW,
-                                                       int32_t invalid_value = 65535);
+                                                       float invalid_value = 0);
 
 ///
 /// @brief Convert a YCbCr420 luma + chroma image into a BGR color image

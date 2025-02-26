@@ -189,7 +189,7 @@ bool write_image(const Image &image, const std::filesystem::path &path)
 std::optional<Image> create_depth_image(const ImageFrame &frame,
                                         const Image::PixelFormat &depth_format,
                                         const DataSource &disparity_source,
-                                        int32_t invalid_value)
+                                        float invalid_value)
 {
     if (!frame.has_image(disparity_source))
     {
@@ -259,7 +259,7 @@ std::optional<Image> create_depth_image(const ImageFrame &frame,
             }
             case Image::PixelFormat::FLOAT32:
             {
-                const float depth = (d == 0.0) ? static_cast<float>(invalid_value) :
+                const float depth = (d == 0.0) ? invalid_value :
                                                  static_cast<float>(fx * -tx / d);
 
                 auto data_pointer = reinterpret_cast<float*>(data->data() + (sizeof(float) * i));
