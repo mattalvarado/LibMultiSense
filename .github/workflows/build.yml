@@ -61,7 +61,7 @@ jobs:
         .\bootstrap-vcpkg.bat
     - id: install-dependencie
       run: |
-        "%GITHUB_WORKSPACE%\vcpkg\vcpkg.exe" install
+          ${{ github.workspace }}/vcpkg/vcpkg install
     - id: build-release
       run: |
           cmake -B ${{github.workspace}}/build -DBUILD_LEGACY_API=OFF -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF
