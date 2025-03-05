@@ -15,6 +15,3 @@ if (BUILD_JSON_SERIALIZATION)
         target_compile_definitions(libmultisense PRIVATE BUILD_JSON="True")
     endif()
 endif()
-
-
-set_target_properties(libmultisense PROPERTIES libmultisense _core)
