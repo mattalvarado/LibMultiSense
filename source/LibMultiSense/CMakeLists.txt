@@ -46,6 +46,12 @@ if (BUILD_OPENCV)
   endif()
 endif()
 
+if (BUILD_JSON_SERIALIZATION)
+    if(nlohmann_json_FOUND)
+        target_link_libraries(MultiSense nlohmann_json::nlohmann_json)
+    endif()
+endif()
+
 set(version "7.0.0")
 set_target_properties(MultiSense PROPERTIES VERSION "${version}")
 
