@@ -54,13 +54,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-
-    - id: Install vcpkg
+    - id: install-vcpkg
       run: |
         git clone https://github.com/microsoft/vcpkg.git
         cd vcpkg
         .\bootstrap-vcpkg.bat
-    - id: Install dependencies with vcpkg
+    - id: install-dependencie
       run: |
         "%GITHUB_WORKSPACE%\vcpkg\vcpkg.exe" install
     - id: build-release
