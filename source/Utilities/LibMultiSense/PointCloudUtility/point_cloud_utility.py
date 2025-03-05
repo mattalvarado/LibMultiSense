@@ -91,7 +91,7 @@ def main(args):
                 print("Saving pointcloud for frame id: ", frame.frame_id)
                 lms.write_pointcloud_ply(point_cloud, str(frame.frame_id) + ".ply")
             else:
-                bgr = lms.create_bgr(frame, color_stream)
+                bgr = lms.create_bgr_image(frame, color_stream)
                 if bgr:
                     point_cloud = lms.create_bgr_pointcloud(frame.get_image(lms.DataSource.LEFT_DISPARITY_RAW),
                                                             bgr,

@@ -115,6 +115,11 @@ PYBIND11_MODULE(libmultisense, m) {
         .value("AUX_RECTIFIED_RAW", multisense::DataSource::AUX_RECTIFIED_RAW)
         .value("COST_RAW", multisense::DataSource::COST_RAW);
 
+    // ColorImageEncoding
+    py::enum_<multisense::ColorImageEncoding>(m, "ColorImageEncoding")
+        .value("NONE", multisense::ColorImageEncoding::NONE)
+        .value("YCBCR420", multisense::ColorImageEncoding::YCBCR420);
+
     // CameraCalibration::DistortionType
     py::enum_<multisense::CameraCalibration::DistortionType>(m, "DistortionType")
         .value("NONE", multisense::CameraCalibration::DistortionType::NONE)
@@ -221,7 +226,8 @@ PYBIND11_MODULE(libmultisense, m) {
         .def_readonly("images", &multisense::ImageFrame::images)
         .def_readonly("calibration", &multisense::ImageFrame::calibration)
         .def_readonly("frame_time", &multisense::ImageFrame::frame_time)
-        .def_readonly("ptp_frame_time", &multisense::ImageFrame::ptp_frame_time);
+        .def_readonly("ptp_frame_time", &multisense::ImageFrame::ptp_frame_time)
+        .def_readonly("aux_color_encoding", &multisense::ImageFrame::aux_color_encoding);
 
     // ImuRate
     py::class_<multisense::ImuRate>(m, "ImuRate")
@@ -891,7 +897,7 @@ PYBIND11_MODULE(libmultisense, m) {
 
     m.def("create_depth_image", &multisense::create_depth_image, py::call_guard<py::gil_scoped_release>());
 
-    m.def("create_bgr_image", &multisense::create_bgr_image, py::call_guard<py::gil_scoped_release>());
+    m.def("create_bgr_from_ycbcr420", &multisense::create_bgr_from_ycbcr420, py::call_guard<py::gil_scoped_release>());
 
-    m.def("create_bgr", &multisense::create_bgr, py::call_guard<py::gil_scoped_release>());
+    m.def("create_bgr_image", &multisense::create_bgr_image, py::call_guard<py::gil_scoped_release>());
 }

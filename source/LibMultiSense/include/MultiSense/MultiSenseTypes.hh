@@ -106,6 +106,12 @@ enum class DataSource : uint16_t
     IMU
 };
 
+enum class ColorImageEncoding : uint16_t
+{
+    NONE,
+    YCBCR420
+};
+
 struct CameraCalibration
 {
     ///
@@ -346,6 +352,11 @@ struct ImageFrame
     /// @brief The MultiSense ptp timestamp associated with the frame
     ///
     TimeT ptp_frame_time{};
+
+    ///
+    /// @brief The encoding of the aux color image(s) in the frame
+    ///
+    ColorImageEncoding aux_color_encoding = ColorImageEncoding::NONE;
 };
 
 ///

@@ -63,7 +63,7 @@ def main(args):
     while True:
         frame = channel.get_next_image_frame()
         if frame:
-            bgr = lms.create_bgr(frame, lms.DataSource.AUX_RAW)
+            bgr = lms.create_bgr_image(frame, lms.DataSource.AUX_RAW)
             if bgr:
                 cv2.imwrite(str(frame.frame_id) + "_aux.png", bgr.as_array)
 

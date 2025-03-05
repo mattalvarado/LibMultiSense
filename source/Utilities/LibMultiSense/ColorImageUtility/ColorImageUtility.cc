@@ -143,7 +143,7 @@ int main(int argc, char** argv)
     {
         if (const auto image_frame = channel->get_next_image_frame(); image_frame)
         {
-            if (const auto bgr = create_bgr(image_frame.value(), lms::DataSource::AUX_RAW); bgr)
+            if (const auto bgr = create_bgr_image(image_frame.value(), lms::DataSource::AUX_RAW); bgr)
             {
                 lms::write_image(bgr.value(), std::to_string(image_frame->frame_id) +  "_aux.ppm");
             }
