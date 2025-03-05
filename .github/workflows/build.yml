@@ -54,6 +54,15 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
+    - id: Install vcpkg
+      run: |
+        git clone https://github.com/microsoft/vcpkg.git
+        cd vcpkg
+        .\bootstrap-vcpkg.bat
+    - id: Install dependencies with vcpkg
+      run: |
+        "%GITHUB_WORKSPACE%\vcpkg\vcpkg.exe" install
     - id: build-release
       run: |
           cmake -B ${{github.workspace}}/build -DBUILD_LEGACY_API=OFF -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF
