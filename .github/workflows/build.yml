@@ -72,7 +72,7 @@ jobs:
 
       - name: Install macOS Deps
         run: |
-            brew install autoconf
+          brew install autoconf automake autoconf-archive
 
       - name: Setup vcpkg on macOS
         run: |
