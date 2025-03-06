@@ -167,7 +167,7 @@ jobs:
             -DBUILD_TESTS=OFF
           cmake --build build --config Release --target install -- /m:10
           mkdir pip-wheel
-          pip wheel --wheel-dir pip-wheel ${{ github.workspace }}
+          pip wheel --wheel-dir pip-wheel ${{ github.workspace }} --no-deps -w dist
 
       - name: Upload Release Artifact
         uses: actions/upload-artifact@v4
