@@ -48,7 +48,7 @@ jobs:
       - name: Upload pip wheel Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: pip-wheel
+          name: linux-pip-wheel
           path: pip-wheel/
 
       - name: Build Debug
@@ -132,7 +132,7 @@ jobs:
       - name: Upload pip wheel Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: pip-wheel
+          name: windows-pip-wheel
           path: pip-wheel/
 
       - name: Build Debug
