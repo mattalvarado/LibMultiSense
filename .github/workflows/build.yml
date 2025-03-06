@@ -103,7 +103,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: |
-            vcpkg_installed
+            vcpkg/installed
             vcpkg/downloads
           key: ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg.json') }}
 
