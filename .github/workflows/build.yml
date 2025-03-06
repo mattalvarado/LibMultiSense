@@ -48,7 +48,7 @@ jobs:
       - name: Upload pip wheel Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: wheel-ubuntu-${{ matrix.ubuntu }}
+          name: libmultisense-wheel-${{ matrix.ubuntu }}
           path: pip-wheel/
 
       - name: Build Debug
@@ -103,8 +103,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: |
-            vcpkg/installed
-            vcpkg/downloads
+            vcpkg/packages
           key: ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg.json') }}
 
       - name: Install vcpkg dependencies
