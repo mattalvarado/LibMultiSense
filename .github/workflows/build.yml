@@ -143,17 +143,17 @@ jobs:
           cd vcpkg
           .\bootstrap-vcpkg.bat
 
-      - name: Cache vcpkg
-        uses: actions/cache@v3
-        with:
-          path: |
-            ./vcpkg/packages
-            ./vcpkg_installed
-            ./vcpkg/install
-            ./vcpkg/scripts
-          key: ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg.json') }}
-          restore-keys: |
-            ${{ runner.os }}-vcpkg-
+          #- name: Cache vcpkg
+          #  uses: actions/cache@v3
+          #  with:
+          #    path: |
+          #      ./vcpkg/packages
+          #      ./vcpkg_installed
+          #      ./vcpkg/install
+          #      ./vcpkg/scripts
+          #    key: ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg.json') }}
+          #    restore-keys: |
+          #      ${{ runner.os }}-vcpkg-
 
       - name: Install vcpkg dependencies
         run: ${{ github.workspace }}\vcpkg\vcpkg install --triplet x64-windows
@@ -169,7 +169,7 @@ jobs:
             -DBUILD_TESTS=OFF
           cmake --build build --config Release --target install -- /m:10
           mkdir pip-wheel
-          pip wheel --wheel-dir pip-wheel ${{ github.workspace }} --no-deps -w dist
+          pip wheel --wheel-dir pip-wheel ${{ github.workspace }}
 
       - name: Upload Release Artifact
         uses: actions/upload-artifact@v4
