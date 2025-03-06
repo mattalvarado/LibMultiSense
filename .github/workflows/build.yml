@@ -86,6 +86,7 @@ jobs:
             ./vcpkg/packages
             ./vcpkg_install
             ./vcpkg/install
+            ./vcpkg/scripts
           key: ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg.json') }}
           restore-keys: |
             ${{ runner.os }}-vcpkg-
@@ -149,6 +150,7 @@ jobs:
             ./vcpkg/packages
             ./vcpkg_installed
             ./vcpkg/install
+            ./vcpkg/scripts
           key: ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg.json') }}
           restore-keys: |
             ${{ runner.os }}-vcpkg-
