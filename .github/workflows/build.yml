@@ -115,7 +115,7 @@ jobs:
       - name: Build Release
         run: |
           cmake -B build -S . \
-            -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake \
+            -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake" \
             -DBUILD_JSON_SERIALIZATION=ON \
             -DBUILD_PYTHON_BINDINGS=ON \
             -DBUILD_LEGACY_API=OFF \
@@ -140,7 +140,7 @@ jobs:
       - name: Build Debug
         run: |
           cmake -B build -S . \
-            -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake \
+            -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake" \
             -DBUILD_JSON_SERIALIZATION=ON \
             -DBUILD_PYTHON_BINDINGS=ON \
             -DBUILD_LEGACY_API=OFF \
