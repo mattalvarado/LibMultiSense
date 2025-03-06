@@ -153,6 +153,7 @@ jobs:
         run: ${{ github.workspace }}\vcpkg\vcpkg install --triplet x64-windows
 
       - name: Build Release
+        shell: cmd
         run: |
           cmake -B build -S . \
             -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake" \
@@ -178,6 +179,7 @@ jobs:
           path: pip-wheel/
 
       - name: Build Debug
+        shell: cmd
         run: |
           cmake -B build -S . \
             -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake" \
