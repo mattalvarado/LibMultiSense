@@ -143,22 +143,23 @@ jobs:
           cd vcpkg
           .\bootstrap-vcpkg.bat
 
-          #- name: Cache vcpkg
-          #  uses: actions/cache@v3
-          #  with:
-          #    path: |
-          #      ./vcpkg/packages
-          #      ./vcpkg_installed
-          #      ./vcpkg/install
-          #      ./vcpkg/scripts
-          #    key: ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg.json') }}
-          #    restore-keys: |
-          #      ${{ runner.os }}-vcpkg-
+      - name: Cache vcpkg
+        uses: actions/cache@v3
+        with:
+          path: |
+            ./vcpkg/packages
+            ./vcpkg_installed
+            ./vcpkg/install
+            ./vcpkg/scripts
+          key: ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            ${{ runner.os }}-vcpkg-
 
       - name: Install vcpkg dependencies
         run: ${{ github.workspace }}\vcpkg\vcpkg install --triplet x64-windows
 
       - name: Build Release
+        shell: cmd
         run: |
           cmake -B build -S . ^
             -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake" ^
@@ -184,6 +185,7 @@ jobs:
           path: pip-wheel/
 
       - name: Build Debug
+        shell: cmd
         run: |
           cmake -B build -S . ^
             -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake" ^
