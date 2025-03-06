@@ -76,7 +76,7 @@
 
 namespace py = pybind11;
 
-PYBIND11_MODULE(libmultisense, m) {
+PYBIND11_MODULE(_libmultisense, m) {
     m.doc() = "Pybind11 bindings for the LibMultiSense C++ Library";
 
     // Status

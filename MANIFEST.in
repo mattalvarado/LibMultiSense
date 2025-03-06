@@ -1,4 +1,0 @@
-# MANIFEST.in
-include CMakeLists.txt
-recursive-include source *
-recursive-include python *
