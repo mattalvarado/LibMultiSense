@@ -66,6 +66,7 @@ jobs:
       run: |
           cmake -B ${{github.workspace}}/build -DCMAKE_TOOLCHAIN_FILE=${{github.workspace}}\vcpkg\scripts\buildsystems\vcpkg.cmake -DBUILD_JSON_SERIALIZATION=ON -DBUILD_PYTHON_BINDINGS=ON -DBUILD_LEGACY_API=OFF -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF
           cmake --build ${{github.workspace}}/build --config Release --target install -- /m:10
+          pip wheel ${{github.workspace}}
     - id: build-debug
       run: |
           cmake -B ${{github.workspace}}/build -DCMAKE_TOOLCHAIN_FILE=${{github.workspace}}\vcpkg\scripts\buildsystems\vcpkg.cmake -DBUILD_JSON_SERIALIZATION=ON -DBUILD_PYTHON_BINDINGS=ON -DBUILD_LEGACY_API=OFF -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=OFF
