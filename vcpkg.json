@@ -1,9 +1,8 @@
 {
+    "overrides": [
+        { "name": "python3", "version": "3.9.5" }
+    ],
     "dependencies": [
-        {
-          "name": "python3",
-          "version=": "3.9.5"
-        },
         "pybind11",
         "nlohmann-json"
     ]
