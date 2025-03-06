@@ -36,6 +36,20 @@ jobs:
           cmake --build build -j "$(nproc)"
           make -C build test
           cmake --install build
+          mkdir pip-wheel
+          pip wheel --wheel-dir pip-wheel .
+
+      - name: Upload Release Artifact
+        uses: actions/upload-artifact@v3
+        with:
+            name: install-release
+            path: install-release/
+
+      - name: Upload pip wheel Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: pip-wheel
+          path: pip-wheel/
 
       - name: Build Debug
         run: |
@@ -106,7 +120,20 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DBUILD_TESTS=OFF
           cmake --build build --config Release --target install -- /m:10
-          pip wheel ${{ github.workspace }}
+          mkdir pip-wheel
+          pip wheel --wheel-dir pip-wheel ${{ github.workspace }}
+
+      - name: Upload Release Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-release
+          path: build\install
+
+      - name: Upload pip wheel Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: pip-wheel
+          path: pip-wheel/
 
       - name: Build Debug
         run: |

@@ -630,9 +630,17 @@ PYBIND11_MODULE(_libmultisense, m) {
 
     // Channel
     py::class_<multisense::Channel, std::unique_ptr<multisense::Channel>>(m, "Channel")
-        .def_static("create", &multisense::Channel::create,
+        .def_static("create", &multisense::Channel::create, py::return_value_policy::move,
                 py::arg("config"),
                 py::arg("impl") = multisense::Channel::ChannelImplementation::LEGACY)
+        .def("__enter__", [](multisense::Channel &self) -> multisense::Channel &
+        {
+            return self;
+        })
+        .def("__exit__", [](multisense::Channel &, py::object, py::object, py::object)
+        {
+            return false;
+        })
         .def("start_streams", &multisense::Channel::start_streams, py::call_guard<py::gil_scoped_release>())
         .def("stop_streams", &multisense::Channel::stop_streams, py::call_guard<py::gil_scoped_release>())
         .def("add_image_frame_callback", &multisense::Channel::add_image_frame_callback, py::call_guard<py::gil_scoped_acquire>())

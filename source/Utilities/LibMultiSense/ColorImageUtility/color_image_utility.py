@@ -45,27 +45,27 @@ def main(args):
     channel_config.ip_address = args.ip_address
     channel_config.mtu = args.mtu
 
-    channel = lms.Channel.create(channel_config)
-    if not channel:
-        print("Invalid channel")
-        return
+    with lms.Channel.create(channel_config) as channel:
+        if not channel:
+            print("Invalid channel")
+            return
 
-    config = channel.get_configuration()
-    config.frames_per_second = 30.0
-    if channel.set_configuration(config) != lms.Status.OK:
-        print("Cannot set configuration")
-        exit(1)
+        config = channel.get_configuration()
+        config.frames_per_second = 30.0
+        if channel.set_configuration(config) != lms.Status.OK:
+            print("Cannot set configuration")
+            exit(1)
 
-    if channel.start_streams([lms.DataSource.AUX_RAW]) != lms.Status.OK:
-        print("Unable to start streams")
-        exit(1)
+        if channel.start_streams([lms.DataSource.AUX_RAW]) != lms.Status.OK:
+            print("Unable to start streams")
+            exit(1)
 
-    while True:
-        frame = channel.get_next_image_frame()
-        if frame:
-            bgr = lms.create_bgr_image(frame, lms.DataSource.AUX_RAW)
-            if bgr:
-                cv2.imwrite(str(frame.frame_id) + "_aux.png", bgr.as_array)
+        while True:
+            frame = channel.get_next_image_frame()
+            if frame:
+                bgr = lms.create_bgr_image(frame, lms.DataSource.AUX_RAW)
+                if bgr:
+                    cv2.imwrite(str(frame.frame_id) + "_aux.png", bgr.as_array)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser("LibMultiSense save image utility")

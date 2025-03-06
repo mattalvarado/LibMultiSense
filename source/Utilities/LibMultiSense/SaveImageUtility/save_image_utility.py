@@ -67,43 +67,43 @@ def main(args):
     channel_config.ip_address = args.ip_address
     channel_config.mtu = args.mtu
 
-    channel = lms.Channel.create(channel_config)
-    if not channel:
-        print("Invalid channel")
-        return
+    with lms.Channel.create(channel_config) as channel:
+        if not channel:
+            print("Invalid channel")
+            return
 
-    info = channel.get_info()
+        info = channel.get_info()
 
-    print("Firmware build date :  ", info.version.firmware_build_date)
-    print("Firmware version    :  ", info.version.firmware_version.to_string())
-    print("Hardware version    :  ", hex(info.version.hardware_version))
+        print("Firmware build date :  ", info.version.firmware_build_date)
+        print("Firmware version    :  ", info.version.firmware_version.to_string())
+        print("Hardware version    :  ", hex(info.version.hardware_version))
 
-    config = channel.get_configuration()
-    config.frames_per_second = 30.0
-    if channel.set_configuration(config) != lms.Status.OK:
-        print("Cannot set configuration")
-        exit(1)
+        config = channel.get_configuration()
+        config.frames_per_second = 30.0
+        if channel.set_configuration(config) != lms.Status.OK:
+            print("Cannot set configuration")
+            exit(1)
 
-    if channel.start_streams([lms.DataSource.LEFT_RECTIFIED_RAW]) != lms.Status.OK:
-        print("Unable to start streams")
-        exit(1)
+        if channel.start_streams([lms.DataSource.LEFT_RECTIFIED_RAW]) != lms.Status.OK:
+            print("Unable to start streams")
+            exit(1)
 
-    #Only save the first image
-    saved = False
+        #Only save the first image
+        saved = False
 
-    while True:
-        if not saved:
-            frame = channel.get_next_image_frame()
-            if frame:
-                for source, image in frame.images.items():
-                    cv2.imwrite(str(source) + ".png", image.as_array)
-                    saved = True
+        while True:
+            if not saved:
+                frame = channel.get_next_image_frame()
+                if frame:
+                    for source, image in frame.images.items():
+                        cv2.imwrite(str(source) + ".png", image.as_array)
+                        saved = True
 
-        status = channel.get_system_status()
-        if status:
-            print(get_status_string(status))
+            status = channel.get_system_status()
+            if status:
+                print(get_status_string(status))
 
-        time.sleep(1)
+            time.sleep(1)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser("LibMultiSense save image utility")

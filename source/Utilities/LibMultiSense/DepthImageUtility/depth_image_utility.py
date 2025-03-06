@@ -45,29 +45,29 @@ def main(args):
     channel_config.ip_address = args.ip_address
     channel_config.mtu = args.mtu
 
-    channel = lms.Channel.create(channel_config)
-    if not channel:
-        print("Invalid channel")
-        exit(1)
+    with lms.Channel.create(channel_config) as channel:
+        if not channel:
+            print("Invalid channel")
+            exit(1)
 
-    config = channel.get_configuration()
-    config.frames_per_second = 10.0
-    if channel.set_configuration(config) != lms.Status.OK:
-        print("Cannot set configuration")
-        exit(1)
+        config = channel.get_configuration()
+        config.frames_per_second = 10.0
+        if channel.set_configuration(config) != lms.Status.OK:
+            print("Cannot set configuration")
+            exit(1)
 
-    if channel.start_streams([lms.DataSource.LEFT_DISPARITY_RAW]) != lms.Status.OK:
-        print("Unable to start streams")
-        exit(1)
+        if channel.start_streams([lms.DataSource.LEFT_DISPARITY_RAW]) != lms.Status.OK:
+            print("Unable to start streams")
+            exit(1)
 
-    while True:
-        frame = channel.get_next_image_frame()
-        if frame:
-            # MONO16 depth images are quantized to 1 mm per 1 pixel value
-            depth_image = lms.create_depth_image(frame, lms.PixelFormat.MONO16, lms.DataSource.LEFT_DISPARITY_RAW, 65535)
-            if depth_image:
-                print("Saving depth image for frame id: ", frame.frame_id)
-                cv2.imwrite(str(frame.frame_id) + ".png", depth_image.as_array)
+        while True:
+            frame = channel.get_next_image_frame()
+            if frame:
+                # MONO16 depth images are quantized to 1 mm per 1 pixel value
+                depth_image = lms.create_depth_image(frame, lms.PixelFormat.MONO16, lms.DataSource.LEFT_DISPARITY_RAW, 65535)
+                if depth_image:
+                    print("Saving depth image for frame id: ", frame.frame_id)
+                    cv2.imwrite(str(frame.frame_id) + ".png", depth_image.as_array)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser("LibMultiSense save image utility")
