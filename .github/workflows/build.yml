@@ -70,6 +70,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install macOS Deps
+        run: |
+            brew install autoconf
+
       - name: Setup vcpkg on macOS
         run: |
           git clone https://github.com/microsoft/vcpkg.git
