@@ -1,8 +1,8 @@
 {
   "default-registry": {
     "kind": "git",
-    "$baseline": "The below commit is for tag 2025.01.13 of VCPKG",
-    "baseline": "6f29f12e82a8293156836ad81cc9bf5af41fe836",
+    "$baseline": "The below commit is for tag 2025.02.14 of VCPKG",
+    "baseline": "d5ec528843d29e3a52d745a64b469f810b2cedbf",
     "repository": "https://github.com/microsoft/vcpkg"
   },
   "registries": [
