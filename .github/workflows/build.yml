@@ -59,6 +59,13 @@ jobs:
         git clone https://github.com/microsoft/vcpkg.git
         cd vcpkg
         .\bootstrap-vcpkg.bat
+    - id: cache-vcpkg
+       uses: actions/cache@v3
+       with:
+         path: |
+           vcpkg_installed
+           vcpkg/downloads
+         key: ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg.json') }}
     - id: install-dependencie
       run: |
           ${{ github.workspace }}/vcpkg/vcpkg install
