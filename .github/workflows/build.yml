@@ -11,7 +11,7 @@ on:
 
 jobs:
 
-  build-releases:
+  build-ubuntu:
     strategy:
       matrix:
         ubuntu: [ubuntu-20.04, ubuntu-22.04, ubuntu-24.04]
@@ -70,17 +70,56 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup vcpkg on macOS
+        run: |
+          git clone https://github.com/microsoft/vcpkg.git
+          ./vcpkg/bootstrap-vcpkg.sh
+
+      - name: Cache vcpkg artifacts on macOS
+        uses: actions/cache@v3
+        with:
+          path: |
+            ./vcpkg/packages
+            ./vcpkg_install
+            ./vcpkg/install
+          key: ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            ${{ runner.os }}-vcpkg-
+
+      - name: Install dependencies with vcpkg
+        run: ./vcpkg/vcpkg install --triplet x64-osx
+
       - name: Build Release
         run: |
           cmake -B build -S . \
+            -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake" \
+            -DBUILD_JSON_SERIALIZATION=ON \
+            -DBUILD_PYTHON_BINDINGS=ON \
             -DCMAKE_BUILD_TYPE=Release \
             -DBUILD_LEGACY_API=OFF \
             -DBUILD_TESTS=OFF
           cmake --build build -j "$(sysctl -n hw.ncpu)"
+          mkdir pip-wheel
+          pip wheel --wheel-dir pip-wheel ${{ github.workspace }}
+
+      - name: Upload Release Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-install-release
+          path: build\install
+
+      - name: Upload pip wheel Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: libmulitisense-wheel-macos
+          path: pip-wheel/
 
       - name: Build Debug
         run: |
           cmake -B build -S . \
+            -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake" \
+            -DBUILD_JSON_SERIALIZATION=ON \
+            -DBUILD_PYTHON_BINDINGS=ON \
             -DCMAKE_BUILD_TYPE=Debug \
             -DBUILD_LEGACY_API=OFF \
             -DBUILD_TESTS=OFF
@@ -103,11 +142,15 @@ jobs:
         uses: actions/cache@v3
         with:
           path: |
-            vcpkg/packages
+            ./vcpkg/packages
+            ./vcpkg_installed
+            ./vcpkg/install
           key: ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            ${{ runner.os }}-vcpkg-
 
       - name: Install vcpkg dependencies
-        run: ${{ github.workspace }}\vcpkg\vcpkg install
+        run: ${{ github.workspace }}\vcpkg\vcpkg install --triplet x64-windows
 
       - name: Build Release
         run: |
@@ -125,13 +168,13 @@ jobs:
       - name: Upload Release Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: windows-release
+          name: windows-install-release
           path: build\install
 
       - name: Upload pip wheel Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: windows-pip-wheel
+          name: libmulitisense-wheel-windows
           path: pip-wheel/
 
       - name: Build Debug
