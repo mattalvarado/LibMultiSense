@@ -40,13 +40,13 @@ jobs:
           pip wheel --wheel-dir pip-wheel .
 
       - name: Upload Release Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
             name: install-release
             path: install-release/
 
       - name: Upload pip wheel Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: pip-wheel
           path: pip-wheel/
@@ -124,13 +124,13 @@ jobs:
           pip wheel --wheel-dir pip-wheel ${{ github.workspace }}
 
       - name: Upload Release Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: windows-release
           path: build\install
 
       - name: Upload pip wheel Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: pip-wheel
           path: pip-wheel/
