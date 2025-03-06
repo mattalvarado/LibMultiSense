@@ -92,7 +92,7 @@ jobs:
             ${{ runner.os }}-vcpkg-
 
       - name: Install dependencies with vcpkg
-        run: ./vcpkg/vcpkg install --triplet x64-osx
+        run: ./vcpkg/vcpkg install --triplet x64-osx --allow-unsupported
 
       - name: Build Release
         run: |
