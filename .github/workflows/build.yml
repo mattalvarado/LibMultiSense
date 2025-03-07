@@ -82,6 +82,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DBUILD_LEGACY_API=OFF \
             -DBUILD_TESTS=ON
+            -DCMAKE_INSTALL_PREFIX=install-release
           cmake --build build --target install -j "$(sysctl -n hw.ncpu)"
           mkdir pip-wheel
           pip wheel --wheel-dir pip-wheel ${{ github.workspace }}
@@ -91,7 +92,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: macos-install-release
-          path: build\install
+          path: install-release/
 
       - name: Upload pip wheel Artifact
         uses: actions/upload-artifact@v4
@@ -107,7 +108,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=Debug \
             -DBUILD_LEGACY_API=OFF \
             -DBUILD_TESTS=ON
-          cmake --build build --target install -j "$(sysctl -n hw.ncpu)"
+          cmake --build build -j "$(sysctl -n hw.ncpu)"
           make -C build test
 
   build-windows:
@@ -175,6 +176,6 @@ jobs:
             -DBUILD_LEGACY_API=OFF ^
             -DCMAKE_BUILD_TYPE=Debug ^
             -DBUILD_TESTS=ON
-          cmake --build build --config Debug --target install -- /m:10
+          cmake --build build --config Debug -- /m:10
           make -C build test
 
