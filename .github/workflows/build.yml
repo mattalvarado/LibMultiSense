@@ -143,11 +143,12 @@ jobs:
         shell: cmd
         run: |
           cmake -B build -S . ^
+            -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake ^
             -DBUILD_JSON_SERIALIZATION=ON ^
             -DBUILD_PYTHON_BINDINGS=ON ^
             -DBUILD_LEGACY_API=OFF ^
             -DCMAKE_BUILD_TYPE=Release ^
-            -DBUILD_TESTS=ON \
+            -DBUILD_TESTS=ON ^
             -DCMAKE_INSTALL_PREFIX=install-release
           cmake --build build --config Release --target install -- /m:10
           mkdir pip-wheel
@@ -170,6 +171,7 @@ jobs:
         shell: cmd
         run: |
           cmake -B build -S . ^
+            -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake ^
             -DBUILD_JSON_SERIALIZATION=ON ^
             -DBUILD_PYTHON_BINDINGS=ON ^
             -DBUILD_LEGACY_API=OFF ^
