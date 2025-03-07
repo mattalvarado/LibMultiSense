@@ -72,7 +72,7 @@ jobs:
 
       - name: Install macOS Deps
         run: |
-          brew install pybind11 nolohmann-json
+          brew install pybind11 nlohmann-json
 
       - name: Build Release
         run: |
