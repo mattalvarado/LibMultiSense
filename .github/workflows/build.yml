@@ -72,32 +72,11 @@ jobs:
 
       - name: Install macOS Deps
         run: |
-          brew install autoconf automake autoconf-archive
-
-      - name: Setup vcpkg on macOS
-        run: |
-          git clone https://github.com/microsoft/vcpkg.git
-          ./vcpkg/bootstrap-vcpkg.sh
-
-      - name: Cache vcpkg artifacts on macOS
-        uses: actions/cache@v3
-        with:
-          path: |
-            ./vcpkg/packages
-            ./vcpkg_install
-            ./vcpkg/install
-            ./vcpkg/scripts
-          key: ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg.json') }}
-          restore-keys: |
-            ${{ runner.os }}-vcpkg-
-
-      - name: Install dependencies with vcpkg
-        run: ./vcpkg/vcpkg install --triplet x64-osx --allow-unsupported
+          brew install pybind11 nolohmann-json
 
       - name: Build Release
         run: |
           cmake -B build -S . \
-            -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake" \
             -DBUILD_JSON_SERIALIZATION=ON \
             -DBUILD_PYTHON_BINDINGS=ON \
             -DCMAKE_BUILD_TYPE=Release \
@@ -122,7 +101,6 @@ jobs:
       - name: Build Debug
         run: |
           cmake -B build -S . \
-            -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake" \
             -DBUILD_JSON_SERIALIZATION=ON \
             -DBUILD_PYTHON_BINDINGS=ON \
             -DCMAKE_BUILD_TYPE=Debug \
