@@ -115,7 +115,7 @@ jobs:
     name: Build on Windows
     runs-on: windows-2022
     env:
-        VCPKG_ROOT=${{ github.workspace }}\vcpkg
+        VCPKG_ROOT: ${{ github.workspace }}\vcpkg
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
