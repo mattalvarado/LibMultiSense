@@ -114,6 +114,8 @@ jobs:
   build-windows:
     name: Build on Windows
     runs-on: windows-2022
+    env:
+        VCPKG_ROOT=${{ github.workspace}\vcpkg
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -143,7 +145,6 @@ jobs:
         shell: cmd
         run: |
           cmake -B build -S . ^
-            -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake ^
             -DBUILD_JSON_SERIALIZATION=ON ^
             -DBUILD_PYTHON_BINDINGS=ON ^
             -DBUILD_LEGACY_API=OFF ^
@@ -171,7 +172,6 @@ jobs:
         shell: cmd
         run: |
           cmake -B build -S . ^
-            -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake ^
             -DBUILD_JSON_SERIALIZATION=ON ^
             -DBUILD_PYTHON_BINDINGS=ON ^
             -DBUILD_LEGACY_API=OFF ^
