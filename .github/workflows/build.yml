@@ -149,9 +149,8 @@ jobs:
             -DBUILD_PYTHON_BINDINGS=ON ^
             -DBUILD_LEGACY_API=OFF ^
             -DCMAKE_BUILD_TYPE=Release ^
-            -DBUILD_TESTS=ON ^
-            -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\install-release
-          cmake --build build --config Release --target install -- /m:10
+            -DBUILD_TESTS=ON
+          cmake --build build --config Release --target install --prefix ${{ github.workspace }}\install-release -- /m:10
           mkdir pip-wheel
           pip wheel -v --wheel-dir pip-wheel ${{ github.workspace }}
           ctest -C Release
