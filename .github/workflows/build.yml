@@ -147,10 +147,11 @@ jobs:
             -DBUILD_PYTHON_BINDINGS=ON ^
             -DBUILD_LEGACY_API=OFF ^
             -DCMAKE_BUILD_TYPE=Release ^
-            -DBUILD_TESTS=OFF
+            -DBUILD_TESTS=ON
           cmake --build build --config Release --target install -- /m:10
           mkdir pip-wheel
           pip wheel --wheel-dir pip-wheel ${{ github.workspace }}
+          make -C build test
 
       - name: Upload Release Artifact
         uses: actions/upload-artifact@v4
@@ -173,6 +174,7 @@ jobs:
             -DBUILD_PYTHON_BINDINGS=ON ^
             -DBUILD_LEGACY_API=OFF ^
             -DCMAKE_BUILD_TYPE=Debug ^
-            -DBUILD_TESTS=OFF
+            -DBUILD_TESTS=ON
           cmake --build build --config Debug --target install -- /m:10
+          make -C build test
 
