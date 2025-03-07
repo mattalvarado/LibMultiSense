@@ -56,6 +56,8 @@ public:
     static CRL_CONSTEXPR IdType      ID      = ID_CMD_CAM_CONTROL;
     static CRL_CONSTEXPR VersionType VERSION = 10;
 
+    static CRL_CONSTEXPR float WIRE_IMAGER_GAIN_MAX = 1000.0f;
+
     //
     // Parameters representing the current camera configuration
 
@@ -92,7 +94,7 @@ public:
     //
     // Additions in version 5
 
-    uint16_t autoExposureRoiX;
+    uint16_t autoExposureRoiX ;
     uint16_t autoExposureRoiY;
     uint16_t autoExposureRoiWidth;
     uint16_t autoExposureRoiHeight;
@@ -145,11 +147,9 @@ public:
         message & exposure;
         message & autoExposure;
         message & autoExposureMax;
-        message & autoExposureDecay;
-        message & autoExposureThresh;
+        message & autoExposureDecay; message & autoExposureThresh;
 
-        message & whiteBalanceRed;
-        message & whiteBalanceBlue;
+        message & whiteBalanceRed; message & whiteBalanceBlue;
         message & autoWhiteBalance;
         message & autoWhiteBalanceDecay;
         message & autoWhiteBalanceThresh;
