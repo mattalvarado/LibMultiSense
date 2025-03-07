@@ -148,7 +148,8 @@ jobs:
             -DBUILD_PYTHON_BINDINGS=ON ^
             -DBUILD_LEGACY_API=OFF ^
             -DCMAKE_BUILD_TYPE=Release ^
-            -DBUILD_TESTS=ON
+            -DBUILD_TESTS=ON \
+            -DCMAKE_INSTALL_PREFIX=install-release
           cmake --build build --config Release --target install -- /m:10
           mkdir pip-wheel
           pip wheel --wheel-dir pip-wheel ${{ github.workspace }}
@@ -158,7 +159,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows-install-release
-          path: build\install
+          path: install-release
 
       - name: Upload pip wheel Artifact
         uses: actions/upload-artifact@v4
