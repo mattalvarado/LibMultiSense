@@ -81,7 +81,7 @@ jobs:
             -DBUILD_PYTHON_BINDINGS=ON \
             -DCMAKE_BUILD_TYPE=Release \
             -DBUILD_LEGACY_API=OFF \
-            -DBUILD_TESTS=ON
+            -DBUILD_TESTS=ON \
             -DCMAKE_INSTALL_PREFIX=install-release
           cmake --build build --target install -j "$(sysctl -n hw.ncpu)"
           mkdir pip-wheel
