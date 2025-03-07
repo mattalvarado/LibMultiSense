@@ -46,8 +46,8 @@ option(BUILD_PYTHON_BINDINGS "Build Python bindings with pybind11." OFF)
 option(BUILD_JSON_SERIALIZATION "Build json type serialization with nlohmann json." OFF)
 
 if(WIN32 AND DEFINED ENV{VCPKG_ROOT})
-    message("setting tooilchain path to $ENV{VCPKG_ROOT}\scripts\buildsystems/vcpkg.cmake")
-    set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}\scripts\buildsystems]vcpkg.cmake" CACHE STRING "vcpkg toolchain file")
+    message("setting tooilchain path to $ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
+    set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "vcpkg toolchain file")
 endif()
 
 if (BUILD_TESTS)
