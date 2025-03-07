@@ -152,7 +152,7 @@ jobs:
             -DCMAKE_INSTALL_PREFIX=install-release
           cmake --build build --config Release --target install -- /m:10
           mkdir pip-wheel
-          pip wheel --wheel-dir pip-wheel ${{ github.workspace }}
+          pip wheel -v --wheel-dir pip-wheel ${{ github.workspace }}
           ctest -C Release
 
       - name: Upload Release Artifact
