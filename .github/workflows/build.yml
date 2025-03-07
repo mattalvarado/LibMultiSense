@@ -72,7 +72,7 @@ jobs:
 
       - name: Install macOS Deps
         run: |
-          brew install pybind11 nlohmann-json
+          brew install pybind11 nlohmann-json googletest
 
       - name: Build Release
         run: |
@@ -81,10 +81,11 @@ jobs:
             -DBUILD_PYTHON_BINDINGS=ON \
             -DCMAKE_BUILD_TYPE=Release \
             -DBUILD_LEGACY_API=OFF \
-            -DBUILD_TESTS=OFF
-          cmake --build build -j "$(sysctl -n hw.ncpu)"
+            -DBUILD_TESTS=ON
+          cmake --build build --target install -j "$(sysctl -n hw.ncpu)"
           mkdir pip-wheel
           pip wheel --wheel-dir pip-wheel ${{ github.workspace }}
+          make -C build test
 
       - name: Upload Release Artifact
         uses: actions/upload-artifact@v4
@@ -105,8 +106,9 @@ jobs:
             -DBUILD_PYTHON_BINDINGS=ON \
             -DCMAKE_BUILD_TYPE=Debug \
             -DBUILD_LEGACY_API=OFF \
-            -DBUILD_TESTS=OFF
-          cmake --build build -j "$(sysctl -n hw.ncpu)"
+            -DBUILD_TESTS=ON
+          cmake --build build --target install -j "$(sysctl -n hw.ncpu)"
+          make -C build test
 
   build-windows:
     name: Build on Windows
