@@ -73,6 +73,7 @@ jobs:
             pip install pybind11 &&
             git clone https://github.com/nlohmann/json.git &&
             cd json &&
+            git checkout v3.11.3 &&
             cmake -S . -B build -DCMAKE_INSTALL_PREFIX=/usr -DJSON_BuildTests=OFF &&
             cmake --build build --target install &&
             cmake --install build
@@ -80,6 +81,7 @@ jobs:
             brew install cmake ninja nlohmann-json pybind11
           CIBW_BEFORE_ALL_WINDOWS: >
             choco install cmake ninja &&
+            rm -rf vcpkg &&
             git clone https://github.com/microsoft/vcpkg.git &&
             ./vcpkg/bootstrap-vcpkg.bat &&
             ./vcpkg/vcpkg install pybind11 nlohmann-json --triplet x64-windows &&
