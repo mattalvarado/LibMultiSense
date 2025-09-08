@@ -605,6 +605,7 @@ uint32_t impl::imagerApiToWire(uint32_t a)
     case system::DeviceInfo::IMAGER_TYPE_AR0234_GREY:   return wire::SysDeviceInfo::IMAGER_TYPE_AR0234_GREY;
     case system::DeviceInfo::IMAGER_TYPE_AR0239_COLOR:  return wire::SysDeviceInfo::IMAGER_TYPE_AR0239_COLOR;
     case system::DeviceInfo::IMAGER_TYPE_FLIR_TAU2:     return wire::SysDeviceInfo::IMAGER_TYPE_FLIR_TAU2;
+    case system::DeviceInfo::IMAGER_TYPE_TENUM1280:     return wire::SysDeviceInfo::IMAGER_TYPE_TENUM1280;
     default:
         CRL_DEBUG("unknown API imager type \"%d\"\n", a);
         return a; // pass through
